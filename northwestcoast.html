@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="no">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NorthWest Coast – Argostep Maritime Ladder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+  <style>
+    :root {
+      --navy: #0a1628;
+      --navy-mid: #0f2040;
+      --navy-light: #1a3358;
+      --green: #2ecc71;
+      --green-dark: #1aab57;
+      --green-glow: rgba(46, 204, 113, 0.15);
+      --sand: #e8e0d4;
+      --sand-light: #f2ece4;
+      --white: #fff;
+      --text-muted: rgba(255, 255, 255, 0.5);
+      --text-dim: rgba(255, 255, 255, 0.75);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 4rem;
+      background: rgba(10, 22, 40, 0.85);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(46, 204, 113, 0.12);
+      transition: padding 0.3s, background 0.3s;
+    }
+
+    .nav-logo img {
+      height: 38px;
+      display: block;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.87rem;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--green);
+    }
+
+    .nav-cta {
+      background: var(--green);
+      color: var(--navy);
+      font-weight: 700;
+      padding: 0.62rem 1.5rem;
+      border-radius: 2rem;
+      text-decoration: none;
+      font-size: 0.87rem;
+      letter-spacing: 0.04em;
+      transition: all 0.2s;
+      border: 2px solid var(--green);
+    }
+
+    .nav-cta:hover {
+      background: transparent;
+      color: var(--green);
+    }
+
+    .nav-lang {
+      display: flex;
+      gap: 0.3rem;
+      align-items: center;
+    }
+
+    .nav-lang button {
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text-dim);
+      border-radius: 0.4rem;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-lang button.active,
+    .nav-lang button:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .hero-bg-img {
+      position: absolute;
+      inset: 0;
+      background-image: url('leider_in_use.jpg');
+      background-size: cover;
+      background-position: center 30%;
+      filter: brightness(0.35) saturate(0.8);
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, rgba(10, 22, 40, 0.92) 0%, rgba(10, 22, 40, 0.7) 50%, rgba(10, 22, 40, 0.3) 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      padding: 0 4rem;
+      max-width: 720px;
+      margin-top: 5rem;
+      animation: fadeUp 1s ease both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.73rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 1px;
+      background: var(--green);
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3.8rem, 8vw, 7.5rem);
+      font-weight: 900;
+      line-height: 0.93;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--green);
+    }
+
+    .hero-desc {
+      font-size: 1.05rem;
+      line-height: 1.72;
+      color: var(--text-dim);
+      max-width: 500px;
+      margin-bottom: 2.2rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: var(--navy);
+      font-weight: 700;
+      padding: 0.9rem 2rem;
+      border-radius: 3rem;
+      text-decoration: none;
+      font-size: 0.93rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s;
+      box-shadow: 0 0 28px rgba(46, 204, 113, 0.35);
+      border: 2px solid var(--green);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 48px rgba(46, 204, 113, 0.55);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--white);
+      font-weight: 500;
+      padding: 0.9rem 2rem;
+      border-radius: 3rem;
+      text-decoration: none;
+      font-size: 0.93rem;
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      transition: all 0.25s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+    }
+
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.2rem;
+    }
+
+    .hero-product-img {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38%;
+      max-width: 520px;
+      z-index: 2;
+      animation: fadeUp 1s 0.25s ease both;
+      filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.6));
+    }
+
+    .hero-product-img img {
+      width: 100%;
+      display: block;
+    }
+
+    /* ── WAVES ── */
+    .wave {
+      line-height: 0;
+      overflow: hidden;
+    }
+
+    .wave svg {
+      display: block;
+      width: 100%;
+    }
+
+    /* ── FEATURES STRIP ── */
+    .features {
+      background: var(--sand);
+      padding: 4rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+    }
+
+    .feat {
+      text-align: center;
+    }
+
+    .feat-icon {
+      width: 3.4rem;
+      height: 3.4rem;
+      margin: 0 auto 0.9rem;
+      background: rgba(26, 171, 87, 0.12);
+      border: 1.5px solid var(--green-dark);
+      border-radius: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+    }
+
+    .feat h3 {
+      font-weight: 700;
+      font-size: 0.97rem;
+      color: var(--navy);
+      margin-bottom: 0.45rem;
+    }
+
+    .feat p {
+      font-size: 0.85rem;
+      color: #456;
+      line-height: 1.55;
+    }
+
+    /* ── SECTIONS BASE ── */
+    section {
+      padding: 6rem 4rem;
+    }
+
+    .lbl {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .lbl::before {
+      content: '';
+      display: block;
+      width: 1.4rem;
+      height: 1px;
+      background: var(--green);
+    }
+
+    .lbl-center {
+      justify-content: center;
+    }
+
+    .lbl-dark {
+      color: var(--green-dark);
+    }
+
+    h2.stitle {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 3.5vw, 3rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    h2.stitle.dark {
+      color: var(--navy);
+    }
+
+    .sub {
+      font-size: 1.02rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+      max-width: 540px;
+    }
+
+    .sub.dark {
+      color: #456;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      background: var(--navy-mid);
+    }
+
+    .how-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .video-box {
+      position: relative;
+      border-radius: 1.4rem;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+      background: var(--navy);
+    }
+
+    .video-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0.75;
+    }
+
+    .play-btn {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 22, 40, 0.3);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .play-btn:hover {
+      background: rgba(10, 22, 40, 0.1);
+    }
+
+    .play-circle {
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 50%;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 0 40px rgba(46, 204, 113, 0.5);
+      transition: transform 0.2s;
+    }
+
+    .play-btn:hover .play-circle {
+      transform: scale(1.1);
+    }
+
+    .vid-caption {
+      text-align: center;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 0.7rem;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+      margin-top: 2rem;
+    }
+
+    .step {
+      display: flex;
+      gap: 1.1rem;
+      align-items: flex-start;
+      padding: 1.3rem;
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      transition: border-color 0.2s;
+    }
+
+    .step:hover {
+      border-color: rgba(46, 204, 113, 0.3);
+    }
+
+    .step-n {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      background: var(--green);
+      color: var(--navy);
+      font-weight: 700;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step h4 {
+      font-weight: 700;
+      font-size: 0.93rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .step p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ── GALLERY ── */
+    .gallery {
+      background: var(--sand-light);
+    }
+
+    .gallery-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin: 2rem 0;
+    }
+
+    .tab {
+      background: rgba(10, 22, 40, 0.1);
+      border: 1px solid rgba(10, 22, 40, 0.15);
+      color: var(--navy);
+      font-weight: 600;
+      font-size: 0.83rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+
+    .gallery-main {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr;
+      grid-template-rows: 280px 280px;
+      gap: 1rem;
+    }
+
+    .g-card {
+      border-radius: 1.2rem;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .g-card:first-child {
+      grid-row: span 2;
+    }
+
+    .g-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 20px 50px rgba(10, 22, 40, 0.25);
+    }
+
+    .g-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s;
+    }
+
+    .g-card:hover img {
+      transform: scale(1.05);
+    }
+
+    .g-label {
+      position: absolute;
+      bottom: 0.8rem;
+      left: 0.8rem;
+      background: rgba(10, 22, 40, 0.85);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.8rem;
+      border-radius: 2rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── 3D VIEWER ── */
+    .viewer-section {
+      background: var(--navy);
+    }
+
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .viewer-box {
+      border-radius: 1.5rem;
+      overflow: hidden;
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      background: linear-gradient(135deg, #0a1628, #0e2040);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      height: 480px;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      --progress-bar-color: var(--green);
+      --progress-bar-height: 3px;
+    }
+
+    .viewer-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      margin-top: 2rem;
+    }
+
+    .vinfo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .vinfo-icon {
+      font-size: 1.3rem;
+      width: 2.5rem;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .vinfo p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .vinfo strong {
+      color: var(--white);
+      display: block;
+      margin-bottom: 0.1rem;
+    }
+
+    /* ── CERTS ── */
+    .certs {
+      background: var(--navy-mid);
+    }
+
+    .certs-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .cert-img {
+      border-radius: 1.5rem;
+      overflow: hidden;
+      height: 400px;
+    }
+
+    .cert-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cert-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      margin-top: 2rem;
+    }
+
+    .cert-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.1rem 1.4rem;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .cert-tick {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: rgba(46, 204, 113, 0.12);
+      border: 1.5px solid var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--green);
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+
+    .cert-card h4 {
+      font-weight: 700;
+      font-size: 0.92rem;
+      margin-bottom: 0.1rem;
+    }
+
+    .cert-card span {
+      font-size: 0.78rem;
+      color: var(--green);
+    }
+
+    .vessel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-top: 2rem;
+    }
+
+    .vessel {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.8rem 1rem;
+      background: rgba(46, 204, 113, 0.05);
+      border-radius: 0.7rem;
+      border: 1px solid rgba(46, 204, 113, 0.15);
+      font-size: 0.85rem;
+    }
+
+    .vessel::before {
+      content: '⚓';
+      font-size: 0.9rem;
+    }
+
+    /* ── IN USE / SLIDESHOW ── */
+    .inuse {
+      background: var(--sand);
+      overflow: hidden;
+      padding-bottom: 0;
+    }
+
+    .inuse-header {
+      padding-bottom: 2rem;
+    }
+
+    .photostrip {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2rem;
+    }
+
+    .photostrip::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .photostrip::-webkit-scrollbar-track {
+      background: rgba(10, 22, 40, 0.1);
+      border-radius: 2px;
+    }
+
+    .photostrip::-webkit-scrollbar-thumb {
+      background: var(--green-dark);
+      border-radius: 2px;
+    }
+
+    .photo-card {
+      flex: 0 0 360px;
+      height: 460px;
+      border-radius: 1.2rem;
+      overflow: hidden;
+      scroll-snap-align: start;
+      position: relative;
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s;
+    }
+
+    .photo-card:hover img {
+      transform: scale(1.04);
+    }
+
+    .photo-cap {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(10, 22, 40, 0.85));
+      color: #fff;
+      padding: 1.5rem 1rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* ── TESTIMONIALS ── */
+    .testi {
+      background: var(--navy);
+    }
+
+    .testi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .testi-card {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 1.4rem;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .testi-card:hover {
+      border-color: rgba(46, 204, 113, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .testi-ship {
+      width: 100%;
+      height: 160px;
+      border-radius: 0.9rem;
+      overflow: hidden;
+      margin-bottom: 1.4rem;
+    }
+
+    .testi-ship img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .quote-mark {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      color: var(--green);
+      line-height: 0.8;
+      margin-bottom: 0.5rem;
+    }
+
+    .testi-card blockquote {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+      font-style: italic;
+      margin-bottom: 1.4rem;
+    }
+
+    .testi-author {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .tauthor-av {
+      width: 2.6rem;
+      height: 2.6rem;
+      border-radius: 50%;
+      background: var(--navy-light);
+      border: 2px solid var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+
+    .tauthor-name {
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .tauthor-co {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* ── NEWS ── */
+    .news {
+      background: var(--sand-light);
+    }
+
+    .news-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .news-card {
+      background: var(--white);
+      border-radius: 1.4rem;
+      overflow: hidden;
+      box-shadow: 0 4px 30px rgba(10, 22, 40, 0.07);
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+
+    .news-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(10, 22, 40, 0.14);
+    }
+
+    .news-img-box {
+      height: 230px;
+      overflow: hidden;
+    }
+
+    .news-img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s;
+    }
+
+    .news-card:hover .news-img-box img {
+      transform: scale(1.05);
+    }
+
+    .news-body {
+      padding: 1.8rem;
+    }
+
+    .news-tag {
+      display: inline-block;
+      background: rgba(46, 204, 113, 0.12);
+      color: var(--green-dark);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.75rem;
+      border-radius: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .news-date {
+      font-size: 0.76rem;
+      color: #8a9cb0;
+      margin-bottom: 0.5rem;
+    }
+
+    .news-body h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      color: var(--navy);
+      margin-bottom: 0.65rem;
+      line-height: 1.3;
+    }
+
+    .news-body p {
+      font-size: 0.86rem;
+      color: #456;
+      line-height: 1.6;
+    }
+
+    .news-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--green-dark);
+      font-weight: 600;
+      font-size: 0.86rem;
+      text-decoration: none;
+      margin-top: 1rem;
+      transition: gap 0.2s;
+    }
+
+    .news-link:hover {
+      gap: 0.7rem;
+    }
+
+    .news-side {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .news-mini {
+      display: flex;
+      gap: 1rem;
+      background: var(--white);
+      border-radius: 1.1rem;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(10, 22, 40, 0.06);
+      cursor: pointer;
+      transition: transform 0.25s;
+    }
+
+    .news-mini:hover {
+      transform: translateX(4px);
+    }
+
+    .news-mini-img {
+      width: 100px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .news-mini-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .news-mini-body {
+      padding: 1rem 1rem 1rem 0;
+    }
+
+    .news-mini-body h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      color: var(--navy);
+      margin-bottom: 0.4rem;
+      line-height: 1.3;
+    }
+
+    /* ── FAQ ── */
+    .faq {
+      background: var(--navy);
+    }
+
+    .faq-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    details.fi {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      overflow: hidden;
+    }
+
+    details.fi[open] {
+      border-color: rgba(46, 204, 113, 0.25);
+    }
+
+    summary.fq {
+      list-style: none;
+      padding: 1.1rem 1.4rem;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    summary.fq::-webkit-details-marker {
+      display: none;
+    }
+
+    details.fi[open] summary.fq {
+      color: var(--green);
+    }
+
+    .fi-icon {
+      color: var(--green);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      transition: transform 0.25s;
+    }
+
+    details.fi[open] .fi-icon {
+      transform: rotate(45deg);
+    }
+
+    .fa {
+      padding: 0 1.4rem 1.1rem;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* ── CONTACT ── */
+    .contact {
+      background: var(--navy-mid);
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 5rem;
+    }
+
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+      margin-top: 2rem;
+    }
+
+    .ci {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .ci-icon {
+      width: 2.7rem;
+      height: 2.7rem;
+      border-radius: 0.75rem;
+      background: rgba(46, 204, 113, 0.1);
+      border: 1px solid rgba(46, 204, 113, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .ci h4 {
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--green);
+      margin-bottom: 0.15rem;
+    }
+
+    .ci p,
+    .ci a {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      text-decoration: none;
+    }
+
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem;
+    }
+
+    .fg {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .fg label {
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .fg input,
+    .fg select,
+    .fg textarea {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0.7rem;
+      padding: 0.8rem 1rem;
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .fg input:focus,
+    .fg select:focus,
+    .fg textarea:focus {
+      border-color: var(--green);
+    }
+
+    .fg select {
+      appearance: none;
+    }
+
+    .fg textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    ::placeholder {
+      color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ── NEWSLETTER ── */
+    .nl {
+      background: linear-gradient(135deg, #061020 0%, #0a2e1a 100%);
+      padding: 5rem 4rem;
+      text-align: center;
+      border-top: 1px solid rgba(46, 204, 113, 0.15);
+      border-bottom: 1px solid rgba(46, 204, 113, 0.15);
+    }
+
+    .nl h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .nl p {
+      color: var(--text-muted);
+      margin-bottom: 1.8rem;
+    }
+
+    .nl-form {
+      display: flex;
+      gap: 0.7rem;
+      max-width: 460px;
+      margin: 0 auto;
+    }
+
+    .nl-form input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 2rem;
+      padding: 0.85rem 1.4rem;
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .nl-form input:focus {
+      border-color: var(--green);
+    }
+
+    .nl-form button {
+      background: var(--green);
+      color: var(--navy);
+      font-weight: 700;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.85rem 1.6rem;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .nl-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(46, 204, 113, 0.35);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #050e1c;
+      padding: 4rem;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1.5fr;
+      gap: 3rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .fbrand p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-top: 0.8rem;
+      max-width: 250px;
+    }
+
+    .fbrand img {
+      height: 35px;
+    }
+
+    .fsocial {
+      display: flex;
+      gap: 0.7rem;
+      margin-top: 1.4rem;
+    }
+
+    .fsoc {
+      width: 2.3rem;
+      height: 2.3rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .fsoc:hover {
+      background: var(--green);
+      color: var(--navy);
+      border-color: var(--green);
+    }
+
+    .fcol h4 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--green);
+      margin-bottom: 1.1rem;
+    }
+
+    .fcol ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .fcol a {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .fcol a:hover {
+      color: var(--white);
+    }
+
+    .fcol address {
+      font-style: normal;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .fcol address span {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+    }
+
+    .fbot {
+      background: #050e1c;
+      padding: 1.4rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.28);
+    }
+
+    /* ── REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── LIGHTBOX ── */
+    #lb {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 14, 28, 0.95);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #lb.open {
+      display: flex;
+    }
+
+    #lb img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 1rem;
+      object-fit: contain;
+    }
+
+    #lb-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    #lb-close:hover {
+      opacity: 1;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      nav {
+        padding: 1rem 1.5rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      section {
+        padding: 4rem 1.5rem;
+      }
+
+      .hero-content {
+        padding: 0 1.5rem;
+      }
+
+      .hero-product-img {
+        display: none;
+      }
+
+      .features {
+        grid-template-columns: 1fr 1fr;
+        padding: 3rem 1.5rem;
+      }
+
+      .how-grid,
+      .viewer-grid,
+      .certs-grid,
+      .faq-layout,
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+
+      .gallery-main {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+      }
+
+      .gallery-main .g-card:first-child {
+        grid-row: auto;
+        grid-column: span 2;
+        height: 280px;
+      }
+
+      .testi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .news-grid {
+        grid-template-columns: 1fr;
+      }
+
+      footer {
+        grid-template-columns: 1fr 1fr;
+        padding: 3rem 1.5rem;
+      }
+
+      .fbot {
+        padding: 1.2rem 1.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .nl {
+        padding: 4rem 1.5rem;
+      }
+
+      .nl-form {
+        flex-direction: column;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-stats {
+        gap: 1.5rem;
+      }
+
+      .viewer-box {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LIGHTBOX -->
+  <div id="lb">
+    <button id="lb-close" onclick="closeLB()">✕</button>
+    <img id="lb-img" src="" alt="">
+  </div>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <a href="#"><img src="logo-light.png" alt="NorthWest Coast" class="nav-logo" height="38" width="auto"></a>
+    <ul class="nav-links">
+      <li><a href="#produkter">Produkter</a></li>
+      <li><a href="#hvordan">Hvordan det virker</a></li>
+      <li><a href="#sertifisering">Sertifisering</a></li>
+      <li><a href="#nyheter">Nyheter</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <div class="nav-lang">
+        <button class="active">NO</button>
+        <button>EN</button>
+      </div>
+      <a href="#kontakt" class="nav-cta">Be om tilbud</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero" id="topp">
+    <div class="hero-bg-img"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Fremtidens ombordstigning</div>
+      <h1>ARGO<em>STEP</em></h1>
+      <p class="hero-desc">Den lette, modulære leideren designet med fokus på maritim sikkerhet. Godkjent av
+        Sjøfartsdirektoratet. Norsk produksjon fra Sunnmøre.</p>
+      <div class="hero-actions">
+        <a href="#kontakt" class="btn-primary">Be om tilbud →</a>
+        <a href="#hvordan" class="btn-ghost">▶ Se hvordan det virker</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num">2–15m</div>
+          <div class="stat-label">Lengder</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">ISO</div>
+          <div class="stat-label">799-1:2019</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">100%</div>
+          <div class="stat-label">Norsk produksjon</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-product-img">
+      <img src="ladder-full.png" alt="Argostep leider full utfelling">
+    </div>
+  </div>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,40 C480,80 960,10 1440,50 L1440,70 L0,70Z" fill="#e8e0d4" />
+    </svg></div>
+
+  <!-- FEATURES -->
+  <div class="features reveal">
+    <div class="feat">
+      <div class="feat-icon">🖐</div>
+      <h3>Enkel Håndtering</h3>
+      <p>Betydelig lettere enn treleidere. Klikk-kobling gjør utsetting og innhenting raskt.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📦</div>
+      <h3>Kompakt Lagring</h3>
+      <p>Lagres i eget værbestandig skap – beskytt mot slitasje, spar dekksplass.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⏳</div>
+      <h3>Lang Levetid</h3>
+      <p>Utskiftbare komponenter av armert plast – bytt ett trinn, ikke hele leideren.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✂️</div>
+      <h3>Skreddersydd</h3>
+      <p>Tilpasset dine spesifikasjoner. Fleksibel løsning fra 2 til 15 meter.</p>
+    </div>
+  </div>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,30 C360,-5 720,65 1080,20 C1260,5 1380,55 1440,30 L1440,0 L0,0Z" fill="#e8e0d4" />
+      <path d="M0,30 C360,-5 720,65 1080,20 C1260,5 1380,55 1440,30 L1440,70 L0,70Z" fill="#0f2040" />
+    </svg></div>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="hvordan">
+    <div class="how-grid reveal">
+      <div>
+        <div class="lbl">Se den i aksjon</div>
+        <h2 class="stitle">Hvordan Argostep Fungerer</h2>
+        <p class="sub" style="margin-bottom:1.8rem;">Argostep revolusjonerer ombordstigning. I motsetning til
+          tradisjonelle treleidere bruker Argostep sprøytestøpt glassfiberarmert plast – kombinasjon av letthet, styrke
+          og holdbarhet.</p>
+        <div class="video-box">
+          <img src="leider_in_use.jpg" alt="Argostep i bruk">
+          <a class="play-btn" href="https://www.youtube.com/watch?v=argostep_video" target="_blank" rel="noopener">
+            <div class="play-circle">▶</div>
+          </a>
+        </div>
+        <p class="vid-caption">Besøkende skal klatre ved bruk av trinn eller sidestropper. Hansker anbefales.</p>
+      </div>
+      <div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-n">1</div>
+            <div>
+              <h4>Modulært System</h4>
+              <p>Enkel klikk-kobling for hvert trinn. Vedlikehold uten spesialverktøy – bytt ett trinn ved behov.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">2</div>
+            <div>
+              <h4>Materialvalg</h4>
+              <p>Høykvalitets glassfiberarmert plast for trinn og fester. Stropper sikkert festet til hvert trinn – lett
+                vekt og høy styrke.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">3</div>
+            <div>
+              <h4>Lagringsløsning</h4>
+              <p>Dedikert skap beskyttet mot vær og vind. Forlenger levetiden og eliminerer slitasje fra eksponering.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">4</div>
+            <div>
+              <h4>Rask Utsetting</h4>
+              <p>Klikkbare forlengere gir stabil støtte. Montering og demontering utføres raskt av én person.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,35 C480,80 960,0 1440,45 L1440,70 L0,70Z" fill="#f2ece4" />
+      <path d="M0,35 C480,80 960,0 1440,45 L1440,0 L0,0Z" fill="#0f2040" />
+    </svg></div>
+
+  <!-- GALLERY -->
+  <section class="gallery" id="produkter">
+    <div class="reveal">
+      <div class="lbl lbl-dark">Produktgalleri</div>
+      <h2 class="stitle dark">Se Argostep fra alle vinkler</h2>
+      <p class="sub dark">Klikk på bildene for å forstørre.</p>
+      <div class="gallery-tabs">
+        <button class="tab active">Alle</button>
+        <button class="tab">Leider</button>
+        <button class="tab">Oppbevaring</button>
+        <button class="tab">I bruk</button>
+      </div>
+    </div>
+    <div class="gallery-main reveal">
+      <div class="g-card" onclick="openLB('leider_in_use.jpg')">
+        <img src="leider_in_use.jpg" alt="Argostep i bruk">
+        <div class="g-label">Leider i bruk</div>
+      </div>
+      <div class="g-card" onclick="openLB('ladder-full.png')">
+        <img src="ladder-full.png" alt="Full utfelling" style="object-fit:contain;background:#e8e0d4;">
+        <div class="g-label">Full Utfelling</div>
+      </div>
+      <div class="g-card" onclick="openLB('ladder-folded.png')">
+        <img src="ladder-folded.png" alt="Foldet" style="object-fit:contain;background:#e8e0d4;">
+        <div class="g-label">Ultrakompakt – Foldet</div>
+      </div>
+      <div class="g-card" onclick="openLB('leider_cabinet.jpg')">
+        <img src="leider_cabinet.jpg" alt="Oppbevaringsskap">
+        <div class="g-label">Oppbevaringsskap</div>
+      </div>
+      <div class="g-card" onclick="openLB('leider_m1.jpg')">
+        <img src="leider_m1.jpg" alt="Ombord">
+        <div class="g-label">Montert ombord</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,20 C360,70 720,0 1080,50 C1260,70 1380,20 1440,30 L1440,70 L0,70Z" fill="#0a1628" />
+      <path d="M0,20 C360,70 720,0 1080,50 C1260,70 1380,20 1440,30 L1440,0 L0,0Z" fill="#f2ece4" />
+    </svg></div>
+
+  <!-- 3D VIEWER -->
+  <section class="viewer-section">
+    <div class="viewer-grid reveal">
+      <div>
+        <div class="lbl">Interaktiv 3D-modell</div>
+        <h2 class="stitle">Se Stigen i 3D</h2>
+        <p class="sub" style="margin-bottom:2rem;">Roter, zoom og utforsk Argostep i detalj. Klikk og dra for å rotere –
+          skroll for å zoome.</p>
+        <div class="viewer-info">
+          <div class="vinfo">
+            <div class="vinfo-icon">🔄</div>
+            <div><strong>Full Utfelling</strong>
+              <p>Se leideren slik den ser ut klar for bruk – med alle trinn og stropper på plass.</p>
+            </div>
+          </div>
+          <div class="vinfo">
+            <div class="vinfo-icon">🔍</div>
+            <div><strong>Detaljtro Modell</strong>
+              <p>Glassfiberarmert plast trinn, klikkfester og sidestropper vist i detalj.</p>
+            </div>
+          </div>
+          <div class="vinfo">
+            <div class="vinfo-icon">📐</div>
+            <div><strong>Skalert korrekt</strong>
+              <p>Modellen representerer standard 8-trinns variant. Finner du riktig lengde for ditt fartøy?</p>
+            </div>
+          </div>
+        </div>
+        <a href="#kontakt" class="btn-primary" style="margin-top:2rem;display:inline-flex;">Sjekk krav til ditt fartøy
+          →</a>
+      </div>
+      <div class="viewer-box">
+        <model-viewer src="leider-compressed-v2.glb" alt="Argostep 3D modell" auto-rotate camera-controls
+          shadow-intensity="1" exposure="1.1" environment-image="neutral"
+          style="background: linear-gradient(135deg, #0a1628 0%, #0e2540 100%);" loading="eager" ar></model-viewer>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,40 C480,10 960,70 1440,25 L1440,70 L0,70Z" fill="#0f2040" />
+      <path d="M0,40 C480,10 960,70 1440,25 L1440,0 L0,0Z" fill="#0a1628" />
+    </svg></div>
+
+  <!-- CERTIFICATIONS -->
+  <section class="certs" id="sertifisering">
+    <div class="certs-grid reveal">
+      <div>
+        <div class="lbl">Sikkerhet først</div>
+        <h2 class="stitle">Sertifisert for Sikkerhet</h2>
+        <p class="sub" style="margin-bottom:2rem;">Argostep er bygget etter de høyeste standarder. Vi møter ikke bare
+          kravene – vi sikrer mot å overgå dem.</p>
+        <div class="cert-cards">
+          <div class="cert-card">
+            <div class="cert-tick">✓</div>
+            <div>
+              <h4>ISO 799-1:2019</h4>
+              <span>Sertifisert for skip og maritim teknologi</span>
+            </div>
+          </div>
+          <div class="cert-card">
+            <div class="cert-tick">✓</div>
+            <div>
+              <h4>Sjøfartsdirektoratet</h4>
+              <span>Godkjent for norske fartøy under 15 meter</span>
+            </div>
+          </div>
+          <div class="cert-card">
+            <div class="cert-tick">✓</div>
+            <div>
+              <h4>SOLAS-kompatibel</h4>
+              <span>Oppfyller internasjonale sikkerhetskrav</span>
+            </div>
+          </div>
+        </div>
+        <a href="#kontakt" class="btn-primary" style="margin-top:2rem;display:inline-flex;">Be om tilbud →</a>
+      </div>
+      <div>
+        <div class="cert-img" onclick="openLB('leiderkasse3.jpg')" style="cursor:pointer;">
+          <img src="leiderkasse3.jpg" alt="Argostep ombord">
+        </div>
+        <div class="lbl" style="margin-top:2rem;">Egnet for</div>
+        <div class="vessel-grid">
+          <div class="vessel">Fiskefartøy under 15m</div>
+          <div class="vessel">Servicefartøy under 15m</div>
+          <div class="vessel">Mindre lasteskip</div>
+          <div class="vessel">Passasjerfartøy</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,25 C360,70 720,5 1080,55 C1260,75 1380,25 1440,35 L1440,70 L0,70Z" fill="#e8e0d4" />
+      <path d="M0,25 C360,70 720,5 1080,55 C1260,75 1380,25 1440,35 L1440,0 L0,0Z" fill="#0f2040" />
+    </svg></div>
+
+  <!-- IN USE PHOTOSTRIP -->
+  <section class="inuse" style="background:var(--sand);">
+    <div class="inuse-header reveal">
+      <div class="lbl lbl-dark">Praksis</div>
+      <h2 class="stitle dark">Argostep i felten</h2>
+      <p class="sub dark">Fra norske farvann – leideren i daglig bruk ombord på fartøy langs kysten.</p>
+    </div>
+    <div class="photostrip reveal">
+      <div class="photo-card">
+        <img src="leider_in_use.jpg" alt="Leider i bruk">
+        <div class="photo-cap">Ombordstigning fra sjøsiden</div>
+      </div>
+      <div class="photo-card">
+        <img src="leiderkasse.jpg" alt="Kasse ombord">
+        <div class="photo-cap">Kompakt oppbevaring ombord</div>
+      </div>
+      <div class="photo-card">
+        <img src="leiderkasse2.jpg" alt="Argostep kasse">
+        <div class="photo-cap">Argostep kasse på dekk</div>
+      </div>
+      <div class="photo-card">
+        <img src="leider_cabinet.jpg" alt="Åpen kasse">
+        <div class="photo-cap">Innvendig lagringsskap</div>
+      </div>
+      <div class="photo-card">
+        <img src="leider_m2.jpg" alt="Montert fartøy">
+        <div class="photo-cap">Montert på passasjerfartøy</div>
+      </div>
+      <div class="photo-card">
+        <img src="leiderkasse4.jpg" alt="Kasse på kai">
+        <div class="photo-cap">Klar for bruk ved kai</div>
+      </div>
+      <div class="photo-card">
+        <img src="praksis.jpg" alt="Livbåtleider i bruk">
+        <div class="photo-cap">Livbåtleider – testdykk</div>
+      </div>
+      <div class="photo-card">
+        <img src="leider_m1.jpg" alt="Fartøy">
+        <div class="photo-cap">Plassert diskret på fartøy</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,35 C360,5 720,70 1080,20 C1260,0 1380,55 1440,35 L1440,70 L0,70Z" fill="#0a1628" />
+      <path d="M0,35 C360,5 720,70 1080,20 C1260,0 1380,55 1440,35 L1440,0 L0,0Z" fill="#e8e0d4" />
+    </svg></div>
+
+  <!-- TESTIMONIALS -->
+  <section class="testi">
+    <div class="reveal" style="text-align:center;">
+      <div class="lbl lbl-center">Kundetilbakemeldinger</div>
+      <h2 class="stitle" style="text-align:center;">Hva våre kunder sier</h2>
+      <p class="sub" style="margin:0.7rem auto;text-align:center;">Velg Argostep og bli en av våre mange fornøyde kunder
+        langs norskekysten.</p>
+    </div>
+    <div class="testi-grid reveal">
+      <div class="testi-card">
+        <div class="testi-ship">
+          <img src="tindskjaer.jpg" alt="M/S Tindskjær">
+        </div>
+        <div class="quote-mark">"</div>
+        <blockquote>Vi fikk godkjenning! Veldig fornøyd med dette. Også flott for små jobber langs skutesiden.
+        </blockquote>
+        <div class="testi-author">
+          <div class="tauthor-av">MT</div>
+          <div>
+            <div class="tauthor-name">M/S Tindskjær</div>
+            <div class="tauthor-co">Tindskjær AS</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-ship"
+          style="background:linear-gradient(135deg,#0a1628,#1a3358);display:flex;align-items:center;justify-content:center;font-size:4rem;border-radius:0.9rem;margin-bottom:1.4rem;">
+          ⛵</div>
+        <div class="quote-mark">"</div>
+        <blockquote>Enkel å montere og tar minimalt med plass. Anbefales på det sterkeste!</blockquote>
+        <div class="testi-author">
+          <div class="tauthor-av">RS</div>
+          <div>
+            <div class="tauthor-name">Ro Spirit</div>
+            <div class="tauthor-co">Rostein AS</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-ship">
+          <img src="ms-skar-senior.jpeg" alt="M/S Skår Senior">
+        </div>
+        <div class="quote-mark">"</div>
+        <blockquote>Solid kvalitet og gjennomtenkt design. Vi er veldig fornøyde med produktet.</blockquote>
+        <div class="testi-author">
+          <div class="tauthor-av">RV</div>
+          <div>
+            <div class="tauthor-name">Ronja Vest</div>
+            <div class="tauthor-co">Sølvtrans Rederi AS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,40 C480,5 960,75 1440,30 L1440,70 L0,70Z" fill="#f2ece4" />
+      <path d="M0,40 C480,5 960,75 1440,30 L1440,0 L0,0Z" fill="#0a1628" />
+    </svg></div>
+
+  <!-- NEWS -->
+  <section class="news" id="nyheter">
+    <div class="reveal">
+      <div class="lbl lbl-dark">Siste nytt</div>
+      <h2 class="stitle dark">Fra Bloggen</h2>
+      <p class="sub dark">Hold deg oppdatert med nyheter, caser og forskrifter for maritime leidere.</p>
+    </div>
+    <div class="news-grid reveal">
+      <div class="news-card">
+        <div class="news-img-box"><img src="leiderkasse.jpg" alt="Ny leiderkasse"></div>
+        <div class="news-body">
+          <span class="news-tag">Nyheter</span>
+          <div class="news-date">📅 15. februar 2024</div>
+          <h3>Ny leiderkasse på plass!</h3>
+          <p>Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter. På bildene ser du
+            eksempler fra båten Geir, der kassene allerede er tatt i bruk.</p>
+          <a href="#" class="news-link">Les hele artikkelen →</a>
+        </div>
+      </div>
+      <div class="news-side">
+        <div class="news-mini">
+          <div class="news-mini-img"><img src="leider_m2.jpg" alt="Guide"></div>
+          <div class="news-mini-body">
+            <span class="news-tag">Guide</span>
+            <h4>Hvordan velge riktig leider for ditt fartøy</h4>
+            <a href="#" class="news-link" style="margin-top:0.5rem;">Les mer →</a>
+          </div>
+        </div>
+        <div class="news-mini">
+          <div class="news-mini-img"><img src="ms-skar-senior2.jpeg" alt="Skar Senior"></div>
+          <div class="news-mini-body">
+            <span class="news-tag">Caser</span>
+            <h4>M/S Skår Senior – ny Argostep installasjon</h4>
+            <a href="#" class="news-link" style="margin-top:0.5rem;">Les mer →</a>
+          </div>
+        </div>
+        <div class="news-mini">
+          <div class="news-mini-img"><img src="leiderkasse4.jpg" alt="Forskrifter"></div>
+          <div class="news-mini-body">
+            <span class="news-tag">Forskrifter</span>
+            <h4>Nye krav til ombordstigning fra 2024</h4>
+            <a href="#" class="news-link" style="margin-top:0.5rem;">Les mer →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:2.5rem;">
+      <a href="#"
+        style="display:inline-flex;align-items:center;gap:0.5rem;color:var(--green-dark);font-weight:600;text-decoration:none;font-size:0.95rem;">Se
+        alle innlegg →</a>
+    </div>
+  </section>
+
+  <!-- WAVE -->
+  <div class="wave"><svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+      <path d="M0,30 C360,70 720,0 1080,50 C1300,80 1380,20 1440,40 L1440,70 L0,70Z" fill="#0a1628" />
+      <path d="M0,30 C360,70 720,0 1080,50 C1300,80 1380,20 1440,40 L1440,0 L0,0Z" fill="#f2ece4" />
+    </svg></div>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="faq-layout">
+      <div class="reveal">
+        <div class="lbl">Spørsmål & Svar</div>
+        <h2 class="stitle">Ofte stilte spørsmål</h2>
+        <p class="sub" style="margin-bottom:2rem;">Ikke funnet svaret? Kontakt oss direkte – vi hjelper gjerne.</p>
+        <a href="#kontakt" class="btn-primary" style="display:inline-flex;">Ta kontakt →</a>
+      </div>
+      <div class="faq-list reveal">
+        <details class="fi">
+          <summary class="fq">Er stigen godkjent for norske skip? <span class="fi-icon">+</span></summary>
+          <p class="fa">Ja, Argostep Entrings- og Livbåtleider er sertifisert etter ISO 799-1:2019 og godkjent av
+            Sjøfartsdirektoratet for norske fartøy under 15 meter.</p>
+        </details>
+        <details class="fi">
+          <summary class="fq">Hvilke lengder er tilgjengelige? <span class="fi-icon">+</span></summary>
+          <p class="fa">Argostep leveres fra 2 til 15 meter. Vi skreddersyr etter ditt fartøys nøyaktige
+            spesifikasjoner.</p>
+        </details>
+        <details class="fi">
+          <summary class="fq">Hvor lenge varer en leider? <span class="fi-icon">+</span></summary>
+          <p class="fa">Designet for lang levetid med utskiftbare komponenter. Korrekt lagring i det medfølgende skapet
+            forlenger levetiden betraktelig.</p>
+        </details>
+        <details class="fi">
+          <summary class="fq">Trenger jeg spesialverktøy for montering? <span class="fi-icon">+</span></summary>
+          <p class="fa">Nei. Argostep er designet for enkel montering og demontering uten spesialverktøy.
+            Klikk-koblingen er intuitiv og kan betjenes av én person.</p>
+        </details>
+        <details class="fi">
+          <summary class="fq">Hva er leveringstiden for Argostep? <span class="fi-icon">+</span></summary>
+          <p class="fa">Leveringstiden varierer avhengig av spesifikasjoner. Kontakt oss for et nøyaktig tilbud og
+            estimert leveringstid for ditt fartøy.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" id="kontakt">
+    <div class="contact-grid">
+      <div class="reveal">
+        <div class="lbl">Kontakt oss</div>
+        <h2 class="stitle">Ta Kontakt</h2>
+        <p class="sub" style="margin-bottom:0.5rem;">Be om tilbud tilpasset ditt fartøy – vi svarer raskt.</p>
+        <div class="contact-info">
+          <div class="ci">
+            <div class="ci-icon">📞</div>
+            <div>
+              <h4>Telefon</h4><a href="tel:+4790407341">+47 904 07 341</a>
+            </div>
+          </div>
+          <div class="ci">
+            <div class="ci-icon">✉️</div>
+            <div>
+              <h4>E-post</h4><a href="mailto:arve@astep.no">arve@astep.no</a>
+            </div>
+          </div>
+          <div class="ci">
+            <div class="ci-icon">📍</div>
+            <div>
+              <h4>Adresse</h4>
+              <p>Postboks 79, 6281 Søvik, Norge</p>
+            </div>
+          </div>
+          <div class="ci">
+            <div class="ci-icon">🏛️</div>
+            <div>
+              <h4>Org.nr</h4>
+              <p>998 196 159</p>
+            </div>
+          </div>
+        </div>
+        <!-- Team mini -->
+        <div style="margin-top:2.5rem;">
+          <p
+            style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--green);margin-bottom:1rem;">
+            Grunnleggerne</p>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div
+                style="width:3.5rem;height:3.5rem;border-radius:50%;overflow:hidden;border:2px solid var(--green);margin:0 auto 0.4rem;background:var(--navy-light);">
+                <div
+                  style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:1.2rem;">
+                  👤</div>
+              </div>
+              <div style="font-size:0.78rem;font-weight:600;">Kristian B. Dyb</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">kristian@astep.no</div>
+            </div>
+            <div style="text-align:center;">
+              <div
+                style="width:3.5rem;height:3.5rem;border-radius:50%;overflow:hidden;border:2px solid var(--green);margin:0 auto 0.4rem;background:var(--navy-light);">
+                <div
+                  style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:1.2rem;">
+                  👤</div>
+              </div>
+              <div style="font-size:0.78rem;font-weight:600;">Arve Toven</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">arve@astep.no</div>
+            </div>
+            <div style="text-align:center;">
+              <div
+                style="width:3.5rem;height:3.5rem;border-radius:50%;overflow:hidden;border:2px solid var(--green);margin:0 auto 0.4rem;background:var(--navy-light);">
+                <div
+                  style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:1.2rem;">
+                  👤</div>
+              </div>
+              <div style="font-size:0.78rem;font-weight:600;">Tor Arne Reitan</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">tor@astep.no</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <form class="contact-form reveal" onsubmit="handleForm(event)">
+        <div class="form-row">
+          <div class="fg"><label>Navn *</label><input type="text" placeholder="Ditt navn" required></div>
+          <div class="fg"><label>E-post *</label><input type="email" placeholder="epost@firma.no" required></div>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label>Telefon</label><input type="tel" placeholder="+47 000 00 000"></div>
+          <div class="fg"><label>Firma/Fartøy</label><input type="text" placeholder="Fartøy/Rederi"></div>
+        </div>
+        <div class="fg">
+          <label>Produktinteresse</label>
+          <select>
+            <option>Argostep Leidersystem</option>
+            <option>Oppbevaringsskap</option>
+            <option>Reservedeler</option>
+            <option>Montering & Lagring</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Melding</label>
+          <textarea placeholder="Fortell oss om dine behov (lengde på leider, fartøystype, osv.)"></textarea>
+        </div>
+        <button type="submit" class="btn-primary"
+          style="border:none;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;justify-content:center;font-size:0.95rem;"
+          id="form-btn">
+          Send Forespørsel →
+        </button>
+        <div id="form-success"
+          style="display:none;text-align:center;padding:1rem;background:rgba(46,204,113,0.12);border-radius:0.75rem;border:1px solid var(--green);color:var(--green);font-weight:600;">
+          ✓ Takk! Vi tar kontakt snart.
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <div class="nl">
+    <div class="lbl" style="justify-content:center;margin-bottom:0.8rem;">Nyhetsbrev</div>
+    <h2>Registrer deg for å motta nyhetsbrev</h2>
+    <p>Siste nyheter om maritim sikkerhet, Argostep og norske sjøfartsforskrifter.</p>
+    <form class="nl-form" onsubmit="return false;">
+      <input type="email" placeholder="Din e-postadresse...">
+      <button type="submit">Registrer</button>
+    </form>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="fbrand">
+      <img src="logo-light.png" alt="NorthWest Coast" height="35" width="auto">
+      <p>Profesjonelt maritimt sikkerhetsutstyr. Ingeniørkunst for de tøffeste hav. Stolt norsk produksjon fra Sunnmøre.
+      </p>
+      <div class="fsocial">
+        <a href="https://facebook.com" class="fsoc" target="_blank">f</a>
+        <a href="https://instagram.com" class="fsoc" target="_blank">📷</a>
+        <a href="https://linkedin.com" class="fsoc" target="_blank">in</a>
+      </div>
+    </div>
+    <div class="fcol">
+      <h4>Produkter</h4>
+      <ul>
+        <li><a href="#">Argostep Leider</a></li>
+        <li><a href="#">Montering & Lagring</a></li>
+        <li><a href="#">Reservedeler</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h4>Selskap</h4>
+      <ul>
+        <li><a href="#">Om oss</a></li>
+        <li><a href="#">Sertifiseringer</a></li>
+        <li><a href="#">Kontakt</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h4>Kontor</h4>
+      <address>
+        <span>Postboks 79</span>
+        <span>6281 Søvik, Norge</span>
+        <span>Org.nr: 998 196 159</span>
+        <span style="margin-top:0.3rem;"><a href="tel:+4790407341"
+            style="color:var(--text-muted);text-decoration:none;">+47 904 07 341</a></span>
+        <span><a href="mailto:arve@astep.no"
+            style="color:var(--text-muted);text-decoration:none;">arve@astep.no</a></span>
+      </address>
+    </div>
+  </footer>
+  <div class="fbot">
+    <span>© 2026 Northwestcoast AS. Alle rettigheter forbeholdt.</span>
+    <span>Designet med ❤️ i Ålesund 🇳🇴</span>
+  </div>
+
+  <script>
+    // Scroll reveal
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // Nav shrink
+    window.addEventListener('scroll', () => {
+      const n = document.getElementById('navbar');
+      if (window.scrollY > 60) {
+        n.style.padding = '0.7rem 4rem';
+        n.style.background = 'rgba(10,22,40,0.98)';
+      } else {
+        n.style.padding = '1.1rem 4rem';
+        n.style.background = 'rgba(10,22,40,0.85)';
+      }
+    });
+
+    // Stagger children within revealed parents
+    document.querySelectorAll('.testi-grid > *, .features > *, .cert-cards > *, .steps > *').forEach((el, i) => {
+      el.style.transitionDelay = `${i * 0.1}s`;
+      el.classList.add('reveal');
+      io.observe(el);
+    });
+
+    // Lightbox
+    function openLB(src) {
+      document.getElementById('lb-img').src = src;
+      document.getElementById('lb').classList.add('open');
+    }
+    function closeLB() {
+      document.getElementById('lb').classList.remove('open');
+      document.getElementById('lb-img').src = '';
+    }
+    document.getElementById('lb').addEventListener('click', e => { if (e.target === document.getElementById('lb')) closeLB(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLB(); });
+
+    // Gallery tabs (simple filter by data)
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Form
+    function handleForm(e) {
+      e.preventDefault();
+      document.getElementById('form-btn').style.display = 'none';
+      document.getElementById('form-success').style.display = 'block';
+    }
+  </script>
+</body>
+
+</html>
