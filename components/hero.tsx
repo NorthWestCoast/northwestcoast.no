@@ -37,10 +37,10 @@ export default function Hero() {
 
       <div className="hero-product-img">
         <Image
-          src="/images/ladder-full.png"
-          alt="Argostep leider full utfelling"
-          width={520}
-          height={780}
+          src="/images/ladder-hero.png"
+          alt="Argostep leider"
+          fill
+          style={{ objectFit: 'contain' }}
           priority
         />
       </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Image from 'next/image';
 
 const STEPS = [
   {
@@ -49,24 +48,14 @@ export default function HowItWorks() {
             bruker Argostep sprøytestøpt glassfiberarmert plast – kombinasjon av letthet, styrke og holdbarhet.
           </p>
           <div className="video-box">
-            <Image
-              src="/images/leider_in_use.jpg"
-              alt="Argostep i bruk"
-              fill
-              style={{ objectFit: 'cover', opacity: 0.75 }}
+            <iframe
+              src="https://www.youtube.com/embed/3bB9M9vF80A?autoplay=0"
+              title="Argostep Demonstration"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             />
-            <a
-              className="play-btn"
-              href="https://www.youtube.com/watch?v=argostep_video"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="play-circle">▶</div>
-            </a>
           </div>
-          <p className="vid-caption">
-            Besøkende skal klatre ved bruk av trinn eller sidestropper. Hansker anbefales.
-          </p>
         </div>
 
         <div>

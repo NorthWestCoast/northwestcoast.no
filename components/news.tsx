@@ -9,21 +9,21 @@ const MINI_NEWS = [
     alt: 'Guide',
     tag: 'Guide',
     title: 'Hvordan velge riktig leider for ditt fartøy',
-    href: '#',
+    href: '/nyheter/guide-velge-leider',
   },
   {
     src: '/images/ms-skar-senior2.jpeg',
     alt: 'Skar Senior',
     tag: 'Caser',
     title: 'M/S Skår Senior – ny Argostep installasjon',
-    href: '#',
+    href: '/nyheter/ms-skar-senior-installasjon',
   },
   {
     src: '/images/leiderkasse4.jpg',
     alt: 'Forskrifter',
     tag: 'Forskrifter',
     title: 'Nye krav til ombordstigning fra 2024',
-    href: '#',
+    href: '/nyheter/nye-krav-ombordstigning-2024',
   },
 ];
 
@@ -68,7 +68,7 @@ export default function News() {
               Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter.
               På bildene ser du eksempler fra båten Geir, der kassene allerede er tatt i bruk.
             </p>
-            <a href="#" className="news-link">Les hele artikkelen →</a>
+            <a href="/nyheter/ny-leiderkasse" className="news-link">Les hele artikkelen →</a>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export default function News() {
 
       <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
         <a
-          href="#"
+          href="/nyheter"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

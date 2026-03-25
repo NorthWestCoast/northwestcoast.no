@@ -1,25 +1,26 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { Feather, Package, Shield, SlidersHorizontal } from 'lucide-react';
 
 const FEATURES = [
   {
-    icon: '🖐',
+    Icon: Feather,
     title: 'Enkel Håndtering',
     desc: 'Betydelig lettere enn treleidere. Klikk-kobling gjør utsetting og innhenting raskt.',
   },
   {
-    icon: '📦',
+    Icon: Package,
     title: 'Kompakt Lagring',
     desc: 'Lagres i eget værbestandig skap – beskytt mot slitasje, spar dekksplass.',
   },
   {
-    icon: '⏳',
+    Icon: Shield,
     title: 'Lang Levetid',
     desc: 'Utskiftbare komponenter av armert plast – bytt ett trinn, ikke hele leideren.',
   },
   {
-    icon: '✂️',
+    Icon: SlidersHorizontal,
     title: 'Skreddersydd',
     desc: 'Tilpasset dine spesifikasjoner. Fleksibel løsning fra 2 til 15 meter.',
   },
@@ -52,7 +53,9 @@ export default function Features() {
           key={f.title}
           style={{ transitionDelay: `${i * 0.1}s` }}
         >
-          <div className="feat-icon">{f.icon}</div>
+          <div className="feat-icon">
+            <f.Icon size={30} strokeWidth={1.5} />
+          </div>
           <h3>{f.title}</h3>
           <p>{f.desc}</p>
         </div>

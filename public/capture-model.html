@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Capture model</title>
+  <style>
+    body { margin: 0; background: transparent; }
+    model-viewer {
+      width: 600px;
+      height: 900px;
+      background: transparent;
+      --progress-bar-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <model-viewer
+    id="mv"
+    src="/3d-models/leider-compressed-v2.glb"
+    alt="Argostep 3D modell"
+    shadow-intensity="1"
+    exposure="1.1"
+    environment-image="neutral"
+    orientation="0deg 0deg 320deg"
+    interaction-prompt="none"
+    loading="eager"
+  ></model-viewer>
+
+  <script type="module">
+    import 'https://cdnjs.cloudflare.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js';
+
+    const mv = document.getElementById('mv');
+
+    mv.addEventListener('load', () => {
+      // Give the renderer one extra frame to settle lighting/shadows
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          mv.toBlob({ idealAspect: false }).then((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ladder-hero.png';
+            a.click();
+            URL.revokeObjectURL(url);
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

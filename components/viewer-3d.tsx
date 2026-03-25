@@ -17,7 +17,7 @@ const VIEWER_INFOS = [
   {
     icon: '📐',
     title: 'Skalert korrekt',
-    desc: 'Modellen representerer standard 8-trinns variant. Finner du riktig lengde for ditt fartøy?',
+    desc: 'Modellen representerer standard 7-trinns variant. Finner du riktig lengde for ditt fartøy?',
   },
 ];
 
@@ -59,7 +59,7 @@ export default function Viewer3D() {
                 </div>
               ))}
             </div>
-            <a href="#kontakt" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
+            <a href="/regelverk" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
               Sjekk krav til ditt fartøy →
             </a>
           </div>

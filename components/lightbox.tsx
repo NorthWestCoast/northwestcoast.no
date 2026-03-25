@@ -27,13 +27,13 @@ export default function Lightbox() {
     const lb = document.getElementById('lightbox');
     const img = document.getElementById('lb-img') as HTMLImageElement | null;
     if (lb) lb.classList.remove('open');
-    if (img) img.src = '';
+    if (img) img.removeAttribute('src');
   }
 
   return (
     <div id="lightbox" className="lightbox">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img id="lb-img" src="" alt="Forstørret bilde" />
+      <img id="lb-img" alt="Forstørret bilde" />
       <button className="lb-close" onClick={close} aria-label="Lukk">✕</button>
     </div>
   );
