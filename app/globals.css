@@ -135,6 +135,7 @@ nav {
   display: flex;
   align-items: center;
   overflow: hidden;
+  padding-bottom: 5rem;
 }
 
 .hero-bg-img {
@@ -303,6 +304,12 @@ nav {
   width: 100%;
 }
 
+.wave--overlap {
+  margin-top: -5rem;
+  z-index: 5;
+  overflow: visible;
+}
+
 /* ── FEATURES STRIP ── */
 .features {
   background: var(--sand);
@@ -406,6 +413,47 @@ h2.stitle.dark { color: var(--navy); }
   border: 1px solid rgba(46, 204, 113, 0.2);
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
   background: var(--navy);
+}
+
+.yt-facade {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: #000;
+}
+
+.yt-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.2s;
+}
+
+.yt-facade:hover .yt-thumb {
+  opacity: 0.85;
+}
+
+.yt-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.yt-play svg {
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  transition: transform 0.15s;
+}
+
+.yt-facade:hover .yt-play svg {
+  transform: scale(1.1);
 }
 
 

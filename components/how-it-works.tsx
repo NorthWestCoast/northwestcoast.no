@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const STEPS = [
   {
@@ -25,8 +25,11 @@ const STEPS = [
   },
 ];
 
+const VIDEO_ID = '3bB9M9vF80A';
+
 export default function HowItWorks() {
   const sectionRef = useRef<HTMLElement>(null);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -48,13 +51,30 @@ export default function HowItWorks() {
             er Argostep lettere, sterkere og mer holdbar – takket være glassfiberarmert plast.
           </p>
           <div className="video-box">
-            <iframe
-              src="https://www.youtube.com/embed/3bB9M9vF80A?autoplay=0"
-              title="Argostep Demonstration"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-            />
+            {playing ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&rel=0`}
+                title="Argostep Demonstration"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              />
+            ) : (
+              <button className="yt-facade" onClick={() => setPlaying(true)} aria-label="Spill av video">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://i.ytimg.com/vi/${VIDEO_ID}/maxresdefault.jpg`}
+                  alt="Argostep Demonstration"
+                  className="yt-thumb"
+                />
+                <span className="yt-play">
+                  <svg viewBox="0 0 68 48" width="68" height="48">
+                    <path d="M66.5 7.8a8.5 8.5 0 0 0-6-6C56 0 34 0 34 0S12 0 7.5 1.8a8.5 8.5 0 0 0-6 6C0 12.3 0 24 0 24s0 11.7 1.5 16.2a8.5 8.5 0 0 0 6 6C12 48 34 48 34 48s22 0 26.5-1.8a8.5 8.5 0 0 0 6-6C68 35.7 68 24 68 24s0-11.7-1.5-16.2z" fill="red"/>
+                    <path d="M27 34l18-10-18-10v20z" fill="white"/>
+                  </svg>
+                </span>
+              </button>
+            )}
           </div>
         </div>
 

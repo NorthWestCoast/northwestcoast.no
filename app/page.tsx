@@ -21,10 +21,10 @@ export default function HomePage() {
 
       <Hero />
 
-      {/* Sand wave down */}
+      {/* Sand wave — overlaps into hero, no own background */}
       <Wave
-        top="var(--navy)"
         bottom="var(--sand)"
+        overlap
       />
 
       <Features />
