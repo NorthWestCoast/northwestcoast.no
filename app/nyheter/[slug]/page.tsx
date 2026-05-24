@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
 import { ARTICLES, getArticle } from '@/lib/articles';
@@ -35,7 +36,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           dangerouslySetInnerHTML={{ __html: article.body }}
         />
         <div className="article-footer">
-          <a href="/nyheter" className="news-link">← Tilbake til nyheter</a>
+          <Link href="/nyheter" className="news-link">← Tilbake til nyheter</Link>
         </div>
       </section>
 
