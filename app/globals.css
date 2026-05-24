@@ -293,6 +293,9 @@ nav {
 .wave {
   line-height: 0;
   overflow: hidden;
+  margin-bottom: -2px;
+  position: relative;
+  z-index: 1;
 }
 
 .wave svg {

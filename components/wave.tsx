@@ -98,7 +98,7 @@ export default function Wave({
         else path += ` L${x},${y}`;
       }
       
-      path += ` L1440,70 L0,70Z`; 
+      path += ` L1440,72 L0,72Z`;
       return path;
     };
 
