@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 interface WaveProps {
   top?: string;
   bottom?: string;
+  overlap?: boolean;
   // Keep these for backward compatibility with app/page.tsx, but ignore them
   path?: string;
   dual?: boolean;
@@ -17,8 +18,9 @@ export default function Wave({
   top,
   bottom,
   dualBottomFill,
+  overlap,
 }: WaveProps) {
-  const wrapStyle = top ? { background: top } : undefined;
+  const wrapStyle = (!overlap && top) ? { background: top } : undefined;
   // If dualBottomFill is provided, prefer it for the bottom wave color, otherwise fallback to bottom
   const fillColor = dualBottomFill || bottom || 'var(--sand)';
 
@@ -98,7 +100,7 @@ export default function Wave({
         else path += ` L${x},${y}`;
       }
       
-      path += ` L1440,70 L0,70Z`; 
+      path += ` L1440,72 L0,72Z`;
       return path;
     };
 
@@ -128,7 +130,7 @@ export default function Wave({
   }, []);
 
   return (
-    <div className="wave" style={wrapStyle}>
+    <div className={overlap ? 'wave wave--overlap' : 'wave'} style={wrapStyle}>
       <svg ref={svgRef} viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
         <path ref={path0Ref} fill={fillColor} opacity={0.3} style={{ transition: 'opacity 0.3s' }} />
         <path ref={path1Ref} fill={fillColor} opacity={0.6} style={{ transition: 'opacity 0.3s' }} />

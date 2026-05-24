@@ -135,6 +135,7 @@ nav {
   display: flex;
   align-items: center;
   overflow: hidden;
+  padding-bottom: 5rem;
 }
 
 .hero-bg-img {
@@ -259,6 +260,7 @@ nav {
 .hero-stats {
   display: flex;
   gap: 2.5rem;
+  flex-wrap: nowrap;
 }
 
 .stat-num {
@@ -292,11 +294,20 @@ nav {
 .wave {
   line-height: 0;
   overflow: hidden;
+  margin-bottom: -2px;
+  position: relative;
+  z-index: 1;
 }
 
 .wave svg {
   display: block;
   width: 100%;
+}
+
+.wave--overlap {
+  margin-top: -5rem;
+  z-index: 5;
+  overflow: visible;
 }
 
 /* ── FEATURES STRIP ── */
@@ -306,6 +317,8 @@ nav {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .feat {
@@ -402,6 +415,47 @@ h2.stitle.dark { color: var(--navy); }
   border: 1px solid rgba(46, 204, 113, 0.2);
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
   background: var(--navy);
+}
+
+.yt-facade {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: #000;
+}
+
+.yt-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.2s;
+}
+
+.yt-facade:hover .yt-thumb {
+  opacity: 0.85;
+}
+
+.yt-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.yt-play svg {
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  transition: transform 0.15s;
+}
+
+.yt-facade:hover .yt-play svg {
+  transform: scale(1.1);
 }
 
 
@@ -1161,7 +1215,20 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
 .fg select:focus,
 .fg textarea:focus { border-color: var(--green); }
 
-.fg select { appearance: none; }
+.fg select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.35)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.fg select option {
+  background: var(--navy-mid);
+  color: var(--white);
+}
+
 .fg textarea { resize: vertical; min-height: 120px; }
 
 ::placeholder { color: rgba(255, 255, 255, 0.25); }
@@ -2721,6 +2788,8 @@ footer {
   .faq-full-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .hero-content { padding: 0 1.2rem; margin-top: 4rem; }
-  .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
+  .hero-stats { gap: 1rem; flex-wrap: nowrap; }
+  .hero-stats .stat-num { font-size: 1.4rem; }
+  .hero-stats .stat-label { font-size: 0.65rem; }
   section { padding: 3rem 1.2rem; }
 }

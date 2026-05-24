@@ -12,12 +12,11 @@ export default function Footer() {
             height={42}
           />
           <p>
-            Profesjonelt maritimt sikkerhetsutstyr. Ingeniørkunst for de tøffeste hav.
-            Stolt norsk produksjon fra Sunnmøre.
+            Maritimt sikkerhetsutstyr av høy kvalitet. Norsk produksjon fra Sunnmøre.
           </p>
           <div className="fsocial">
             <a href="https://facebook.com" className="fsoc" target="_blank" rel="noopener noreferrer">f</a>
-            <a href="https://instagram.com" className="fsoc" target="_blank" rel="noopener noreferrer">📷</a>
+            <a href="https://instagram.com" className="fsoc" target="_blank" rel="noopener noreferrer">ig</a>
             <a href="https://linkedin.com" className="fsoc" target="_blank" rel="noopener noreferrer">in</a>
           </div>
         </div>
