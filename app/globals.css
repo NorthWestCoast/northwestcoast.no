@@ -259,6 +259,7 @@ nav {
 .hero-stats {
   display: flex;
   gap: 2.5rem;
+  flex-wrap: nowrap;
 }
 
 .stat-num {
@@ -1161,7 +1162,20 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
 .fg select:focus,
 .fg textarea:focus { border-color: var(--green); }
 
-.fg select { appearance: none; }
+.fg select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.35)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.fg select option {
+  background: var(--navy-mid);
+  color: var(--white);
+}
+
 .fg textarea { resize: vertical; min-height: 120px; }
 
 ::placeholder { color: rgba(255, 255, 255, 0.25); }
@@ -2721,6 +2735,8 @@ footer {
   .faq-full-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .hero-content { padding: 0 1.2rem; margin-top: 4rem; }
-  .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
+  .hero-stats { gap: 1rem; flex-wrap: nowrap; }
+  .hero-stats .stat-num { font-size: 1.4rem; }
+  .hero-stats .stat-label { font-size: 0.65rem; }
   section { padding: 3rem 1.2rem; }
 }

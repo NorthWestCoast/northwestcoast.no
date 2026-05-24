@@ -44,8 +44,8 @@ export default function HowItWorks() {
           <div className="lbl">Se den i aksjon</div>
           <h2 className="stitle">Hvordan Argostep Fungerer</h2>
           <p className="sub" style={{ marginBottom: '1.8rem' }}>
-            Argostep revolusjonerer ombordstigning. I motsetning til tradisjonelle treleidere
-            bruker Argostep sprøytestøpt glassfiberarmert plast – kombinasjon av letthet, styrke og holdbarhet.
+            Argostep forenkler ombordstigning. Sammenlignet med tradisjonelle treleidere
+            er Argostep lettere, sterkere og mer holdbar – takket være glassfiberarmert plast.
           </p>
           <div className="video-box">
             <iframe

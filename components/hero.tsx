@@ -12,8 +12,8 @@ export default function Hero() {
           ARGO<em>STEP</em>
         </h1>
         <p className="hero-desc">
-          Den lette, modulære leideren designet med fokus på maritim sikkerhet.
-          Godkjent av Sjøfartsdirektoratet. Norsk produksjon fra Sunnmøre.
+          En lett og modulær leider, designet med fokus på sikkerhet.
+          Godkjent av Sjøfartsdirektoratet. Produsert på Sunnmøre.
         </p>
         <div className="hero-actions">
           <a href="#kontakt" className="btn-primary">Be om tilbud →</a>

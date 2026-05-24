@@ -41,7 +41,7 @@ export default function Certifications() {
           <div className="lbl">Sikkerhet først</div>
           <h2 className="stitle">Sertifisert for Sikkerhet</h2>
           <p className="sub" style={{ marginBottom: '2rem' }}>
-            Argostep er bygget etter de høyeste standarder. Vi møter ikke bare kravene – vi sikrer mot å overgå dem.
+            Argostep er bygget etter de høyeste standarder – og vi sikter alltid mot å overgå dem.
           </p>
           <div className="cert-cards">
             {CERTS.map((c, i) => (
