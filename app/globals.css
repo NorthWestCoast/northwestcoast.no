@@ -135,7 +135,7 @@ nav {
   display: flex;
   align-items: center;
   overflow: hidden;
-  padding-bottom: 5rem;
+  padding-bottom: calc(70 / 1440 * 100vw);
 }
 
 .hero-bg-img {
@@ -305,7 +305,7 @@ nav {
 }
 
 .wave--overlap {
-  margin-top: -5rem;
+  margin-top: calc(-70 / 1440 * 100vw);
   z-index: 5;
   overflow: visible;
 }
