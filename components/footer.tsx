@@ -6,10 +6,10 @@ export default function Footer() {
       <footer>
         <div className="fbrand">
           <Image
-            src="/images/logo/logo-light.png"
+            src="/images/logo/NY-logo.png"
             alt="NorthWest Coast"
-            width={120}
-            height={35}
+            width={140}
+            height={42}
           />
           <p>
             Profesjonelt maritimt sikkerhetsutstyr. Ingeniørkunst for de tøffeste hav.

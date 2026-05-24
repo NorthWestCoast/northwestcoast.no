@@ -61,7 +61,7 @@ export default function Wave({
       const m = mouse.current;
       
       for(let i=0; i<=segments; i++) {
-        let x = i * dx;
+        const x = i * dx;
         let y = 35; // base level of the wave in the 70px height svg
         
         if (layer === 0) {
@@ -77,15 +77,15 @@ export default function Wave({
         
         // Apply mouse interaction (only when physically close to the wave curve)
         if (m.active > 0) {
-           let distanceX = Math.abs(x - m.x);
-           let distanceY = Math.abs(y - m.targetY);
-           
-           if (distanceX < 100 && distanceY < 20) {
-             let falloffX = Math.cos((distanceX / 100) * (Math.PI / 2));
-             let falloffY = Math.cos((distanceY / 20) * (Math.PI / 2));
-             let combinedFalloff = falloffX * falloffY;
+           const distanceX = Math.abs(x - m.x);
+           const distanceY = Math.abs(y - m.targetY);
 
-             let ripple = Math.sin(distanceX * 0.08 - t * 6) * 6;
+           if (distanceX < 100 && distanceY < 20) {
+             const falloffX = Math.cos((distanceX / 100) * (Math.PI / 2));
+             const falloffY = Math.cos((distanceY / 20) * (Math.PI / 2));
+             const combinedFalloff = falloffX * falloffY;
+
+             const ripple = Math.sin(distanceX * 0.08 - t * 6) * 6;
              y += ripple * combinedFalloff * m.active;
            }
         }

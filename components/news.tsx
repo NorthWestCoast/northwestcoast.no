@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const MINI_NEWS = [
   {
@@ -68,7 +69,7 @@ export default function News() {
               Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter.
               På bildene ser du eksempler fra båten Geir, der kassene allerede er tatt i bruk.
             </p>
-            <a href="/nyheter/ny-leiderkasse" className="news-link">Les hele artikkelen →</a>
+            <Link href="/nyheter/ny-leiderkasse" className="news-link">Les hele artikkelen →</Link>
           </div>
         </div>
 
@@ -82,9 +83,9 @@ export default function News() {
               <div className="news-mini-body">
                 <span className="news-tag">{n.tag}</span>
                 <h4>{n.title}</h4>
-                <a href={n.href} className="news-link" style={{ marginTop: '0.5rem' }}>
+                <Link href={n.href} className="news-link" style={{ marginTop: '0.5rem' }}>
                   Les mer →
-                </a>
+                </Link>
               </div>
             </div>
           ))}
@@ -92,7 +93,7 @@ export default function News() {
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-        <a
+        <Link
           href="/nyheter"
           style={{
             display: 'inline-flex',
@@ -105,7 +106,7 @@ export default function News() {
           }}
         >
           Se alle innlegg →
-        </a>
+        </Link>
       </div>
     </section>
   );

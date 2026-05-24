@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
 import { CheckCircle, XCircle, AlertCircle, FileText, Ruler, Shield, BookOpen, ArrowUpRight, Waves, ChevronDown, Clock, Eye, Tag, Package } from 'lucide-react';
@@ -746,12 +747,12 @@ export default function RegelverkPage() {
             om ditt nåværende system er i samsvar med gjeldende forskrifter.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="/#kontakt" className="btn-primary" style={{ display: 'inline-flex', border: 'none' }}>
+            <Link href="/#kontakt" className="btn-primary" style={{ display: 'inline-flex', border: 'none' }}>
               Be om vurdering →
-            </a>
-            <a href="/faq" className="btn-ghost" style={{ display: 'inline-flex' }}>
+            </Link>
+            <Link href="/faq" className="btn-ghost" style={{ display: 'inline-flex' }}>
               Se vanlige spørsmål
-            </a>
+            </Link>
           </div>
         </div>
       </section>
