@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 export const FAQS = [
   {
     q: 'Er stigen godkjent for norske skip?',
-    a: 'Ja, Argostep Entrings- og Livbåtleider er sertifisert etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy under 15 meter.',
+    a: 'Ja, Argostep Entrings- og Livbåtleider er sertifisert etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy.',
     category: 'Sertifisering',
   },
   {
