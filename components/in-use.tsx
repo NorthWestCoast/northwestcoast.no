@@ -11,7 +11,7 @@ const PHOTOS = [
   { src: '/images/leider_m2.jpg',       alt: 'Montert fartøy',          cap: 'Montert på passasjerfartøy' },
   { src: '/images/leiderkasse4.jpg',    alt: 'Kasse på kai',            cap: 'Klar for bruk ved kai' },
   { src: '/images/praksis.jpg',         alt: 'Livbåtleider i bruk',     cap: 'Livbåtleider – testdykk' },
-  { src: '/images/leider_m1.jpg',       alt: 'Fartøy',                  cap: 'Plassert diskret på fartøy' },
+  { src: '/images/leider_m1.jpg',       alt: 'M/S Veidar',              cap: 'Plassert ombord M/S Veidar' },
 ];
 
 export default function InUse() {
