@@ -121,7 +121,7 @@ export default function Contact() {
             </div>
           </div>
           <div className="fg">
-            <label>Produktinteresse</label>
+            <label>Produkt</label>
             <select name="product">
               <option>Argostep Leidersystem</option>
               <option>Oppbevaringsskap</option>
