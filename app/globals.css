@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ── CSS VARIABLES ── */
+/* ── CSS VARIABLES ── (v1) */
 :root {
   --navy: #0a1628;
   --navy-mid: #0f2040;
