@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import Link from 'next/link';
 import Nav from '@/components/nav';
 import Wave from '@/components/wave';
 import Features from '@/components/features';
@@ -76,7 +77,7 @@ export default function ProduktPage() {
             </div>
 
             <div className="prod-actions">
-              <a href="/#kontakt" className="btn-primary">Bestill / Be om tilbud →</a>
+              <Link href="/#kontakt" className="btn-primary">Bestill / Be om tilbud →</Link>
               <a href="tel:+4790407341" className="btn-ghost">Ring +47 904 07 341</a>
             </div>
           </div>
@@ -106,9 +107,9 @@ export default function ProduktPage() {
               ))}
             </div>
 
-            <a href="/#kontakt" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
+            <Link href="/#kontakt" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
               Be om tilbud →
-            </a>
+            </Link>
           </div>
 
           <div className="cert-img">
@@ -130,9 +131,9 @@ export default function ProduktPage() {
           Fortell oss om fartøyet ditt, så setter vi sammen riktig leiderløsning og sender deg et
           tilbud raskt.
         </p>
-        <a href="/#kontakt" className="btn-primary" style={{ display: 'inline-flex' }}>
+        <Link href="/#kontakt" className="btn-primary" style={{ display: 'inline-flex' }}>
           Bestill nå →
-        </a>
+        </Link>
       </section>
 
       <Footer />
