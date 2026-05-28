@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // CSS caching fix
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },

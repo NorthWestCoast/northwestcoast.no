@@ -14,6 +14,7 @@ import Newsletter from '@/components/newsletter';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
 
+// Home page component
 export default function HomePage() {
   return (
     <>
