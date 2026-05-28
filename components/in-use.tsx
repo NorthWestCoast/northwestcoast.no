@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 const PHOTOS = [
-  { src: '/images/leider_in_use.jpg',   alt: 'Leider i bruk',           cap: 'Ombordstigning fra sjøsiden' },
+  { src: '/images/leider_in_use.jpg',   alt: 'Leider i bruk',           cap: 'Ombordstigning fra skutesiden' },
   { src: '/images/leiderkasse.jpg',     alt: 'Kasse ombord',            cap: 'Kompakt oppbevaring ombord' },
   { src: '/images/leiderkasse2.jpg',    alt: 'Argostep kasse',          cap: 'Argostep kasse på dekk' },
   { src: '/images/leider_cabinet.jpg',  alt: 'Åpen kasse',              cap: 'Innvendig lagringsskap' },

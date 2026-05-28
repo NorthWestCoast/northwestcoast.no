@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 export const ALL_IMAGES = [
-  { src: '/images/leider_in_use.jpg',    alt: 'Leider i bruk',               label: 'Ombordstigning fra sjøsiden',    tag: 'I bruk' },
+  { src: '/images/leider_in_use.jpg',    alt: 'Leider i bruk',               label: 'Ombordstigning fra skutesiden',    tag: 'I bruk' },
   { src: '/images/leider_m1.jpg',        alt: 'Fartøy',                       label: 'Plassert diskret på fartøy',     tag: 'I bruk' },
   { src: '/images/leider_m2.jpg',        alt: 'Montert fartøy',               label: 'Montert på passasjerfartøy',     tag: 'I bruk' },
   { src: '/images/praksis.jpg',          alt: 'Livbåtleider i bruk',          label: 'Livbåtleider – testdykk',        tag: 'I bruk' },
