@@ -116,7 +116,7 @@ export default function Contact() {
               <input name="phone" type="tel" placeholder="+47 000 00 000" />
             </div>
             <div className="fg">
-              <label>Firma/Fartøy</label>
+              <label>Fartøy/Rederi</label>
               <input name="company" type="text" placeholder="Fartøy/Rederi" />
             </div>
           </div>
