@@ -129,12 +129,15 @@ export default function Wave({
     };
   }, []);
 
+  // Static initial path for SSR to avoid hydration mismatch
+  const initialPath = "M0,35 L1440,35 L1440,72 L0,72Z";
+
   return (
     <div className={overlap ? 'wave wave--overlap' : 'wave'} style={wrapStyle}>
       <svg ref={svgRef} viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
-        <path ref={path0Ref} fill={fillColor} opacity={0.3} style={{ transition: 'opacity 0.3s' }} />
-        <path ref={path1Ref} fill={fillColor} opacity={0.6} style={{ transition: 'opacity 0.3s' }} />
-        <path ref={path2Ref} fill={fillColor} opacity={1.0} style={{ transition: 'opacity 0.3s' }} />
+        <path ref={path0Ref} d={initialPath} fill={fillColor} opacity={0.3} style={{ transition: 'opacity 0.3s' }} />
+        <path ref={path1Ref} d={initialPath} fill={fillColor} opacity={0.6} style={{ transition: 'opacity 0.3s' }} />
+        <path ref={path2Ref} d={initialPath} fill={fillColor} opacity={1.0} style={{ transition: 'opacity 0.3s' }} />
       </svg>
     </div>
   );
