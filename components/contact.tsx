@@ -123,7 +123,7 @@ export default function Contact() {
           <div className="fg">
             <label>Produkt</label>
             <select name="product">
-              <option>Argostep Leidersystem</option>
+              <option>Argostep Livbåtleider</option>
               <option>Oppbevaringsskap</option>
               <option>Reservedeler</option>
               <option>Montering &amp; Lagring</option>
