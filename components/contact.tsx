@@ -126,7 +126,6 @@ export default function Contact() {
               <option>Argostep Livbåtleider</option>
               <option>Oppbevaringsskap</option>
               <option>Reservedeler</option>
-              <option>Montering &amp; Lagring</option>
             </select>
           </div>
           <div className="fg">
