@@ -10,7 +10,7 @@ export const FAQS = [
   },
   {
     q: 'Hvilke lengder er tilgjengelige?',
-    a: 'Argostep leveres fra 2 til 15 meter. Vi skreddersyr etter ditt fartøys nøyaktige spesifikasjoner.',
+    a: 'Argostep Livbåtleider leveres som standard lengder fra 2 - 15 meter. Ta kontakt ved andre behov så skreddersyr vi en pakke for deg.',
     category: 'Produkt',
   },
   {
