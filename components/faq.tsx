@@ -5,12 +5,12 @@ import { useEffect, useRef } from 'react';
 export const FAQS = [
   {
     q: 'Er stigen godkjent for norske skip?',
-    a: 'Ja, Argostep Entrings- og Livbåtleider er sertifisert etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy under 15 meter.',
+    a: 'Ja, Argostep Entrings- og Livbåtleider er sertifisert etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy.',
     category: 'Sertifisering',
   },
   {
     q: 'Hvilke lengder er tilgjengelige?',
-    a: 'Argostep leveres fra 2 til 15 meter. Vi skreddersyr etter ditt fartøys nøyaktige spesifikasjoner.',
+    a: 'Argostep Livbåtleider leveres som standard lengder fra 2 - 15 meter. Ta kontakt ved andre behov så skreddersyr vi en pakke for deg.',
     category: 'Produkt',
   },
   {

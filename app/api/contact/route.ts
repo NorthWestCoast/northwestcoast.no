@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         `Navn: ${name}`,
         `E-post: ${email}`,
         `Telefon: ${phone ?? '–'}`,
-        `Firma/Fartøy: ${company ?? '–'}`,
+        `Fartøy/Rederi: ${company ?? '–'}`,
         `Produkt: ${product ?? '–'}`,
         ``,
         `Melding:`,

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
-  { href: '/#hvordan',      label: 'Produkt' },
+  { href: '/produkt',       label: 'Produkt' },
   { href: '/galleri',       label: 'Galleri' },
   { href: '/regelverk',     label: 'Regelverk' },
   { href: '/nyheter',       label: 'Nyheter' },

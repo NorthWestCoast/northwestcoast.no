@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 export const ALL_IMAGES = [
-  { src: '/images/leider_in_use.jpg',    alt: 'Leider i bruk',               label: 'Ombordstigning fra sjøsiden',    tag: 'I bruk' },
-  { src: '/images/leider_m1.jpg',        alt: 'Fartøy',                       label: 'Plassert diskret på fartøy',     tag: 'I bruk' },
+  { src: '/images/leider_in_use.jpg',    alt: 'Leider i bruk',               label: 'Ombordstigning fra skutesiden',    tag: 'I bruk' },
   { src: '/images/leider_m2.jpg',        alt: 'Montert fartøy',               label: 'Montert på passasjerfartøy',     tag: 'I bruk' },
   { src: '/images/praksis.jpg',          alt: 'Livbåtleider i bruk',          label: 'Livbåtleider – testdykk',        tag: 'I bruk' },
   { src: '/images/ladder-full.png',      alt: 'Full utfelling',               label: 'Full Utfelling',                 tag: 'Leider', contain: true },
@@ -17,6 +16,7 @@ export const ALL_IMAGES = [
   { src: '/images/leiderkasse2.jpg',     alt: 'Argostep kasse',               label: 'Argostep kasse på dekk',         tag: 'Oppbevaring' },
   { src: '/images/leiderkasse3.jpg',     alt: 'Kasse detalj',                 label: 'Kasse – detalj',                 tag: 'Oppbevaring' },
   { src: '/images/leiderkasse4.jpg',     alt: 'Kasse på kai',                 label: 'Klar for bruk ved kai',          tag: 'Oppbevaring' },
+  { src: '/images/leider_m1.jpg',        alt: 'M/S Veidar',                   label: 'Plassert ombord M/S Veidar',     tag: 'Referanser' },
   { src: '/images/tindskjaer.jpg',       alt: 'M/S Tindskjær',               label: 'M/S Tindskjær',                 tag: 'Referanser' },
   { src: '/images/ms-skar-senior.jpeg',  alt: 'M/S Skår Senior',             label: 'M/S Skår Senior',               tag: 'Referanser' },
   { src: '/images/ms-skar-senior2.jpeg', alt: 'M/S Skår Senior installasjon', label: 'Argostep på M/S Skår Senior',   tag: 'Referanser' },

@@ -811,6 +811,106 @@ model-viewer {
   margin: 0 auto;
 }
 
+/* ── PRODUCT PAGE ── */
+.product-intro {
+  background: var(--sand-light);
+  padding: 5rem 4rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 5rem;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.product-img {
+  position: relative;
+  height: 460px;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: var(--sand);
+}
+
+.spec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 2rem 0;
+}
+
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.2rem;
+  background: #fff;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(10, 22, 40, 0.08);
+}
+
+.spec-item .spec-key {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #678;
+  font-weight: 600;
+}
+
+.spec-item .spec-val {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.prod-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.prod-actions .btn-ghost {
+  color: var(--navy);
+  border-color: rgba(10, 22, 40, 0.25);
+}
+
+.prod-actions .btn-ghost:hover {
+  border-color: var(--green-dark);
+  color: var(--green-dark);
+}
+
+.order-band {
+  background: var(--navy);
+  text-align: center;
+  padding: 5rem 1.5rem;
+}
+
+.order-band h2 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.order-band p {
+  color: var(--text-dim);
+  max-width: 540px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .product-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .product-intro { padding: 3rem 1.5rem; }
+  .product-img { height: 340px; }
+}
+
 /* ── IN USE / PHOTO STRIP ── */
 .inuse { background: var(--sand); }
 

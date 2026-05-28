@@ -24,9 +24,8 @@ export default function Footer() {
         <div className="fcol">
           <h4>Produkter</h4>
           <ul>
-            <li><a href="#">Argostep Leider</a></li>
-            <li><a href="#">Montering &amp; Lagring</a></li>
-            <li><a href="#">Reservedeler</a></li>
+            <li><a href="/produkt">Argostep Livbåtleider</a></li>
+            <li><a href="/produkt">Reservedeler</a></li>
           </ul>
         </div>
 
