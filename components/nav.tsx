@@ -52,21 +52,23 @@ export default function Nav() {
   return (
     <>
       <nav ref={navRef} id="navbar">
-        <Link className="nav-logo" href="/">
-          <Image
-            src="/images/logo/NY-logo.png"
-            alt="NorthWest Coast"
-            width={140}
-            height={42}
-            priority
-          />
-        </Link>
+        <div className="nav-left">
+          <Link className="nav-logo" href="/">
+            <Image
+              src="/images/logo/NY-logo.png"
+              alt="NorthWest Coast"
+              width={140}
+              height={42}
+              priority
+            />
+          </Link>
 
-        <ul className="nav-links">
-          {NAV_LINKS.map((l) => (
-            <li key={l.href}><a href={l.href}>{l.label}</a></li>
-          ))}
-        </ul>
+          <ul className="nav-links">
+            {NAV_LINKS.map((l) => (
+              <li key={l.href}><a href={l.href}>{l.label}</a></li>
+            ))}
+          </ul>
+        </div>
 
         <div className="nav-right">
           <div className="nav-lang nav-lang-desktop">
