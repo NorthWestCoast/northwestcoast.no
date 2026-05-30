@@ -3,27 +3,49 @@
 import { useMemo, useState } from 'react';
 import Script from 'next/script';
 
-const MIN = 2;
-const MAX = 15;
-const PRICE_PER_M = 2450; // NOK per meter, veiledende
+// Priser iht. offisiell tabell. Skap- og PVC-pris (og størrelse/antall) følger lengden.
+type Row = { length: number; price: number; cabinetSize: number; cabinetPrice: number; pvcQty: number; pvcPrice: number };
 
-const LENGTHS = Array.from({ length: MAX - MIN + 1 }, (_, i) => MIN + i); // 2..15
-
-const ACCESSORIES = [
-  { id: 'cabinet', label: 'Oppbevaringsskap', price: 4900 },
-  { id: 'pvc', label: 'PVC-duk', price: 1900 },
+const PRICE_TABLE: Row[] = [
+  { length: 3,  price: 9499,  cabinetSize: 1, cabinetPrice: 4999, pvcQty: 1, pvcPrice: 3999 },
+  { length: 4,  price: 10999, cabinetSize: 1, cabinetPrice: 4999, pvcQty: 1, pvcPrice: 3999 },
+  { length: 5,  price: 12499, cabinetSize: 1, cabinetPrice: 4999, pvcQty: 1, pvcPrice: 3999 },
+  { length: 6,  price: 13999, cabinetSize: 1, cabinetPrice: 4999, pvcQty: 1, pvcPrice: 3999 },
+  { length: 7,  price: 15499, cabinetSize: 2, cabinetPrice: 5999, pvcQty: 2, pvcPrice: 4999 },
+  { length: 8,  price: 16999, cabinetSize: 2, cabinetPrice: 5999, pvcQty: 2, pvcPrice: 4999 },
+  { length: 9,  price: 18099, cabinetSize: 2, cabinetPrice: 5999, pvcQty: 2, pvcPrice: 4999 },
+  { length: 10, price: 20699, cabinetSize: 2, cabinetPrice: 5999, pvcQty: 2, pvcPrice: 4999 },
+  { length: 11, price: 22199, cabinetSize: 3, cabinetPrice: 6999, pvcQty: 3, pvcPrice: 5999 },
+  { length: 12, price: 24199, cabinetSize: 3, cabinetPrice: 6999, pvcQty: 3, pvcPrice: 5999 },
+  { length: 13, price: 25499, cabinetSize: 3, cabinetPrice: 6999, pvcQty: 3, pvcPrice: 5999 },
+  { length: 14, price: 26799, cabinetSize: 3, cabinetPrice: 6999, pvcQty: 3, pvcPrice: 5999 },
+  { length: 15, price: 28999, cabinetSize: 3, cabinetPrice: 6999, pvcQty: 3, pvcPrice: 5999 },
 ];
+
+const LENGTHS = PRICE_TABLE.map((r) => r.length); // 3..15
 
 export default function OrderConfigurator() {
   const [length, setLength] = useState(6);
   const [extras, setExtras] = useState<string[]>([]);
   const [sent, setSent] = useState(false);
 
+  const row = useMemo(
+    () => PRICE_TABLE.find((r) => r.length === length) ?? PRICE_TABLE[0],
+    [length],
+  );
+
+  const accessories = useMemo(
+    () => [
+      { id: 'cabinet', label: `Oppbevaringsskap (str. ${row.cabinetSize})`, price: row.cabinetPrice },
+      { id: 'pvc', label: `PVC-duk (${row.pvcQty} stk)`, price: row.pvcPrice },
+    ],
+    [row],
+  );
+
   const total = useMemo(() => {
-    const base = Math.round(length * PRICE_PER_M);
-    const addons = ACCESSORIES.filter((a) => extras.includes(a.id)).reduce((s, a) => s + a.price, 0);
-    return base + addons;
-  }, [length, extras]);
+    const addons = accessories.filter((a) => extras.includes(a.id)).reduce((s, a) => s + a.price, 0);
+    return row.price + addons;
+  }, [row, accessories, extras]);
 
   const toggleExtra = (id: string) =>
     setExtras((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -83,7 +105,7 @@ export default function OrderConfigurator() {
             <label>Tilbehør</label>
           </div>
           <div className="config-extras">
-            {ACCESSORIES.map((a) => (
+            {accessories.map((a) => (
               <button
                 key={a.id}
                 type="button"
@@ -99,8 +121,8 @@ export default function OrderConfigurator() {
 
         <div className="config-total">
           <div>
-            <span className="config-total-label">Veiledende pris</span>
-            <span className="config-total-sub">{length} m Argostep Livbåtleider</span>
+            <span className="config-total-label">Totalpris</span>
+            <span className="config-total-sub">{length} m leider · {fmt(row.price)} kr{extras.length > 0 ? ' + tilbehør' : ''}</span>
           </div>
           <span className="config-total-amount">{fmt(total)} kr</span>
         </div>
