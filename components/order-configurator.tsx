@@ -37,7 +37,7 @@ export default function OrderConfigurator() {
   const accessories = useMemo(
     () => [
       { id: 'cabinet', label: `Oppbevaringsskap (str. ${row.cabinetSize})`, price: row.cabinetPrice },
-      { id: 'pvc', label: `PVC-duk (${row.pvcQty} stk)`, price: row.pvcPrice },
+      { id: 'pvc', label: 'PVC-duk', price: row.pvcPrice },
     ],
     [row],
   );
