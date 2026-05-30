@@ -1,12 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
-
-const Ladder3D = dynamic(() => import('./ladder-3d'), {
-  ssr: false,
-  loading: () => <div className="ladder-loading">Laster 3D-modell…</div>,
-});
+import Script from 'next/script';
 
 const MIN = 2;
 const MAX = 15;
@@ -37,9 +32,26 @@ export default function OrderConfigurator() {
 
   return (
     <div className="config-grid">
+      <Script
+        src="https://cdnjs.cloudflare.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
+        type="module"
+        strategy="lazyOnload"
+      />
       {/* 3D viewer */}
       <div className="config-viewer">
-        <Ladder3D length={length} />
+        {/* @ts-expect-error – model-viewer is a custom web component */}
+        <model-viewer
+          src="/3d-models/leider-compressed-v2.glb"
+          alt="Argostep 3D modell"
+          auto-rotate
+          camera-controls
+          shadow-intensity="1"
+          exposure="1.1"
+          environment-image="neutral"
+          style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0e2540 100%)', width: '100%', height: '100%' }}
+          loading="eager"
+          ar
+        />
         <div className="config-viewer-badge">{length} m · {Math.round(length / 0.32)} trinn</div>
         <div className="config-viewer-hint">Dra for å rotere</div>
       </div>
