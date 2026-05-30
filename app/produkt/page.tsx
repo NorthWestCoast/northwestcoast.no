@@ -77,7 +77,7 @@ export default function ProduktPage() {
             </div>
 
             <div className="prod-actions">
-              <Link href="/#kontakt" className="btn-primary">Bestill / Be om tilbud →</Link>
+              <Link href="/bestill" className="btn-primary">Bestill nå →</Link>
               <a href="tel:+4790407341" className="btn-ghost">Ring +47 904 07 341</a>
             </div>
           </div>
@@ -107,8 +107,8 @@ export default function ProduktPage() {
               ))}
             </div>
 
-            <Link href="/#kontakt" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
-              Be om tilbud →
+            <Link href="/bestill" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
+              Bestill nå →
             </Link>
           </div>
 
@@ -131,7 +131,7 @@ export default function ProduktPage() {
           Fortell oss om fartøyet ditt, så setter vi sammen riktig leiderløsning og sender deg et
           tilbud raskt.
         </p>
-        <Link href="/#kontakt" className="btn-primary" style={{ display: 'inline-flex' }}>
+        <Link href="/bestill" className="btn-primary" style={{ display: 'inline-flex' }}>
           Bestill nå →
         </Link>
       </section>

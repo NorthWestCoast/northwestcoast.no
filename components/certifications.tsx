@@ -58,8 +58,8 @@ export default function Certifications() {
               </div>
             ))}
           </div>
-          <a href="#kontakt" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
-            Be om tilbud →
+          <a href="/bestill" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
+            Bestill nå →
           </a>
         </div>
 

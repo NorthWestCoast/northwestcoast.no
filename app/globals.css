@@ -64,23 +64,36 @@ nav {
   gap: 1rem;
 }
 
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 0.6rem;
   list-style: none;
 }
 
 .nav-links a {
+  display: inline-flex;
+  align-items: center;
   color: var(--text-dim);
   text-decoration: none;
-  font-size: 0.87rem;
-  letter-spacing: 0.055em;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  transition: color 0.2s;
+  padding: 0.5rem 1.05rem;
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
 }
 
 .nav-links a:hover {
-  color: var(--green);
+  color: var(--navy);
+  background: var(--green);
+  border-color: var(--green);
 }
 
 .nav-cta {
@@ -141,10 +154,10 @@ nav {
 .hero-bg-img {
   position: absolute;
   inset: 0;
-  background-image: url('/images/leider_in_use.jpg');
+  background-image: url('/images/first-bg1.jpg');
   background-size: cover;
-  background-position: center 30%;
-  filter: brightness(0.35) saturate(0.8);
+  background-position: center center;
+  filter: brightness(0.5) saturate(0.95);
 }
 
 .hero-overlay {
@@ -2892,4 +2905,345 @@ footer {
   .hero-stats .stat-num { font-size: 1.4rem; }
   .hero-stats .stat-label { font-size: 0.65rem; }
   section { padding: 3rem 1.2rem; }
+}
+
+/* ── BESTILL / KONFIGURATOR ── */
+.config-section {
+  background: var(--navy);
+  padding: 4rem;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.config-viewer {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  min-height: 520px;
+  background: radial-gradient(circle at 50% 35%, var(--navy-light) 0%, var(--navy) 70%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.config-viewer canvas { display: block; }
+
+.ladder-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.config-viewer-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(46, 204, 113, 0.16);
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.4rem 0.9rem;
+  border-radius: 2rem;
+}
+
+.config-viewer-hint {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.config-panel {
+  background: var(--navy-mid);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-panel .stitle { margin-bottom: 1.75rem; }
+
+.config-block {
+  padding: 1.25rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.config-block:first-of-type { border-top: none; padding-top: 0; }
+
+.config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.config-row label {
+  color: var(--white);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.config-value {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.config-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+}
+.config-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 3px solid var(--navy);
+  cursor: pointer;
+  box-shadow: 0 0 0 1px var(--green);
+}
+.config-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 3px solid var(--navy);
+  cursor: pointer;
+}
+
+.config-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.config-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.config-chip {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 2rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.config-chip:hover { border-color: var(--green); color: var(--white); }
+.config-chip.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.config-select {
+  width: 100%;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.config-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.config-extra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.88rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.config-extra:hover { border-color: rgba(46, 204, 113, 0.6); }
+.config-extra.active {
+  border-color: var(--green);
+  background: var(--green-glow);
+  color: var(--white);
+}
+.config-extra-price { color: var(--green); font-weight: 600; font-size: 0.82rem; }
+
+.config-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: var(--navy);
+  border: 1px solid var(--green);
+  border-radius: 0.85rem;
+}
+.config-total-label { display: block; color: var(--text-dim); font-size: 0.85rem; }
+.config-total-sub { display: block; color: var(--text-muted); font-size: 0.75rem; margin-top: 0.15rem; }
+.config-total-amount { color: var(--green); font-size: 1.7rem; font-weight: 800; }
+
+.config-submit {
+  margin-top: 1.25rem;
+  width: 100%;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.98rem;
+}
+
+.config-confirm {
+  margin-top: 1.25rem;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid var(--green);
+  border-radius: 0.75rem;
+  color: var(--green);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.config-note {
+  margin-top: 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* Antall-velger (draft) */
+.config-qty {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.config-qty button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--navy);
+  color: var(--white);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.config-qty button:hover { border-color: var(--green); color: var(--green); }
+.config-qty span { color: var(--white); font-weight: 700; min-width: 1.2rem; text-align: center; }
+
+/* Legg til-knapp */
+.config-add {
+  margin-top: 0.5rem;
+  width: 100%;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* Handlekurv / bestillingsliste */
+.config-cart {
+  margin-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1.25rem;
+}
+.config-cart-head {
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.85rem;
+}
+.config-cart-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.config-cart-info { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.config-cart-info strong { color: var(--white); font-size: 0.9rem; font-weight: 600; }
+.config-cart-meta { color: var(--text-muted); font-size: 0.75rem; }
+.config-cart-qty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.config-cart-qty button {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.config-cart-qty button:hover { border-color: var(--green); color: var(--green); }
+.config-cart-qty span { color: var(--white); font-size: 0.85rem; min-width: 1rem; text-align: center; }
+.config-cart-price {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.9rem;
+  min-width: 5.5rem;
+  text-align: right;
+}
+.config-cart-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  transition: color 0.18s;
+}
+.config-cart-remove:hover { color: #e06a6a; }
+
+.config-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .config-section { padding: 2.5rem 1.2rem; }
+  .config-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  .config-viewer { min-height: 380px; }
 }

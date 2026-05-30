@@ -73,7 +73,7 @@ export default function Nav() {
             <button className={lang === 'NO' ? 'active' : ''} onClick={() => setLang('NO')}>NO</button>
             <button className={lang === 'EN' ? 'active' : ''} onClick={() => setLang('EN')}>EN</button>
           </div>
-          <a href="#kontakt" className="nav-cta nav-cta-desktop">Be om tilbud</a>
+          <a href="/bestill" className="nav-cta nav-cta-desktop">Bestill nå</a>
           <button className="nav-burger" onClick={() => setOpen((v) => !v)} aria-label="Meny">
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -89,7 +89,7 @@ export default function Nav() {
             </li>
           ))}
           <li>
-            <a href="#kontakt" className="nav-drawer-cta" onClick={() => setOpen(false)}>Be om tilbud</a>
+            <a href="/bestill" className="nav-drawer-cta" onClick={() => setOpen(false)}>Bestill nå</a>
           </li>
         </ul>
         <div className="nav-lang nav-lang-mobile">

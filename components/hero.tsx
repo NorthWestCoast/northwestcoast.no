@@ -16,7 +16,7 @@ export default function Hero() {
           Godkjent av Sjøfartsdirektoratet. Produsert på Sunnmøre.
         </p>
         <div className="hero-actions">
-          <a href="#kontakt" className="btn-primary">Be om tilbud →</a>
+          <a href="/bestill" className="btn-primary">Bestill nå →</a>
           <a href="#hvordan" className="btn-ghost">▶ Se hvordan det virker</a>
         </div>
         <div className="hero-stats">
