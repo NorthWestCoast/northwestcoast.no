@@ -12,22 +12,15 @@ const MIN = 2;
 const MAX = 15;
 const PRICE_PER_M = 2450; // NOK per meter, veiledende
 
-const VESSELS = [
-  'Fiskefartøy under 15m',
-  'Servicefartøy under 15m',
-  'Mindre lasteskip',
-  'Passasjerfartøy',
-];
+const LENGTHS = Array.from({ length: MAX - MIN + 1 }, (_, i) => MIN + i); // 2..15
 
 const ACCESSORIES = [
   { id: 'cabinet', label: 'Oppbevaringsskap', price: 4900 },
-  { id: 'spares', label: 'Reservedelssett', price: 1900 },
-  { id: 'mount', label: 'Veggmontering', price: 1200 },
+  { id: 'pvc', label: 'PVC-duk', price: 1900 },
 ];
 
 export default function OrderConfigurator() {
   const [length, setLength] = useState(6);
-  const [vessel, setVessel] = useState(VESSELS[0]);
   const [extras, setExtras] = useState<string[]>([]);
   const [sent, setSent] = useState(false);
 
@@ -47,7 +40,7 @@ export default function OrderConfigurator() {
       {/* 3D viewer */}
       <div className="config-viewer">
         <Ladder3D length={length} />
-        <div className="config-viewer-badge">{length.toFixed(1)} m · {Math.round(length / 0.32)} trinn</div>
+        <div className="config-viewer-badge">{length} m · {Math.round(length / 0.32)} trinn</div>
         <div className="config-viewer-hint">Dra for å rotere</div>
       </div>
 
@@ -59,48 +52,16 @@ export default function OrderConfigurator() {
         <div className="config-block">
           <div className="config-row">
             <label htmlFor="length">Lengde</label>
-            <span className="config-value">{length.toFixed(1)} m</span>
-          </div>
-          <input
-            id="length"
-            type="range"
-            min={MIN}
-            max={MAX}
-            step={0.5}
-            value={length}
-            onChange={(e) => setLength(Number(e.target.value))}
-            className="config-slider"
-          />
-          <div className="config-scale">
-            <span>{MIN} m</span>
-            <span>{MAX} m</span>
-          </div>
-          <div className="config-quick">
-            {[2, 4, 6, 8, 10, 12, 15].map((v) => (
-              <button
-                key={v}
-                type="button"
-                className={`config-chip${length === v ? ' active' : ''}`}
-                onClick={() => setLength(v)}
-              >
-                {v}m
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="config-block">
-          <div className="config-row">
-            <label htmlFor="vessel">Fartøystype</label>
+            <span className="config-value">{length} m</span>
           </div>
           <select
-            id="vessel"
+            id="length"
             className="config-select"
-            value={vessel}
-            onChange={(e) => setVessel(e.target.value)}
+            value={length}
+            onChange={(e) => setLength(Number(e.target.value))}
           >
-            {VESSELS.map((v) => (
-              <option key={v}>{v}</option>
+            {LENGTHS.map((v) => (
+              <option key={v} value={v}>{v} meter</option>
             ))}
           </select>
         </div>
@@ -127,7 +88,7 @@ export default function OrderConfigurator() {
         <div className="config-total">
           <div>
             <span className="config-total-label">Veiledende pris</span>
-            <span className="config-total-sub">{length.toFixed(1)} m · {vessel}</span>
+            <span className="config-total-sub">{length} m Argostep Livbåtleider</span>
           </div>
           <span className="config-total-amount">{fmt(total)} kr</span>
         </div>
@@ -138,7 +99,7 @@ export default function OrderConfigurator() {
           </button>
         ) : (
           <div className="config-confirm">
-            ✓ Takk! Vi har mottatt din bestilling på en {length.toFixed(1)} m Argostep og tar kontakt for bekreftelse.
+            ✓ Takk! Vi har mottatt din bestilling på en {length} m Argostep og tar kontakt for bekreftelse.
           </div>
         )}
         <p className="config-note">
