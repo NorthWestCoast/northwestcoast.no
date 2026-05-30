@@ -3145,6 +3145,103 @@ footer {
   text-align: center;
 }
 
+/* Antall-velger (draft) */
+.config-qty {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.config-qty button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--navy);
+  color: var(--white);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.config-qty button:hover { border-color: var(--green); color: var(--green); }
+.config-qty span { color: var(--white); font-weight: 700; min-width: 1.2rem; text-align: center; }
+
+/* Legg til-knapp */
+.config-add {
+  margin-top: 0.5rem;
+  width: 100%;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* Handlekurv / bestillingsliste */
+.config-cart {
+  margin-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1.25rem;
+}
+.config-cart-head {
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.85rem;
+}
+.config-cart-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.config-cart-info { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.config-cart-info strong { color: var(--white); font-size: 0.9rem; font-weight: 600; }
+.config-cart-meta { color: var(--text-muted); font-size: 0.75rem; }
+.config-cart-qty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.config-cart-qty button {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.config-cart-qty button:hover { border-color: var(--green); color: var(--green); }
+.config-cart-qty span { color: var(--white); font-size: 0.85rem; min-width: 1rem; text-align: center; }
+.config-cart-price {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.9rem;
+  min-width: 5.5rem;
+  text-align: right;
+}
+.config-cart-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  transition: color 0.18s;
+}
+.config-cart-remove:hover { color: #e06a6a; }
+
+.config-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 @media (max-width: 900px) {
   .config-section { padding: 2.5rem 1.2rem; }
   .config-grid { grid-template-columns: 1fr; gap: 1.5rem; }
