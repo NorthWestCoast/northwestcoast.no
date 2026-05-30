@@ -68,7 +68,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 2rem;
-  }
+}
 
 .nav-links {
   display: flex;
@@ -154,10 +154,10 @@ nav {
 .hero-bg-img {
   position: absolute;
   inset: 0;
-  background-image: url('/images/leider_in_use.jpg');
+  background-image: url('/images/first-bg1.jpg');
   background-size: cover;
-  background-position: center 30%;
-  filter: brightness(0.35) saturate(0.8);
+  background-position: center center;
+  filter: brightness(0.5) saturate(0.95);
 }
 
 .hero-overlay {
