@@ -3,23 +3,32 @@
 import { useMemo, useState } from 'react';
 import Script from 'next/script';
 
-// Priser iht. offisiell tabell. Skap- og PVC-pris (og størrelse/antall) følger lengden.
-type Row = { length: number; price: number; cabinetSize: number; cabinetPrice: number; pvcPrice: number };
+// Priser iht. offisiell tabell. Skap-navn/-nummer og -pris følger lengden.
+type Row = {
+  length: number;
+  steps: number;
+  productNumber: string;
+  productName: string;
+  price: number;
+  cabinetNumber: string;
+  cabinetName: string;
+  cabinetPrice: number;
+};
 
 const PRICE_TABLE: Row[] = [
-  { length: 3,  price: 9499,  cabinetSize: 1, cabinetPrice: 4999, pvcPrice: 3999 },
-  { length: 4,  price: 10999, cabinetSize: 1, cabinetPrice: 4999, pvcPrice: 3999 },
-  { length: 5,  price: 12499, cabinetSize: 1, cabinetPrice: 4999, pvcPrice: 3999 },
-  { length: 6,  price: 13999, cabinetSize: 1, cabinetPrice: 4999, pvcPrice: 3999 },
-  { length: 7,  price: 15499, cabinetSize: 2, cabinetPrice: 5999, pvcPrice: 4999 },
-  { length: 8,  price: 16999, cabinetSize: 2, cabinetPrice: 5999, pvcPrice: 4999 },
-  { length: 9,  price: 18099, cabinetSize: 2, cabinetPrice: 5999, pvcPrice: 4999 },
-  { length: 10, price: 20699, cabinetSize: 2, cabinetPrice: 5999, pvcPrice: 4999 },
-  { length: 11, price: 22199, cabinetSize: 3, cabinetPrice: 6999, pvcPrice: 5999 },
-  { length: 12, price: 24199, cabinetSize: 3, cabinetPrice: 6999, pvcPrice: 5999 },
-  { length: 13, price: 25499, cabinetSize: 3, cabinetPrice: 6999, pvcPrice: 5999 },
-  { length: 14, price: 26799, cabinetSize: 3, cabinetPrice: 6999, pvcPrice: 5999 },
-  { length: 15, price: 28999, cabinetSize: 3, cabinetPrice: 6999, pvcPrice: 5999 },
+  { length: 3,  steps: 10, productNumber: '400-031', productName: 'Argostep – 3ML',  price: 9499,  cabinetNumber: '400-061', cabinetName: 'ASC-LC3-5',   cabinetPrice: 9000 },
+  { length: 4,  steps: 13, productNumber: '400-032', productName: 'Argostep – 4ML',  price: 10999, cabinetNumber: '400-062', cabinetName: 'ASC-LC3-5',   cabinetPrice: 9000 },
+  { length: 5,  steps: 16, productNumber: '400-033', productName: 'Argostep – 5ML',  price: 12499, cabinetNumber: '400-063', cabinetName: 'ASC-LC3-5',   cabinetPrice: 9000 },
+  { length: 6,  steps: 19, productNumber: '400-034', productName: 'Argostep – 6ML',  price: 13999, cabinetNumber: '400-065', cabinetName: 'ASC-LC5-6',   cabinetPrice: 9500 },
+  { length: 7,  steps: 22, productNumber: '400-035', productName: 'Argostep – 7ML',  price: 15499, cabinetNumber: '400-062', cabinetName: 'ASC-LC6-8',   cabinetPrice: 10000 },
+  { length: 8,  steps: 25, productNumber: '400-036', productName: 'Argostep – 8ML',  price: 16999, cabinetNumber: '400-063', cabinetName: 'ASC-LC6-8',   cabinetPrice: 10000 },
+  { length: 9,  steps: 28, productNumber: '400-037', productName: 'Argostep – 9ML',  price: 18099, cabinetNumber: '400-063', cabinetName: 'ASC-LC9-10',  cabinetPrice: 11000 },
+  { length: 10, steps: 31, productNumber: '400-038', productName: 'Argostep – 10ML', price: 20699, cabinetNumber: '400-064', cabinetName: 'ASC-LC9-10',  cabinetPrice: 11000 },
+  { length: 11, steps: 34, productNumber: '400-039', productName: 'Argostep – 11ML', price: 23499, cabinetNumber: '400-064', cabinetName: 'ASC-LC11-16', cabinetPrice: 12000 },
+  { length: 12, steps: 37, productNumber: '400-040', productName: 'Argostep – 12ML', price: 25999, cabinetNumber: '400-065', cabinetName: 'ASC-LC11-16', cabinetPrice: 12000 },
+  { length: 13, steps: 40, productNumber: '400-041', productName: 'Argostep – 13ML', price: 27499, cabinetNumber: '400-066', cabinetName: 'ASC-LC11-16', cabinetPrice: 12000 },
+  { length: 14, steps: 43, productNumber: '400-042', productName: 'Argostep – 14ML', price: 28999, cabinetNumber: '400-067', cabinetName: 'ASC-LC11-16', cabinetPrice: 12000 },
+  { length: 15, steps: 46, productNumber: '400-043', productName: 'Argostep – 15ML', price: 30599, cabinetNumber: '400-068', cabinetName: 'ASC-LC11-16', cabinetPrice: 12000 },
 ];
 
 const LENGTHS = PRICE_TABLE.map((r) => r.length); // 3..15
@@ -29,7 +38,6 @@ type CartItem = {
   length: number;
   qty: number;
   cabinet: boolean;
-  pvc: boolean;
 };
 
 const fmt = (n: number) => n.toLocaleString('nb-NO');
@@ -37,7 +45,7 @@ const rowFor = (length: number) => PRICE_TABLE.find((r) => r.length === length) 
 
 function itemTotal(item: CartItem) {
   const row = rowFor(item.length);
-  const unit = row.price + (item.cabinet ? row.cabinetPrice : 0) + (item.pvc ? row.pvcPrice : 0);
+  const unit = row.price + (item.cabinet ? row.cabinetPrice : 0);
   return unit * item.qty;
 }
 
@@ -48,23 +56,21 @@ export default function OrderConfigurator() {
   const [length, setLength] = useState(6);
   const [qty, setQty] = useState(1);
   const [cabinet, setCabinet] = useState(false);
-  const [pvc, setPvc] = useState(false);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sent, setSent] = useState(false);
 
   const row = useMemo(() => rowFor(length), [length]);
 
-  const draftUnit = row.price + (cabinet ? row.cabinetPrice : 0) + (pvc ? row.pvcPrice : 0);
+  const draftUnit = row.price + (cabinet ? row.cabinetPrice : 0);
   const draftTotal = draftUnit * qty;
 
   const grandTotal = useMemo(() => cart.reduce((s, it) => s + itemTotal(it), 0), [cart]);
 
   const addToOrder = () => {
-    setCart((prev) => [...prev, { id: nextId++, length, qty, cabinet, pvc }]);
+    setCart((prev) => [...prev, { id: nextId++, length, qty, cabinet }]);
     // reset draft to defaults
     setCabinet(false);
-    setPvc(false);
     setQty(1);
     setSent(false);
   };
@@ -104,7 +110,8 @@ export default function OrderConfigurator() {
       {/* Options */}
       <div className="config-panel">
         <div className="lbl">Konfigurer din leider</div>
-        <h2 className="stitle">Argostep Livbåtleider</h2>
+        <h2 className="stitle">{row.productName}</h2>
+        <p className="config-product-no">Produktnr. {row.productNumber} · {row.steps} trinn</p>
 
         <div className="config-block">
           <div className="config-row">
@@ -133,16 +140,8 @@ export default function OrderConfigurator() {
               className={`config-extra${cabinet ? ' active' : ''}`}
               onClick={() => setCabinet((v) => !v)}
             >
-              <span>{`Oppbevaringsskap (str. ${row.cabinetSize})`}</span>
+              <span>{`Oppbevaringsskap ${row.cabinetName}`}</span>
               <span className="config-extra-price">+{fmt(row.cabinetPrice)} kr</span>
-            </button>
-            <button
-              type="button"
-              className={`config-extra${pvc ? ' active' : ''}`}
-              onClick={() => setPvc((v) => !v)}
-            >
-              <span>PVC-duk</span>
-              <span className="config-extra-price">+{fmt(row.pvcPrice)} kr</span>
             </button>
           </div>
         </div>
@@ -171,12 +170,12 @@ export default function OrderConfigurator() {
               return (
                 <div key={it.id} className="config-cart-item">
                   <div className="config-cart-info">
-                    <strong>{it.length} m Livbåtleider</strong>
+                    <strong>{r.productName}</strong>
                     <span className="config-cart-meta">
                       {[
-                        it.cabinet ? `Skap str. ${r.cabinetSize}` : null,
-                        it.pvc ? 'PVC-duk' : null,
-                      ].filter(Boolean).join(' · ') || 'Uten tilbehør'}
+                        `Produktnr. ${r.productNumber}`,
+                        it.cabinet ? `Skap ${r.cabinetName}` : null,
+                      ].filter(Boolean).join(' · ')}
                     </span>
                   </div>
                   <div className="config-cart-qty">

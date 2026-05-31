@@ -2976,7 +2976,14 @@ footer {
   flex-direction: column;
 }
 
-.config-panel .stitle { margin-bottom: 1.75rem; }
+.config-panel .stitle { margin-bottom: 0.4rem; }
+
+.config-product-no {
+  margin: 0 0 1.75rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.6);
+}
 
 .config-block {
   padding: 1.25rem 0;
