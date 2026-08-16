@@ -139,8 +139,15 @@ export default function OrderConfigurator() {
               type="button"
               className={`config-extra${cabinet ? ' active' : ''}`}
               onClick={() => setCabinet((v) => !v)}
+              aria-pressed={cabinet}
             >
-              <span>{`Oppbevaringsskap ${row.cabinetName}`}</span>
+              <span className="config-extra-check" aria-hidden="true">
+                {cabinet ? '✓' : ''}
+              </span>
+              <span className="config-extra-label">
+                {`Oppbevaringsskap ${row.cabinetName}`}
+                {cabinet && <span className="config-extra-tag">Valgt</span>}
+              </span>
               <span className="config-extra-price">+{fmt(row.cabinetPrice)} kr</span>
             </button>
           </div>

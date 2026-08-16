@@ -3090,7 +3090,7 @@ footer {
 .config-extra {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   background: var(--navy);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--text-dim);
@@ -3100,6 +3100,7 @@ footer {
   border-radius: 0.6rem;
   cursor: pointer;
   transition: all 0.18s;
+  text-align: left;
 }
 .config-extra:hover { border-color: rgba(46, 204, 113, 0.6); }
 .config-extra.active {
@@ -3107,7 +3108,44 @@ footer {
   background: var(--green-glow);
   color: var(--white);
 }
-.config-extra-price { color: var(--green); font-weight: 600; font-size: 0.82rem; }
+.config-extra-check {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0.35rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: all 0.18s;
+}
+.config-extra.active .config-extra-check {
+  background: var(--green);
+  border-color: var(--green);
+}
+.config-extra-label {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.config-extra-tag {
+  display: inline-flex;
+  align-items: center;
+  background: var(--green);
+  color: var(--white);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.3rem;
+}
+.config-extra-price { flex: 0 0 auto; color: var(--green); font-weight: 600; font-size: 0.82rem; }
 
 .config-total {
   display: flex;
@@ -3253,4 +3291,197 @@ footer {
   .config-section { padding: 2.5rem 1.2rem; }
   .config-grid { grid-template-columns: 1fr; gap: 1.5rem; }
   .config-viewer { min-height: 380px; }
+}
+
+/* ── VEDLIKEHOLD / MAINTENANCE ── */
+.mnt-section {
+  background: var(--navy);
+  padding: 4rem;
+}
+.mnt-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+.mnt-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.mnt-video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.mnt-form {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  padding: 2.5rem;
+}
+.mnt-form-head { margin-bottom: 2rem; }
+.mnt-form-head h2 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+.mnt-form-head p { color: var(--text-dim); font-size: 0.95rem; }
+
+.mnt-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.mnt-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.mnt-row:last-child { border-bottom: none; }
+.mnt-row-files { align-items: start; }
+.mnt-row label {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.mnt-row input,
+.mnt-row textarea {
+  width: 100%;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.55rem;
+  padding: 0.7rem 0.9rem;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.18s;
+}
+.mnt-row textarea { min-height: 90px; resize: vertical; }
+.mnt-row input:focus,
+.mnt-row textarea:focus {
+  outline: none;
+  border-color: var(--green);
+}
+.mnt-row input::placeholder,
+.mnt-row textarea::placeholder { color: rgba(255, 255, 255, 0.4); }
+
+.mnt-file-input { display: none; }
+.mnt-file-btn {
+  background: var(--navy);
+  border: 1px dashed rgba(46, 204, 113, 0.6);
+  color: var(--green);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.7rem 1.1rem;
+  border-radius: 0.55rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.mnt-file-btn:hover { background: var(--green-glow); }
+.mnt-file-list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.mnt-file-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.8rem;
+}
+.mnt-file-name {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mnt-file-remove {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.2rem;
+  transition: color 0.18s;
+}
+.mnt-file-remove:hover { color: #e06a6a; }
+
+.mnt-error {
+  margin-top: 1rem;
+  color: #e06a6a;
+  font-size: 0.88rem;
+}
+.mnt-submit {
+  margin-top: 1.75rem;
+  width: 100%;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+.mnt-submit:disabled { opacity: 0.6; cursor: wait; }
+
+.mnt-success {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: center;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid var(--green);
+  border-radius: 1rem;
+  padding: 3rem 2rem;
+}
+.mnt-success-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--green);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.mnt-success h3 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: 1.6rem;
+  color: #fff;
+  margin-bottom: 0.6rem;
+}
+.mnt-success p { color: var(--text-dim); }
+
+@media (max-width: 720px) {
+  .mnt-section { padding: 2.5rem 1.2rem; }
+  .mnt-wrap { gap: 2rem; }
+  .mnt-form { padding: 1.5rem; }
+  .mnt-row { grid-template-columns: 1fr; gap: 0.5rem; padding: 1rem; }
 }

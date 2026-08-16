@@ -8,8 +8,8 @@ import { Menu, X } from 'lucide-react';
 const NAV_LINKS = [
   { href: '/produkt',       label: 'Produkt' },
   { href: '/galleri',       label: 'Galleri' },
-  { href: '/regelverk',     label: 'Regelverk' },
   { href: '/nyheter',       label: 'Nyheter' },
+  { href: '/vedlikehold',   label: 'Vedlikehold' },
   { href: '/faq',           label: 'FAQ' },
 ];
 
