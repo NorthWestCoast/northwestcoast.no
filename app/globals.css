@@ -3090,7 +3090,7 @@ footer {
 .config-extra {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   background: var(--navy);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--text-dim);
@@ -3100,6 +3100,7 @@ footer {
   border-radius: 0.6rem;
   cursor: pointer;
   transition: all 0.18s;
+  text-align: left;
 }
 .config-extra:hover { border-color: rgba(46, 204, 113, 0.6); }
 .config-extra.active {
@@ -3107,7 +3108,44 @@ footer {
   background: var(--green-glow);
   color: var(--white);
 }
-.config-extra-price { color: var(--green); font-weight: 600; font-size: 0.82rem; }
+.config-extra-check {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0.35rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: all 0.18s;
+}
+.config-extra.active .config-extra-check {
+  background: var(--green);
+  border-color: var(--green);
+}
+.config-extra-label {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.config-extra-tag {
+  display: inline-flex;
+  align-items: center;
+  background: var(--green);
+  color: var(--white);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.3rem;
+}
+.config-extra-price { flex: 0 0 auto; color: var(--green); font-weight: 600; font-size: 0.82rem; }
 
 .config-total {
   display: flex;
