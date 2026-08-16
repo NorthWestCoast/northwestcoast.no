@@ -59,9 +59,6 @@ export default function Viewer3D() {
                 </div>
               ))}
             </div>
-            <a href="/regelverk" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
-              Sjekk krav til ditt fartøy →
-            </a>
           </div>
 
           <div className="viewer-box">
