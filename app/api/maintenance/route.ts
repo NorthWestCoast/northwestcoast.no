@@ -4,9 +4,10 @@ type ImagePayload = { name: string; type: string; dataUrl: string };
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, boat, serial, notes, images } = body as {
+  const { name, boat, imo, serial, notes, images } = body as {
     name?: string;
     boat?: string;
+    imo?: string;
     serial?: string;
     notes?: string;
     images?: ImagePayload[];
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       text: [
         `Navn: ${name}`,
         `Navn på båt: ${boat}`,
+        `IMO nr: ${imo || '–'}`,
         `Serienummer på leider: ${serial}`,
         ``,
         `Kommentar:`,

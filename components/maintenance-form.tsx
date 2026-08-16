@@ -49,6 +49,7 @@ export default function MaintenanceForm() {
         body: JSON.stringify({
           name: data.name,
           boat: data.boat,
+          imo: data.imo,
           serial: data.serial,
           notes: data.notes,
           images,
@@ -91,6 +92,10 @@ export default function MaintenanceForm() {
         <div className="mnt-row">
           <label htmlFor="boat">Navn på båt *</label>
           <input id="boat" name="boat" type="text" placeholder="F.eks. MS Havbris" required />
+        </div>
+        <div className="mnt-row">
+          <label htmlFor="imo">IMO nr</label>
+          <input id="imo" name="imo" type="text" placeholder="F.eks. 9074729" />
         </div>
         <div className="mnt-row">
           <label htmlFor="serial">Serienummer på leider *</label>
