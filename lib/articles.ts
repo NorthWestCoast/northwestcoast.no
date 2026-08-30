@@ -12,7 +12,7 @@ export const ARTICLES: Article[] = [
   {
     slug: 'ny-leiderkasse',
     tag: 'Nyheter',
-    date: '15. februar 2024',
+    date: '30.08.2026',
     title: 'Ny leiderkasse på plass!',
     excerpt: 'Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter. Se eksempler fra den første installasjonen ombord på Geir.',
     image: '/images/leiderkasse.jpg',

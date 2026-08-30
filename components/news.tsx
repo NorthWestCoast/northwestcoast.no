@@ -39,7 +39,7 @@ export default function News() {
           </div>
           <div className="news-body">
             <span className="news-tag">Nyheter</span>
-            <div className="news-date">📅 15. februar 2024</div>
+            <div className="news-date">📅 30.08.2026</div>
             <h3>Ny leiderkasse på plass!</h3>
             <p>
               Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter.
