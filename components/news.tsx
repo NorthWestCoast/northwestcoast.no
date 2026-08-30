@@ -6,13 +6,6 @@ import Link from 'next/link';
 
 const MINI_NEWS = [
   {
-    src: '/images/leider_m2.jpg',
-    alt: 'Guide',
-    tag: 'Guide',
-    title: 'Hvordan velge riktig leider for ditt fartøy',
-    href: '/nyheter/guide-velge-leider',
-  },
-  {
     src: '/images/ms-skar-senior2.jpeg',
     alt: 'Skar Senior',
     tag: 'Caser',

@@ -31,32 +31,6 @@ export const ARTICLES: Article[] = [
     `,
   },
   {
-    slug: 'guide-velge-leider',
-    tag: 'Guide',
-    date: '3. januar 2024',
-    title: 'Hvordan velge riktig leider for ditt fartøy',
-    excerpt: 'Å velge riktig maritim leider handler om mer enn pris. Vi går gjennom de viktigste faktorene – fra fartøysstørrelse og materiale til lagringsløsning og regelverk.',
-    image: '/images/leider_m2.jpg',
-    body: `
-      <p>Å velge riktig maritim leider er ikke alltid enkelt. Markedet tilbyr alt fra enkle treplank-konstruksjoner til avanserte modulære systemer som Argostep. I denne guiden går vi gjennom de viktigste faktorene du bør vurdere.</p>
-
-      <h2>Fartøyets størrelse og type</h2>
-      <p>Det første du bør vurdere er fartøyets størrelse og type. For fiskefartøy og servicebåter under 15 meter gjelder spesifikke krav fra Sjøfartsdirektoratet. Argostep er sertifisert for disse fartøyene og leveres i lengder fra 2 til 15 meter, slik at du alltid får en løsning tilpasset ditt behov.</p>
-
-      <h2>Material og holdbarhet</h2>
-      <p>Tradisjonelle treleidere krever jevnlig vedlikehold og er utsatt for råte og deformasjon i fuktig sjømiljø. Glassfiberarmert plast, som brukes i Argostep, gir overlegen holdbarhet uten behov for maling eller impregnering. Materialet er også betydelig lettere, noe som reduserer belastningen ved daglig bruk.</p>
-
-      <h2>Vekt og håndterbarhet</h2>
-      <p>Vekt er en kritisk faktor – særlig for singlehanded-seiling eller på arbeidsintensive fartøy. Argostep veier betraktelig mindre enn tilsvarende treleidere. Klikk-koblingssystemet gjør det mulig å sette ut og hente inn leideren raskt og enkelt – én person, ingen redskaper.</p>
-
-      <h2>Lagring og oppbevaring</h2>
-      <p>Et leidersystem er bare så bra som oppbevaringsmulighetene. Argostep leveres med dedikert oppbevaringsskap som beskytter leideren mot vær og vind, og forlenger levetiden markant. Skapet monteres diskret og tar minimalt med plass ombord.</p>
-
-      <h2>Regelverk og sertifisering</h2>
-      <p>Pass alltid på at leideren oppfyller gjeldende regelverk for ditt fartøy. Argostep er sertifisert etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet, noe som gir deg trygghet ved inspeksjon og forsikringsoppgjør.</p>
-    `,
-  },
-  {
     slug: 'ms-skar-senior-installasjon',
     tag: 'Caser',
     date: '20. november 2023',
