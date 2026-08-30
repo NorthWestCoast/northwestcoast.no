@@ -19,7 +19,7 @@ export const ARTICLES: Article[] = [
     body: `
       <p>Hos NorthWest Coast er vi alltid på jakt etter måter å forbedre bruksopplevelsen til kundene våre. Den seneste nyheten er at vi nå har fått på plass en ny generasjon leiderkasser – spesialtilpasset for leidere mellom 11 og 15 meter.</p>
 
-      <h2>Kompakt og holdbar design</h2>
+      <h2>Kompakt og holdbart design</h2>
       <p>Den nye kassen er konstruert av UV-bestandig polyetylen som tåler det tøffe maritime miljøet. Med et integrert låsesystem og gummipakninger sikrer den leideren mot salt, fukt og mekanisk slitasje under oppbevaring. Kassen monteres enkelt på dekk eller skott og krever minimalt med rekkeplass.</p>
 
       <h2>Rask tilgang, trygg oppbevaring</h2>
