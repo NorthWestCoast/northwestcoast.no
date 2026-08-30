@@ -34,11 +34,6 @@ export const FAQS = [
     category: 'Produkt',
   },
   {
-    q: 'Kan leideren brukes på alle typer fartøy?',
-    a: 'Argostep er egnet for fiskefartøy, servicebåter, passasjerfartøy og mindre lasteskip under 15 meter. Ta kontakt for å avklare om leideren passer til ditt spesifikke fartøy.',
-    category: 'Produkt',
-  },
-  {
     q: 'Hva veier en standard Argostep?',
     a: 'En standard 8-trinns Argostep veier betydelig mindre enn en tilsvarende treeleider, takket være glassfiberarmert plast. Nøyaktig vekt avhenger av lengde og konfigurasjon.',
     category: 'Produkt',
