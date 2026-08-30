@@ -15,7 +15,7 @@ export const FAQS = [
   },
   {
     q: 'Hvor lenge varer en leider?',
-    a: 'Designet for lang levetid med utskiftbare komponenter. Korrekt lagring i det medfølgende skapet forlenger levetiden betraktelig.',
+    a: 'Designet for lang levetid med utskiftbare komponenter. Ved oppbevaring i skap fra Northwestcoast vil levetiden øke betraktlig.',
     category: 'Produkt',
   },
   {
