@@ -23,7 +23,7 @@ export const ARTICLES: Article[] = [
       <p>Den nye kassen er konstruert av UV-bestandig polyetylen som tåler det tøffe maritime miljøet. Med et integrert låsesystem og gummipakninger sikrer den leideren mot salt, fukt og mekanisk slitasje under oppbevaring. Kassen monteres enkelt på dekk eller skott og krever minimalt med rekkeplass.</p>
 
       <h2>Rask tilgang, trygg oppbevaring</h2>
-      <p>En av de viktigste egenskapene er den raske tilgangen. Kassen kan åpnes og leideren klargjøres for bruk på under 30 sekunder – uten spesialverktøy. Dette er spesielt viktig ved utrykning og i krevende situasjoner, der hvert sekund teller.</p>
+      <p>En av de viktigste egenskapene er den raske tilgangen. Kassen kan åpnes og leideren klargjøres for bruk helt uten spesialverktøy.</p>
 
       <h2>Installert ombord på Geir</h2>
       <p>De første kassene er allerede installert ombord på Geir, der mannskapet har gitt svært positive tilbakemeldinger. «Enkelt å bruke, og leideren er alltid i perfekt stand» er kommentaren fra kaptein Olav Moen, som har operert langs kysten i over 20 år.</p>
