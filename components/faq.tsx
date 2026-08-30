@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 export const FAQS = [
   {
     q: 'Er stigen godkjent for norske skip?',
-    a: 'Ja, Argostep Entrings- og Livbåtleider er sertifisert etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy.',
+    a: 'Ja, Argostep Entrings- og Livbåtleider er testet og godkjent etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy.',
     category: 'Sertifisering',
   },
   {
@@ -15,12 +15,12 @@ export const FAQS = [
   },
   {
     q: 'Hvor lenge varer en leider?',
-    a: 'Designet for lang levetid med utskiftbare komponenter. Korrekt lagring i det medfølgende skapet forlenger levetiden betraktelig.',
+    a: 'Designet for lang levetid med utskiftbare komponenter. Ved oppbevaring i skap fra Northwestcoast vil levetiden øke betraktlig.',
     category: 'Produkt',
   },
   {
-    q: 'Trenger jeg spesialverktøy for montering?',
-    a: 'Nei. Argostep er designet for enkel montering og demontering uten spesialverktøy. Klikk-koblingen er intuitiv og kan betjenes av én person.',
+    q: 'Hvordan monterer jeg leideren?',
+    a: 'Argostep er designet for enkel montering og demontering uten spesialverktøy. Leideren monteres på samme måte som den tradisjonelle leideren.',
     category: 'Montering',
   },
   {
@@ -34,13 +34,8 @@ export const FAQS = [
     category: 'Produkt',
   },
   {
-    q: 'Kan leideren brukes på alle typer fartøy?',
-    a: 'Argostep er egnet for fiskefartøy, servicebåter, passasjerfartøy og mindre lasteskip under 15 meter. Ta kontakt for å avklare om leideren passer til ditt spesifikke fartøy.',
-    category: 'Produkt',
-  },
-  {
     q: 'Hva veier en standard Argostep?',
-    a: 'En standard 8-trinns Argostep veier betydelig mindre enn en tilsvarende treeleider, takket være glassfiberarmert plast. Nøyaktig vekt avhenger av lengde og konfigurasjon.',
+    a: 'Alle vektene for Argostep leider finner du under Bestill nå.',
     category: 'Produkt',
   },
   {

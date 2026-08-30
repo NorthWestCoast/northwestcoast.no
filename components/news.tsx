@@ -4,30 +4,6 @@ import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const MINI_NEWS = [
-  {
-    src: '/images/leider_m2.jpg',
-    alt: 'Guide',
-    tag: 'Guide',
-    title: 'Hvordan velge riktig leider for ditt fartøy',
-    href: '/nyheter/guide-velge-leider',
-  },
-  {
-    src: '/images/ms-skar-senior2.jpeg',
-    alt: 'Skar Senior',
-    tag: 'Caser',
-    title: 'M/S Skår Senior – ny Argostep installasjon',
-    href: '/nyheter/ms-skar-senior-installasjon',
-  },
-  {
-    src: '/images/leiderkasse4.jpg',
-    alt: 'Forskrifter',
-    tag: 'Forskrifter',
-    title: 'Nye krav til ombordstigning fra 2024',
-    href: '/nyheter/nye-krav-ombordstigning-2024',
-  },
-];
-
 export default function News() {
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -63,7 +39,7 @@ export default function News() {
           </div>
           <div className="news-body">
             <span className="news-tag">Nyheter</span>
-            <div className="news-date">📅 15. februar 2024</div>
+            <div className="news-date">📅 30.08.2026</div>
             <h3>Ny leiderkasse på plass!</h3>
             <p>
               Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter.
@@ -71,24 +47,6 @@ export default function News() {
             </p>
             <Link href="/nyheter/ny-leiderkasse" className="news-link">Les hele artikkelen →</Link>
           </div>
-        </div>
-
-        {/* Side articles */}
-        <div className="news-side">
-          {MINI_NEWS.map((n) => (
-            <div className="news-mini" key={n.title}>
-              <div className="news-mini-img">
-                <Image src={n.src} alt={n.alt} fill style={{ objectFit: 'cover' }} />
-              </div>
-              <div className="news-mini-body">
-                <span className="news-tag">{n.tag}</span>
-                <h4>{n.title}</h4>
-                <Link href={n.href} className="news-link" style={{ marginTop: '0.5rem' }}>
-                  Les mer →
-                </Link>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
