@@ -26,7 +26,7 @@ export const ARTICLES: Article[] = [
       <p>En av de viktigste egenskapene er den raske tilgangen. Kassen kan åpnes og leideren klargjøres for bruk helt uten spesialverktøy.</p>
 
       <h2>Installert ombord</h2>
-      <p>De første kassene er allerede installert ombord på Geir, der mannskapet har gitt svært positive tilbakemeldinger. «Enkelt å bruke, og leideren er alltid i perfekt stand» er kommentaren fra kaptein Olav Moen, som har operert langs kysten i over 20 år.</p>
+      <p>De første kassene er allerede installert ombord skip, der mannskapet har gitt svært positive tilbakemeldinger.</p>
       <p>Kassene er nå tilgjengelig for bestilling. Ta kontakt med oss for mer informasjon om priser og tilpasning til ditt fartøy.</p>
     `,
   },
