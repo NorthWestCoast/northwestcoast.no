@@ -35,7 +35,7 @@ export const FAQS = [
   },
   {
     q: 'Hva veier en standard Argostep?',
-    a: 'En standard 8-trinns Argostep veier betydelig mindre enn en tilsvarende treeleider, takket være glassfiberarmert plast. Nøyaktig vekt avhenger av lengde og konfigurasjon.',
+    a: 'Alle vektene for Argostep leider finner du under Bestill nå.',
     category: 'Produkt',
   },
   {
