@@ -19,13 +19,6 @@ const MINI_NEWS = [
     title: 'M/S Skår Senior – ny Argostep installasjon',
     href: '/nyheter/ms-skar-senior-installasjon',
   },
-  {
-    src: '/images/leiderkasse4.jpg',
-    alt: 'Forskrifter',
-    tag: 'Forskrifter',
-    title: 'Nye krav til ombordstigning fra 2024',
-    href: '/nyheter/nye-krav-ombordstigning-2024',
-  },
 ];
 
 export default function News() {

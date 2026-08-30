@@ -80,35 +80,6 @@ export const ARTICLES: Article[] = [
       <p>Sølvtrans Rederi vurderer nå å utstyre flere fartøy i flåten med Argostep-systemet.</p>
     `,
   },
-  {
-    slug: 'nye-krav-ombordstigning-2024',
-    tag: 'Forskrifter',
-    date: '28. desember 2023',
-    title: 'Nye krav til ombordstigning fra 2024',
-    excerpt: 'Fra 1. januar 2024 trådte nye forskrifter i kraft for leidersystemer på norske fartøy under 15 meter. Her er en praktisk oversikt over hva som gjelder.',
-    image: '/images/leiderkasse4.jpg',
-    body: `
-      <p>Fra og med 1. januar 2024 trådte reviderte forskrifter i kraft som stiller klarere krav til leidersystemer på norske fiskefartøy og servicebåter under 15 meter. Endringene er en direkte følge av en gjennomgang av ulykkesstatistikk og internasjonale standarder.</p>
-
-      <h2>Hva er nytt?</h2>
-      <p>De reviderte kravene presiserer og skjerper en rekke punkter:</p>
-      <ul>
-        <li>Materialkvalitet og konstruksjon av leidersystemer – tre aksepteres ikke lenger som primærmateriale</li>
-        <li>Dokumentert godkjenning fra Sjøfartsdirektoratet eller anerkjent klassifikasjonsselskap</li>
-        <li>Krav til oppbevaring som sikrer at leideren er i brukbar stand til enhver tid</li>
-        <li>Skriftlig vedlikeholdslogg og dokumentasjon ved inspeksjon</li>
-      </ul>
-
-      <h2>Hvem omfattes av regelverket?</h2>
-      <p>Regelverket gjelder alle norske fiskefartøy, servicebåter og passasjerfartøy med lengde under 15 meter som er registrert i Skipsregisteret og bruker leidersystem for ombordstigning.</p>
-
-      <h2>Er Argostep i samsvar?</h2>
-      <p>Ja. Argostep Entrings- og Livbåtleider er sertifisert etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet. Systemet oppfyller samtlige krav i det nye regelverket, inkludert krav til materiale, konstruksjon og oppbevaring.</p>
-
-      <h2>Hva gjør du hvis du ikke er i samsvar?</h2>
-      <p>Kontakt oss for en gratis vurdering av ditt nåværende leidersystem. Vi kan raskt avklare om systemet oppfyller de nye kravene, og tilby et skreddersydd tilbud på Argostep dersom det er behov for utskiftning. Ikke vent til neste inspeksjon.</p>
-    `,
-  },
 ];
 
 export function getArticle(slug: string): Article | undefined {
