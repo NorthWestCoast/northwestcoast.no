@@ -30,30 +30,6 @@ export const ARTICLES: Article[] = [
       <p>Kassene er nå tilgjengelig for bestilling. Ta kontakt med oss for mer informasjon om priser og tilpasning til ditt fartøy.</p>
     `,
   },
-  {
-    slug: 'ms-skar-senior-installasjon',
-    tag: 'Caser',
-    date: '20. november 2023',
-    title: 'M/S Skår Senior – ny Argostep installasjon',
-    excerpt: 'Sølvtrans Rederi valgte Argostep til M/S Skår Senior etter lang tids søken etter et pålitelig og godkjent leidersystem. Her er hele historien.',
-    image: '/images/ms-skar-senior2.jpeg',
-    body: `
-      <p>M/S Skår Senior er et servicefartøy i Sølvtrans Rederis flåte som opererer langs vestkysten av Norge. I november 2023 fikk fartøyet installert et komplett Argostep-system bestående av en 9-trinns leider og dedikert oppbevaringsskap.</p>
-
-      <h2>Utfordringen</h2>
-      <p>Det gamle leidersystemet ombord var i dårlig forfatning etter mange år med saltvannspåkjenning og begrenset vedlikehold. Mannskapet hadde lenge etterspurt et enklere og mer pålitelig alternativ som oppfylte de nyeste sikkerhetskravene fra Sjøfartsdirektoratet.</p>
-
-      <h2>Valget falt på Argostep</h2>
-      <p>Etter en grundig behovsvurdering og dialog med NorthWest Coast bestemte rederiet seg for Argostep 9-trinns leider med tilhørende oppbevaringsskap. Avgjørende faktorer var lavt vekt, enkel betjening og at produktet allerede var godkjent av Sjøfartsdirektoratet.</p>
-
-      <h2>Monteringen</h2>
-      <p>Monteringen ble utført av NorthWest Coast sine teknikere i løpet av en dag, uten behov for ombygging av fartøyet. Det modulære systemet passet perfekt til fartøyets eksisterende rekkeoppbygg, og kabelen ble lagt diskret langs skutesiden.</p>
-
-      <h2>Resultatet</h2>
-      <p>«Vi er svært fornøyde med den nye leideren. Den er lettere å bruke enn det gamle systemet, og mannskapet føler seg tryggere ved ombordstigning», sier kaptein Rune Vatne. Leideren har nå vært i daglig bruk i flere måneder uten problemer.</p>
-      <p>Sølvtrans Rederi vurderer nå å utstyre flere fartøy i flåten med Argostep-systemet.</p>
-    `,
-  },
 ];
 
 export function getArticle(slug: string): Article | undefined {

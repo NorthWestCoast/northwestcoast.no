@@ -4,16 +4,6 @@ import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const MINI_NEWS = [
-  {
-    src: '/images/ms-skar-senior2.jpeg',
-    alt: 'Skar Senior',
-    tag: 'Caser',
-    title: 'M/S Skår Senior – ny Argostep installasjon',
-    href: '/nyheter/ms-skar-senior-installasjon',
-  },
-];
-
 export default function News() {
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -57,24 +47,6 @@ export default function News() {
             </p>
             <Link href="/nyheter/ny-leiderkasse" className="news-link">Les hele artikkelen →</Link>
           </div>
-        </div>
-
-        {/* Side articles */}
-        <div className="news-side">
-          {MINI_NEWS.map((n) => (
-            <div className="news-mini" key={n.title}>
-              <div className="news-mini-img">
-                <Image src={n.src} alt={n.alt} fill style={{ objectFit: 'cover' }} />
-              </div>
-              <div className="news-mini-body">
-                <span className="news-tag">{n.tag}</span>
-                <h4>{n.title}</h4>
-                <Link href={n.href} className="news-link" style={{ marginTop: '0.5rem' }}>
-                  Les mer →
-                </Link>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
