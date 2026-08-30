@@ -20,7 +20,7 @@ export const FAQS = [
   },
   {
     q: 'Hvordan monterer jeg leideren?',
-    a: 'Nei. Argostep er designet for enkel montering og demontering uten spesialverktøy. Klikk-koblingen er intuitiv og kan betjenes av én person.',
+    a: 'Argostep er designet for enkel montering og demontering uten spesialverktøy. Leideren monteres på samme måte som den tradisjonelle leideren.',
     category: 'Montering',
   },
   {
