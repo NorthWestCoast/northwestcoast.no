@@ -64,6 +64,7 @@ export default function Gallery() {
               src={img.src}
               alt={img.alt}
               fill
+              sizes="(max-width: 640px) 100vw, 50vw"
               style={{ objectFit: img.contain ? 'contain' : 'cover', background: img.contain ? '#e8e0d4' : undefined }}
             />
             <div className="g-label">{img.label}</div>

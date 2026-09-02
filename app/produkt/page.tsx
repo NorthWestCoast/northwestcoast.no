@@ -6,11 +6,21 @@ import Wave from '@/components/wave';
 import Features from '@/components/features';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
+import JsonLd from '@/components/json-ld';
+import { pageOpenGraph } from '@/lib/site';
+import { breadcrumbNode, graph, productNode, webPageNode } from '@/lib/structured-data';
 
 export const metadata: Metadata = {
-  title: 'Argostep Livbåtleider – Produkt | NorthWest Coast',
+  title: 'Argostep Livbåtleider – spesifikasjoner, lengder og materiale',
   description:
     'Argostep Livbåtleider – modulær, lett og sterk maritim leider i glassfiberarmert plast. ISO 799-1:2019 sertifisert og godkjent av Sjøfartsdirektoratet. Leveres fra 2 til 15 meter.',
+  alternates: { canonical: '/produkt' },
+  openGraph: pageOpenGraph({
+    path: '/produkt',
+    title: 'Argostep Livbåtleider – spesifikasjoner, lengder og materiale',
+    description:
+      'Modulær maritim leider i glassfiberarmert plast. ISO 799-1:2019, godkjent av Sjøfartsdirektoratet, 2–15 meter.',
+  }),
 };
 
 const SPECS = [
@@ -32,7 +42,31 @@ const VESSELS = [
 export default function ProduktPage() {
   return (
     <>
+      {/* The canonical home of the Product entity: every variant, price and
+          certification, so a shopping surface or an assistant can answer
+          "what does a 9 metre Argostep cost" without guessing. */}
+      <JsonLd
+        data={graph([
+          webPageNode({
+            path: '/produkt',
+            name: 'Argostep Livbåtleider',
+            description:
+              'Spesifikasjoner for Argostep Livbåtleider: lengder, materiale, sertifisering og bruksområder.',
+            type: 'ItemPage',
+          }),
+          productNode(),
+          breadcrumbNode([
+            { name: 'Hjem', path: '/' },
+            { name: 'Produkt', path: '/produkt' },
+          ]),
+        ])}
+      />
+
       <Nav />
+
+      {/* Named landmark: the skip link in the nav targets this, and it gives
+          assistive tech and crawlers an explicit "page content starts here". */}
+      <main id="hovedinnhold">
 
       <div className="subpage-header">
         <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>Produkt</div>
@@ -51,8 +85,9 @@ export default function ProduktPage() {
           <div className="product-img">
             <Image
               src="/images/ladder-full.png"
-              alt="Argostep Livbåtleider i full lengde"
+              alt="Argostep Livbåtleider i full lengde – modulær maritim leider i glassfiberarmert plast"
               fill
+              sizes="(max-width: 900px) 100vw, 45vw"
               style={{ objectFit: 'contain' }}
               priority
             />
@@ -107,16 +142,20 @@ export default function ProduktPage() {
               ))}
             </div>
 
-            <Link href="/bestill" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
-              Bestill nå →
-            </Link>
+            <div className="prod-actions" style={{ marginTop: '2rem' }}>
+              <Link href="/bestill" className="btn-primary">Bestill nå →</Link>
+              {/* Contextual link from "which length do I need" to the tool that
+                  answers it — the highest-intent internal link on the site. */}
+              <Link href="/leiderkalkulator" className="btn-ghost">Regn ut riktig lengde →</Link>
+            </div>
           </div>
 
           <div className="cert-img">
             <Image
               src="/images/leider_in_use.jpg"
-              alt="Argostep Livbåtleider i bruk"
+              alt="Argostep Livbåtleider rigget langs skutesiden på et norsk fartøy"
               fill
+              sizes="(max-width: 900px) 100vw, 45vw"
               style={{ objectFit: 'cover' }}
             />
           </div>
@@ -135,6 +174,8 @@ export default function ProduktPage() {
           Bestill nå →
         </Link>
       </section>
+
+      </main>
 
       <Footer />
       <Lightbox />

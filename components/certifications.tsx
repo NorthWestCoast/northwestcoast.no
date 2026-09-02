@@ -73,6 +73,7 @@ export default function Certifications() {
               src="/images/leiderkasse3.jpg"
               alt="Argostep ombord"
               fill
+              sizes="(max-width: 900px) 100vw, 45vw"
               style={{ objectFit: 'cover' }}
             />
           </div>

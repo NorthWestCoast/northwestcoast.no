@@ -43,6 +43,7 @@ export default function InUse() {
               src={photo.src}
               alt={photo.alt}
               fill
+              sizes="(max-width: 700px) 50vw, 25vw"
               style={{ objectFit: 'cover' }}
             />
             <div className="photo-cap">{photo.cap}</div>

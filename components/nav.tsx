@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
-  { href: '/produkt',       label: 'Produkt' },
-  { href: '/galleri',       label: 'Galleri' },
-  { href: '/nyheter',       label: 'Nyheter' },
-  { href: '/vedlikehold',   label: 'Vedlikehold' },
-  { href: '/faq',           label: 'FAQ' },
+  { href: '/produkt',          label: 'Produkt' },
+  { href: '/leiderkalkulator', label: 'Kalkulator' },
+  { href: '/galleri',          label: 'Galleri' },
+  { href: '/nyheter',          label: 'Nyheter' },
+  { href: '/vedlikehold',      label: 'Vedlikehold' },
+  { href: '/faq',              label: 'FAQ' },
 ];
 
 export default function Nav() {
@@ -51,7 +52,11 @@ export default function Nav() {
 
   return (
     <>
-      <nav ref={navRef} id="navbar">
+      {/* Skip link: first focusable element on every page, so keyboard users
+          are not forced through the whole menu on each navigation. */}
+      <a href="#hovedinnhold" className="skip-link">Hopp til hovedinnhold</a>
+
+      <nav ref={navRef} id="navbar" aria-label="Hovedmeny">
         <Link className="nav-logo" href="/">
           <Image
             src="/images/logo/NY-logo.png"
@@ -64,7 +69,7 @@ export default function Nav() {
 
         <ul className="nav-links">
           {NAV_LINKS.map((l) => (
-            <li key={l.href}><a href={l.href}>{l.label}</a></li>
+            <li key={l.href}><Link href={l.href}>{l.label}</Link></li>
           ))}
         </ul>
 
@@ -73,8 +78,13 @@ export default function Nav() {
             <button className={lang === 'NO' ? 'active' : ''} onClick={() => setLang('NO')}>NO</button>
             <button className={lang === 'EN' ? 'active' : ''} onClick={() => setLang('EN')}>EN</button>
           </div>
-          <a href="/bestill" className="nav-cta nav-cta-desktop">Bestill nå</a>
-          <button className="nav-burger" onClick={() => setOpen((v) => !v)} aria-label="Meny">
+          <Link href="/bestill" className="nav-cta nav-cta-desktop">Bestill nå</Link>
+          <button
+            className="nav-burger"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? 'Lukk meny' : 'Åpne meny'}
+            aria-expanded={open}
+          >
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -85,11 +95,11 @@ export default function Nav() {
         <ul>
           {NAV_LINKS.map((l) => (
             <li key={l.href}>
-              <a href={l.href} onClick={() => setOpen(false)}>{l.label}</a>
+              <Link href={l.href} onClick={() => setOpen(false)}>{l.label}</Link>
             </li>
           ))}
           <li>
-            <a href="/bestill" className="nav-drawer-cta" onClick={() => setOpen(false)}>Bestill nå</a>
+            <Link href="/bestill" className="nav-drawer-cta" onClick={() => setOpen(false)}>Bestill nå</Link>
           </li>
         </ul>
         <div className="nav-lang nav-lang-mobile">

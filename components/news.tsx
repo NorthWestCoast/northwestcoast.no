@@ -34,6 +34,7 @@ export default function News() {
               src="/images/leiderkasse.jpg"
               alt="Ny leiderkasse"
               fill
+              sizes="(max-width: 700px) 100vw, 33vw"
               style={{ objectFit: 'cover' }}
             />
           </div>

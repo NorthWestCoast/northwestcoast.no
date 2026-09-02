@@ -1,29 +1,62 @@
-'use client';
-
-import { useState } from 'react';
-import Image from 'next/image';
+import type { Metadata } from 'next';
 import Nav from '@/components/nav';
 import Wave from '@/components/wave';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
-import { ALL_IMAGES } from '@/components/media-gallery';
+import GalleryTabs from '@/components/gallery-tabs';
+import JsonLd from '@/components/json-ld';
+import { ALL_IMAGES } from '@/lib/gallery';
+import { abs, pageOpenGraph } from '@/lib/site';
+import { breadcrumbNode, graph, webPageNode, ORG_ID } from '@/lib/structured-data';
 
-const TABS = ['Alle', 'I bruk', 'Leider', 'Oppbevaring', 'Referanser'];
+export const metadata: Metadata = {
+  title: 'Bildegalleri – Argostep maritim leider i bruk',
+  description:
+    'Se Argostep-leideren fra alle vinkler: produktbilder, oppbevaringsskap og leideren i daglig bruk om bord på fartøy langs norskekysten.',
+  alternates: { canonical: '/galleri' },
+  openGraph: pageOpenGraph({
+    path: '/galleri',
+    title: 'Bildegalleri – Argostep maritim leider i bruk',
+    description: 'Produktbilder, oppbevaringsskap og referansefartøy langs norskekysten.',
+  }),
+};
 
 export default function GalleriPage() {
-  const [activeTab, setActiveTab] = useState('Alle');
-
-  const filtered = activeTab === 'Alle' ? ALL_IMAGES : ALL_IMAGES.filter((img) => img.tag === activeTab);
-
-  const openLightbox = (src: string) => {
-    const lb = document.getElementById('lightbox') as HTMLElement | null;
-    const img = document.getElementById('lb-img') as HTMLImageElement | null;
-    if (lb && img) { img.src = src; lb.classList.add('open'); }
-  };
-
   return (
     <>
+      {/* ImageGallery schema with every image described: image search and
+          multimodal AI models both index the captions, not the pixels. */}
+      <JsonLd
+        data={graph([
+          {
+            ...webPageNode({
+              path: '/galleri',
+              name: 'Bildegalleri – Argostep i bruk',
+              description: 'Bilder av Argostep maritim leider, oppbevaringsskap og referansefartøy.',
+              type: 'ImageGallery',
+            }),
+            image: ALL_IMAGES.map((img) => ({
+              '@type': 'ImageObject',
+              contentUrl: abs(img.src),
+              name: img.label,
+              description: img.alt,
+              creditText: 'NorthWest Coast',
+              copyrightNotice: 'Northwestcoast AS',
+              creator: { '@id': ORG_ID },
+            })),
+          },
+          breadcrumbNode([
+            { name: 'Hjem', path: '/' },
+            { name: 'Galleri', path: '/galleri' },
+          ]),
+        ])}
+      />
+
       <Nav />
+
+      {/* Named landmark: the skip link in the nav targets this, and it gives
+          assistive tech and crawlers an explicit "page content starts here". */}
+      <main id="hovedinnhold">
 
       <div className="subpage-header">
         <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>Produktgalleri</div>
@@ -33,42 +66,11 @@ export default function GalleriPage() {
 
       <Wave top="var(--navy)" bottom="var(--sand-light)" dualBottomFill="var(--sand-light)" />
 
-      <section className="gallery" id="galleri" style={{ paddingTop: '3rem' }}>
-        <div className="gallery-tabs" style={{ marginTop: 0 }}>
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              className={`tab${activeTab === tab ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div className="mg-grid" style={{ marginTop: '1.5rem' }}>
-          {filtered.map((img) => (
-            <div
-              key={img.src}
-              className="mg-card"
-              onClick={() => openLightbox(img.src)}
-            >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                style={{
-                  objectFit: img.contain ? 'contain' : 'cover',
-                  background: img.contain ? '#e8e0d4' : undefined,
-                }}
-              />
-              <div className="g-label">{img.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <GalleryTabs />
 
       <Wave top="var(--sand-light)" bottom="var(--navy)" dual dualBottomFill="var(--navy)" />
+
+      </main>
 
       <Footer />
       <Lightbox />

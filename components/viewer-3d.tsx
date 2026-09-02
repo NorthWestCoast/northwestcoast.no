@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Script from 'next/script';
+import Link from 'next/link';
 
 const VIEWER_INFOS = [
   {
@@ -45,9 +46,14 @@ export default function Viewer3D() {
           <div>
             <div className="lbl">Interaktiv 3D-modell</div>
             <h2 className="stitle">Se Stigen i 3D</h2>
-            <p className="sub" style={{ marginBottom: '2rem' }}>
+            <p className="sub" style={{ marginBottom: '1.5rem' }}>
               Roter, zoom og utforsk Argostep i detalj. Klikk og dra for å rotere – skroll for å zoome.
             </p>
+            {/* The panel below asks whether you have found the right length for
+                your vessel; this is the link to the tool that answers it. */}
+            <Link href="/leiderkalkulator" className="btn-ghost" style={{ display: 'inline-flex', marginBottom: '2rem' }}>
+              Regn ut riktig lengde →
+            </Link>
             <div className="viewer-info">
               {VIEWER_INFOS.map((info) => (
                 <div className="vinfo" key={info.title}>

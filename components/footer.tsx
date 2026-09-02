@@ -1,4 +1,31 @@
 import Image from 'next/image';
+import Link from 'next/link';
+import { SITE } from '@/lib/site';
+
+/**
+ * Site footer.
+ *
+ * Two SEO-relevant fixes over the previous version:
+ *
+ * 1. The anchor links used to be bare fragments ("#kontakt", "#faq"). Those only
+ *    resolve on the front page — from /produkt or /faq they pointed at nothing,
+ *    which is a dead internal link on every subpage. They are now root-relative
+ *    ("/#kontakt"), so they work from anywhere and pass link equity home.
+ *
+ * 2. "Om oss" pointed at "#", a href that crawlers follow and then discard. It
+ *    now points at the section that actually carries the company story.
+ *
+ * The address block is also the site's visible NAP (name, address, phone) and is
+ * kept byte-identical to lib/site.ts, which feeds the Organization JSON-LD —
+ * consistency between the two is what lets search engines merge them into one
+ * business entity rather than two half-confident ones.
+ */
+
+const SOCIALS = [
+  { href: 'https://facebook.com', label: 'Facebook', short: 'f' },
+  { href: 'https://instagram.com', label: 'Instagram', short: 'ig' },
+  { href: 'https://linkedin.com', label: 'LinkedIn', short: 'in' },
+];
 
 export default function Footer() {
   return (
@@ -15,44 +42,67 @@ export default function Footer() {
             Maritimt sikkerhetsutstyr av høy kvalitet. Norsk produksjon fra Sunnmøre.
           </p>
           <div className="fsocial">
-            <a href="https://facebook.com" className="fsoc" target="_blank" rel="noopener noreferrer">f</a>
-            <a href="https://instagram.com" className="fsoc" target="_blank" rel="noopener noreferrer">ig</a>
-            <a href="https://linkedin.com" className="fsoc" target="_blank" rel="noopener noreferrer">in</a>
+            {SOCIALS.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                className="fsoc"
+                target="_blank"
+                rel="noopener noreferrer"
+                // The visible label is a one- or two-letter glyph; without this
+                // the link announces as "f" to a screen reader and carries no
+                // anchor text at all for a crawler.
+                aria-label={`NorthWest Coast på ${s.label}`}
+              >
+                <span aria-hidden="true">{s.short}</span>
+              </a>
+            ))}
           </div>
         </div>
 
         <div className="fcol">
           <h4>Produkter</h4>
           <ul>
-            <li><a href="/produkt">Argostep Livbåtleider</a></li>
-            <li><a href="/produkt">Reservedeler</a></li>
+            <li><Link href="/produkt">Argostep Livbåtleider</Link></li>
+            <li><Link href="/bestill">Bestill og pris</Link></li>
+            <li><Link href="/produkt">Reservedeler</Link></li>
+          </ul>
+        </div>
+
+        <div className="fcol">
+          <h4>Verktøy og hjelp</h4>
+          <ul>
+            <li><Link href="/leiderkalkulator">Leiderkalkulator</Link></li>
+            <li><Link href="/vedlikehold">Vedlikehold</Link></li>
+            <li><Link href="/faq">Ofte stilte spørsmål</Link></li>
+            <li><Link href="/nyheter">Nyheter</Link></li>
           </ul>
         </div>
 
         <div className="fcol">
           <h4>Selskap</h4>
           <ul>
-            <li><a href="#">Om oss</a></li>
-            <li><a href="#sertifisering">Sertifiseringer</a></li>
-            <li><a href="#kontakt">Kontakt</a></li>
-            <li><a href="#faq">FAQ</a></li>
+            <li><Link href="/#hvordan">Om oss</Link></li>
+            <li><Link href="/#sertifisering">Sertifiseringer</Link></li>
+            <li><Link href="/galleri">Galleri</Link></li>
+            <li><Link href="/#kontakt">Kontakt</Link></li>
           </ul>
         </div>
 
         <div className="fcol">
           <h4>Kontor</h4>
           <address>
-            <span>Postboks 79</span>
-            <span>6281 Søvik, Norge</span>
-            <span>Org.nr: 998 196 159</span>
+            <span>{SITE.address.poBox}</span>
+            <span>{SITE.address.postalCode} {SITE.address.city}, Norge</span>
+            <span>Org.nr: {SITE.orgNumber}</span>
             <span style={{ marginTop: '0.3rem' }}>
-              <a href="tel:+4790407341" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-                +47 904 07 341
+              <a href={`tel:${SITE.phone}`} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+                {SITE.phoneDisplay}
               </a>
             </span>
             <span>
-              <a href="mailto:arve@astep.no" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-                arve@astep.no
+              <a href={`mailto:${SITE.email}`} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+                {SITE.email}
               </a>
             </span>
           </address>
@@ -60,7 +110,7 @@ export default function Footer() {
       </footer>
 
       <div className="fbot">
-        <span>© 2026 Northwestcoast AS. Alle rettigheter forbeholdt.</span>
+        <span>© {new Date().getFullYear()} {SITE.legalName}. Alle rettigheter forbeholdt.</span>
         <span>Designet med ❤️ i Ålesund 🇳🇴</span>
       </div>
     </>
