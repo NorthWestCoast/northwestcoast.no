@@ -2,8 +2,15 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from './config';
 
-/** Stier som krever innlogging. */
-const PROTECTED = ['/minside'];
+/**
+ * Stier som krever innlogging.
+ *
+ * /admin krever i tillegg staff-flagget, men den sjekken ligger i
+ * requireStaff() – middleware sørger bare for at man er logget inn i det
+ * hele tatt, slik at uinnloggede havner på innloggingssiden framfor en
+ * redirect-runde via /minside.
+ */
+const PROTECTED = ['/minside', '/admin'];
 
 /**
  * Oppdaterer Supabase-sesjonen på hver request og vokter /minside.

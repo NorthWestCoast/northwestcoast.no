@@ -17,5 +17,5 @@ export const config = {
    * /auth/callback står utenfor med vilje: den route handleren setter
    * cookiene sine selv via createServerSupabase().
    */
-  matcher: ['/minside/:path*', '/logg-inn'],
+  matcher: ['/minside/:path*', '/admin/:path*', '/logg-inn'],
 };

@@ -108,3 +108,48 @@ Dette er stegene som ikke lot seg teste lokalt uten service-role-nøkkelen:
    EXIF (og ikke er lik opplastingstidspunktet), og at e-posten har signerte
    lenker.
 3. Logg inn på `/logg-inn` → magic link → `/minside` skal vise tallene.
+
+## 5. Gi noen tilgang til /admin
+
+Admin-verktøyet er gjerdet inn av `app_metadata.staff`. Flagget må settes med
+service-role – det er hele poenget: `app_metadata` kan ikke endres av brukeren
+selv, i motsetning til `user_metadata`. Lå flagget der, kunne hvem som helst
+gjort seg selv til ansatt.
+
+Personen må ha logget inn med magic link minst én gang først, slik at raden
+finnes i `auth.users`. Kjør så i Supabase SQL Editor:
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"staff": true}'::jsonb
+where email = 'arve@astep.no';
+```
+
+Ta bort tilgangen igjen:
+
+```sql
+update auth.users
+set raw_app_meta_data = raw_app_meta_data - 'staff'
+where email = 'arve@astep.no';
+```
+
+**Personen må logge ut og inn igjen** etterpå. Claimet ligger i JWT-en, og den
+gamle tokenet vet ingenting om det nye flagget før det fornyes.
+
+Databasen stoler ikke på nettsiden her: hver eneste RLS-policy for
+admin-skriving kaller `app.is_staff()` og leser samme claim. Verifisert at en
+innlogget kunde uten flagget verken kan opprette selskap, registrere leidere
+eller endre vedlikeholdsrapporter.
+
+## 6. Første ansatt, første kunde
+
+Rekkefølgen som får data inn i systemet:
+
+1. Logg inn på `/logg-inn` med din egen adresse.
+2. Sett `staff`-flagget (over), logg inn på nytt.
+3. `/admin/selskap` → opprett rederiet, åpne det, legg til fartøy.
+4. `/admin/leidere` → lim inn serienumrene for et produksjonsparti, koble dem
+   til fartøyet med installasjonsdato.
+5. `/admin/selskap/<id>` → inviter kundens kontaktperson.
+6. `/admin/service` → registrer servicerapport. Neste frist beregnes fra
+   leiderens serviceintervall om du ikke setter den selv.

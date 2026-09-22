@@ -58,8 +58,16 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: never;
-        Update: never;
+        Insert: {
+          id?: string;
+          name: string;
+          org_number?: string | null;
+          address?: string | null;
+          postal_code?: string | null;
+          city?: string | null;
+          country?: string;
+        };
+        Update: Partial<Database['public']['Tables']['companies']['Insert']>;
         Relationships: [];
       };
       vessels: {
@@ -75,8 +83,17 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: never;
-        Update: never;
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          imo?: string | null;
+          call_sign?: string | null;
+          mmsi?: string | null;
+          vessel_type?: string | null;
+          home_port?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['vessels']['Insert']>;
         Relationships: [];
       };
       ladders: {
@@ -94,8 +111,80 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: never;
-        Update: never;
+        Insert: {
+          id?: string;
+          serial_number: string;
+          public_code?: string | null;
+          product_id: string;
+          produced_at?: string | null;
+          vessel_id?: string | null;
+          installed_at?: string | null;
+          status?: LadderLifecycleStatus;
+          service_interval_months?: number;
+          notes?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['ladders']['Insert']>;
+        Relationships: [];
+      };
+      service_reports: {
+        Row: {
+          id: string;
+          ladder_id: string;
+          performed_at: string;
+          performed_by: string;
+          technician_user_id: string | null;
+          findings: string | null;
+          parts_replaced: Json;
+          result: ServiceResult;
+          next_service_due: string | null;
+          report_path: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ladder_id: string;
+          performed_at: string;
+          performed_by: string;
+          technician_user_id?: string | null;
+          findings?: string | null;
+          parts_replaced?: Json;
+          result: ServiceResult;
+          next_service_due?: string | null;
+          report_path?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['service_reports']['Insert']>;
+        Relationships: [];
+      };
+      company_members: {
+        Row: {
+          company_id: string;
+          user_id: string;
+          role: CompanyRole;
+          created_at: string;
+        };
+        Insert: { company_id: string; user_id: string; role?: CompanyRole };
+        Update: Partial<Database['public']['Tables']['company_members']['Insert']>;
+        Relationships: [];
+      };
+      company_invitations: {
+        Row: {
+          id: string;
+          company_id: string;
+          email: string;
+          role: CompanyRole;
+          invited_by: string | null;
+          expires_at: string;
+          accepted_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          email: string;
+          role?: CompanyRole;
+          invited_by?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['company_invitations']['Insert']>;
         Relationships: [];
       };
       products: {
