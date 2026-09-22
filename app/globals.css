@@ -3573,3 +3573,133 @@ footer {
 .mnt-video-placeholder p { color: var(--text-dim); font-size: 0.9rem; max-width: 34rem; }
 .mnt-video-placeholder a { color: var(--green); text-decoration: none; }
 .mnt-video-placeholder a:hover { text-decoration: underline; }
+
+/* ── INNLOGGING / MIN SIDE ── */
+.auth-section {
+  padding: 3.5rem 1.5rem 5rem;
+  display: flex;
+  justify-content: center;
+  background: var(--navy);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  text-align: left;
+}
+
+.auth-card h2 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--white);
+}
+
+.auth-card p { color: var(--text-dim); font-size: 0.92rem; line-height: 1.6; }
+.auth-success-icon { font-size: 2.5rem; }
+.auth-submit { width: 100%; justify-content: center; border: none; cursor: pointer; font-family: inherit; }
+
+.auth-hint { color: var(--text-muted); font-size: 0.82rem; }
+.auth-hint a, .auth-link {
+  color: var(--green);
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.auth-hint a:hover, .auth-link:hover { text-decoration: underline; }
+
+.minside-section { padding: 3rem 1.5rem 5rem; background: var(--navy); max-width: 62rem; margin: 0 auto; }
+
+.minside-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.minside-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+}
+.minside-stat-num { font-size: 2.2rem; font-weight: 800; color: var(--green); line-height: 1; }
+.minside-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.minside-note {
+  padding: 1.75rem;
+  background: rgba(46, 204, 113, 0.07);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 0.9rem;
+}
+.minside-note h2 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: 1.35rem;
+  color: var(--white);
+  margin-bottom: 0.7rem;
+}
+.minside-note p { color: var(--text-dim); font-size: 0.92rem; line-height: 1.7; margin-bottom: 0.6rem; }
+.minside-note a { color: var(--green); text-decoration: none; }
+.minside-note a:hover { text-decoration: underline; }
+
+/* ── JURIDISKE SIDER ── */
+.legal-section { padding: 3.5rem 1.5rem 5rem; background: var(--navy); }
+
+.legal-body {
+  max-width: 48rem;
+  margin: 0 auto;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+.legal-body h2 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: var(--white);
+  margin: 2.2rem 0 0.8rem;
+}
+.legal-body h2:first-child { margin-top: 0; }
+.legal-body p { margin-bottom: 1rem; }
+.legal-body ul { margin: 0 0 1rem 1.2rem; }
+.legal-body li { margin-bottom: 0.5rem; }
+.legal-body a { color: var(--green); text-decoration: none; }
+.legal-body a:hover { text-decoration: underline; }
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.86rem;
+  display: block;
+  overflow-x: auto;
+}
+.legal-table th,
+.legal-table td {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.65rem 0.8rem;
+  text-align: left;
+  vertical-align: top;
+}
+.legal-table th { color: var(--white); font-weight: 600; background: rgba(255, 255, 255, 0.04); }
+
+@media (max-width: 720px) {
+  .auth-card { padding: 1.5rem; }
+  .minside-section, .legal-section { padding: 2.5rem 1.2rem 3.5rem; }
+}

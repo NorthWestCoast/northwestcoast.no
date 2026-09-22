@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/faq`,          changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/vedlikehold`,  changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/nyheter`,      changeFrequency: 'weekly',  priority: 0.6 },
+    { url: `${SITE_URL}/personvern`,   changeFrequency: 'yearly',  priority: 0.3 },
   ];
 
   const articles: MetadataRoute.Sitemap = ARTICLES.map((article) => ({

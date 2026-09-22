@@ -29,7 +29,8 @@ export type AnalyticsEvent =
   | 'Lead: Phone click'     // klikk på telefonnummer
   | 'Lead: Email click'     // klikk på e-postadresse
   | 'Service: Maintenance logged' // vedlikehold registrert
-  | 'CTA: Bestill'; // klikk på "Bestill nå" (settes også via tagged-events-klasser)
+  | 'CTA: Bestill' // klikk på "Bestill nå" (settes også via tagged-events-klasser)
+  | 'Auth: Magic link requested'; // bedt om innloggingslenke til Min side
 
 type PlausibleProps = Record<string, string | number | boolean>;
 

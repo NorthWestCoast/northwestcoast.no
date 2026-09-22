@@ -4,6 +4,12 @@
  * Denne modulen deles av konfiguratoren (klient) og /api/order (server).
  * Serveren regner alltid ut prisen på nytt fra denne tabellen – klienten
  * sender kun lengde, antall og om skap er valgt, aldri kronebeløp.
+ *
+ * MERK – prisene finnes også i products-tabellen i Supabase. Denne filen er
+ * fasit for det kunden får se og betale, fordi /bestill er en statisk side
+ * som ikke skal gjøre et databasekall for å vise en pris. products-tabellen
+ * er speilet, og brukes til å knytte ordrelinjer til ekte produktrader.
+ * /api/order logger en feil hvis de to har drevet fra hverandre.
  */
 export type PriceRow = {
   length: number;
