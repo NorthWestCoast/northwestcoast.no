@@ -12,6 +12,10 @@ import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
 import { ORDER_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
 import { orderInternal, orderReceipt, type OrderLineView } from '@/lib/mail/templates';
 
+// Signering av opplastings-URL-er og e-postutsending kan ta noen
+// sekunder; standardgrensen er knapp når flere bilder er med.
+export const maxDuration = 30;
+
 const MAX_LINES = 20;
 const MAX_QTY = 99;
 

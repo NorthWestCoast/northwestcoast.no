@@ -4,6 +4,10 @@ import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
 import { SUPPORT_PHONE } from '@/lib/mail';
 import { notifyMaintenance } from './notify';
 
+// Signering av opplastings-URL-er og e-postutsending kan ta noen
+// sekunder; standardgrensen er knapp når flere bilder er med.
+export const maxDuration = 20;
+
 /**
  * Trinn 1 av vedlikeholdsinnsending: lagre teksten, og gi klienten signerte
  * opplastings-URL-er for bildene.

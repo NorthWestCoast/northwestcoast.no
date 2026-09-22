@@ -6,12 +6,16 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Alt unntatt statiske filer og bilder. Los-delingssiden (/los/:token)
-     * er med vilje IKKE unntatt – den er offentlig, men skal fortsatt gå
-     * gjennom middleware slik at den kan få sikkerhetsheadere senere.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|images|3d-models|.*\\.(?:svg|png|jpg|jpeg|gif|webp|glb)$).*)',
-  ],
+  /*
+   * Bevisst smal matcher.
+   *
+   * Nettstedet er nesten utelukkende statiske markedsføringssider. Kjørte
+   * middleware på alt, ville hver eneste sidevisning – også forsiden – gått
+   * gjennom en Supabase-sesjonssjekk, og hver invokasjon faktureres. Sesjonen
+   * betyr bare noe der man faktisk er innlogget.
+   *
+   * /auth/callback står utenfor med vilje: den route handleren setter
+   * cookiene sine selv via createServerSupabase().
+   */
+  matcher: ['/minside/:path*', '/logg-inn'],
 };

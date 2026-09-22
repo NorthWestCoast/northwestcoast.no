@@ -1,12 +1,33 @@
 /**
  * Kanonisk nettadresse. Brukes av metadataBase, sitemap, robots og JSON-LD.
- * På Vercel settes NEXT_PUBLIC_SITE_URL til produksjonsdomenet; VERCEL_URL
- * gir riktig adresse i previews slik at OG-bilder også virker der.
+ *
+ * Rekkefølgen har betydning for SEO. VERCEL_URL er DEPLOY-spesifikk
+ * (northwestcoast-bnsl9e85a-…vercel.app) – brukes den i produksjon, peker
+ * canonical-lenker og sitemap på en URL som byttes ut ved neste deploy.
+ * VERCEL_PROJECT_PRODUCTION_URL er derimot det stabile produksjonsdomenet.
+ *
+ * I previews vil vi motsatt ha den deploy-spesifikke URL-en, så OG-bilder og
+ * lenker peker på nettopp den previewen man ser på.
+ *
+ * Alle som importerer denne modulen kjører på serveren, så VERCEL_ENV og
+ * VERCEL_PROJECT_PRODUCTION_URL (uten NEXT_PUBLIC_-prefiks) er tilgjengelige.
  */
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://northwestcoast.no')
-).replace(/\/$/, '');
+function resolveSiteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (
+    process.env.VERCEL_ENV === 'production' &&
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+
+  return 'https://northwestcoast.no';
+}
+
+export const SITE_URL = resolveSiteUrl().replace(/\/$/, '');
 
 export const ORG = {
   name: 'Northwestcoast AS',

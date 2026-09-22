@@ -3,6 +3,10 @@ import { clean, clientIp, rateLimit } from '@/lib/api-guard';
 import { hasServiceRole } from '@/lib/supabase/server';
 import { notifyMaintenance } from '../notify';
 
+// Signering av opplastings-URL-er og e-postutsending kan ta noen
+// sekunder; standardgrensen er knapp når flere bilder er med.
+export const maxDuration = 30;
+
 /**
  * Trinn 2: klienten melder fra at bildene er lastet opp, og vi varsler NWC.
  *
