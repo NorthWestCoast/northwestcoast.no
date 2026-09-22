@@ -96,18 +96,51 @@ testrunde, og avsenderadressen blir ikke NWC sin.
   `frame-ancestors`. Det var for v0-previews og bør strammes inn når
   produksjonsdomenet er på plass.
 
-## 4. Første verifisering etter deploy
+## 4. Verifisering etter deploy
 
-Dette er stegene som ikke lot seg teste lokalt uten service-role-nøkkelen:
+Rekkefølgen er avhengighetsstyrt – hvert steg låser opp det neste. Alt dette
+er verifisert mot databasen eller lokalt, men aldri kjørt gjennom en ekte
+deploy, fordi service-role-nøkkelen ikke er tilgjengelig i utviklingsmiljøet.
 
-1. Send inn en bestilling på `/bestill` → sjekk at det kommer en rad i
-   `orders` + `order_lines`, og at både internvarsel og kundekvittering er
-   logget i `email_log`.
-2. Registrer vedlikehold på `/vedlikehold` **med et bilde tatt på mobil** →
-   sjekk at filen havner i `maintenance-photos`, at `captured_at` er satt fra
-   EXIF (og ikke er lik opplastingstidspunktet), og at e-posten har signerte
-   lenker.
-3. Logg inn på `/logg-inn` → magic link → `/minside` skal vise tallene.
+**1. Innlogging.** `/logg-inn` → lenke i innboksen → lander på `/minside`.
+Beviser at Resend virker, at redirect-URL-ene er godkjent i Supabase, og at
+sesjonscookie og middleware fungerer.
+*Feiler typisk på:* redirect-URL ikke godkjent, eller manglende egen SMTP
+(den innebygde ratelimiten stopper etter noen forsøk).
+
+**2. Staff-flagget.** Sett flagget (punkt 5), logg ut og inn, åpne `/admin`.
+Beviser at app_metadata-claimet faktisk havner i JWT-en der `app.is_staff()`
+leser det.
+*Feiler typisk på:* glemt å logge ut og inn – det gamle tokenet kjenner ikke
+det nye flagget.
+
+**3. Legg inn data.** `/admin/selskap` → rederi → fartøy → `/admin/leidere` →
+produksjonsparti → koble til fartøy. Beviser at staff-policyene for skriving
+virker gjennom en ekte sesjon.
+
+**4. Bestilling.** Send inn på `/bestill` → sjekk rad i `orders` og
+`order_lines`, ordrenummer på formen `NWC-2026-0001`, og to rader i
+`email_log`. Beviser skriveveien med service-role, prisberegning og
+e-postabstraksjonen.
+
+**5. Vedlikehold med bilde tatt på mobil.** Det viktigste steget. Sjekk at
+filen havner i `maintenance-photos`, at `captured_at` er satt fra EXIF og
+IKKE er lik opplastingstidspunktet, og at e-posten har signerte bildelenker.
+Beviser hele den signerte opplastingsrunden og komprimering i en ekte
+nettleser – ingen av delene lar seg kjøre uten mobil og service-role.
+`captured_at` er dessuten bærende for 24-timersregelen i los-delingen.
+
+**6. Invitasjon.** Inviter fra `/admin/selskap/<id>` → personen får e-post →
+logger inn → ser rederiet sitt. Beviser innløsningen i `/auth/callback`.
+Uten den ville en invitert person logget inn og tilhørt ingenting.
+
+**7. PDF.** Åpne `/minside/leider/<id>/pdf`. Sjekk at den laster ned, at
+sidetallet står nederst til høyre, og at bildene er med. Beviser at
+@react-pdf kjører i produksjonsbygget – bundlingen er en annen der enn i dev.
+
+**8. Stikkprøve på isolasjon.** Logg inn som en kunde fra et annet rederi og
+bekreft at fartøyene til det første ikke er synlige. Er verifisert i SQL, men
+fortjener én bekreftelse gjennom appen.
 
 ## 5. Gi noen tilgang til /admin
 
