@@ -55,6 +55,11 @@ export default async function LeiderPage({ params }: { params: Promise<{ id: str
       <div className="ms-title-row">
         <h1>{ladder.serial_number}</h1>
         <ServiceBadge state={ladder.service_state} days={ladder.days_until_service} />
+        {/* Dokumentet fartøyet viser ved tilsyn. Vanlig lenke, ikke fetch –
+            nettleseren håndterer nedlastingen selv. */}
+        <a href={`/minside/leider/${id}/pdf`} className="ms-download">
+          Last ned vedlikeholdslogg (PDF)
+        </a>
       </div>
 
       <section className="ms-section">

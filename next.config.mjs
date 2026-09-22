@@ -5,6 +5,10 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
 
+  // @react-pdf/renderer drar med seg avhengigheter som ikke tåler å bli
+  // bundlet av webpack. Lar Node laste pakken direkte i stedet.
+  serverExternalPackages: ['@react-pdf/renderer'],
+
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],

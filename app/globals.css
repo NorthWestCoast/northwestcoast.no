@@ -4144,3 +4144,21 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   .ms-kv > div { flex-direction: column; gap: 0.1rem; }
   .ms-kv dt { min-width: 0; }
 }
+
+/* Nedlasting av vedlikeholdslogg */
+.ms-download {
+  margin-left: auto;
+  padding: 0.5rem 0.95rem;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.45);
+  border-radius: 0.55rem;
+  color: #7ee2a8;
+  text-decoration: none;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.ms-download:hover { background: rgba(46, 204, 113, 0.2); }
+
+@media (max-width: 720px) {
+  .ms-download { margin-left: 0; }
+}

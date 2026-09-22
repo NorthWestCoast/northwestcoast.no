@@ -33,7 +33,9 @@ export const ORG = {
   name: 'Northwestcoast AS',
   legalName: 'Northwestcoast AS',
   orgNumber: '998 196 159',
+  // E.164 for tel:-lenker og JSON-LD; lesbar variant for dokumenter.
   phone: '+4790407341',
+  phoneDisplay: '+47 904 07 341',
   email: 'arve@astep.no',
   street: 'Postboks 79',
   postalCode: '6281',
