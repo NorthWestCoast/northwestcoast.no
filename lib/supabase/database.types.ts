@@ -222,6 +222,7 @@ export type Database = {
           performed_at: string;
           notes: string | null;
           source: string;
+          notified_at: string | null;
         };
         Insert: {
           id?: string;
@@ -236,6 +237,7 @@ export type Database = {
           performed_at?: string;
           notes?: string | null;
           source?: string;
+          notified_at?: string | null;
         };
         Update: Partial<Database['public']['Tables']['maintenance_logs']['Insert']>;
         Relationships: [];

@@ -1,18 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clean, clientIp, isBot, isEmail, rateLimit } from '@/lib/api-guard';
 import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
-import { MAINTENANCE_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
-import { maintenanceReceipt, maintenanceReport } from '@/lib/mail/templates';
+import { SUPPORT_PHONE } from '@/lib/mail';
+import { notifyMaintenance } from './notify';
 
-type ImagePayload = { name: string; type: string; dataUrl: string; capturedAt?: string };
+/**
+ * Trinn 1 av vedlikeholdsinnsending: lagre teksten, og gi klienten signerte
+ * opplastings-URL-er for bildene.
+ *
+ * Bildebytes går ALDRI gjennom denne ruten. Tidligere kom de som base64 i
+ * JSON-bodyen, og ett eneste 5 MB-bilde ble 6,7 MB – godt over Vercels
+ * 4,5 MB grense for serverless-funksjoner. Nå laster nettleseren opp direkte
+ * til Supabase Storage, og ruten håndterer bare metadata.
+ */
 
-const MAX_IMAGES = 8;
+type PhotoRequest = { name?: string; type?: string; capturedAt?: string | null };
+
+const MAX_IMAGES = 10;
 const BUCKET = 'maintenance-photos';
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+
+/** Gjør filnavnet trygt som storage-sti uten å miste gjenkjennelighet. */
+function safeName(name: string, index: number): string {
+  const cleaned = clean(name, 80)
+    .toLowerCase()
+    .replace(/[^\w.\-]/g, '_')
+    .replace(/_+/g, '_');
+  return cleaned || `bilde-${index + 1}.jpg`;
+}
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
-  if (isBot(body)) return NextResponse.json({ ok: true });
+  if (isBot(body)) return NextResponse.json({ ok: true, uploads: [] });
 
   if (!rateLimit(`maintenance:${clientIp(req)}`)) {
     return NextResponse.json(
@@ -27,7 +47,10 @@ export async function POST(req: NextRequest) {
   const serial = clean(body.serial, 60);
   const email = clean(body.email, 160);
   const notes = clean(body.notes, 4000);
-  const images = (Array.isArray(body.images) ? body.images : []) as ImagePayload[];
+  const photos = (Array.isArray(body.photos) ? body.photos : []).slice(
+    0,
+    MAX_IMAGES,
+  ) as PhotoRequest[];
 
   if (!name || !boat || !serial) {
     return NextResponse.json(
@@ -51,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   // Prøv å koble serienummeret til en registrert leider. Treffer vi ikke,
   // lagres innsendingen likevel med råteksten – en rapport skal aldri gå tapt
-  // fordi oppslaget bommet. NWC kan koble den manuelt senere.
+  // fordi oppslaget bommet.
   const { data: ladder } = await supabase
     .from('ladders')
     .select('id, vessel_id')
@@ -82,72 +105,47 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── Bilder til privat storage ───────────────────────────────────────────
-  const accepted = images
-    .slice(0, MAX_IMAGES)
-    .filter((img) => typeof img?.dataUrl === 'string' && img.dataUrl.includes(','));
+  // ── Signerte opplastings-URL-er ─────────────────────────────────────────
+  // `index` peker tilbake på klientens photos-array. Uten den ville et
+  // bilde som filtreres bort her forskyve alle de påfølgende, og filene
+  // havne på feil sti.
+  const uploads: { index: number; path: string; token: string }[] = [];
 
-  const attachments: { filename: string; content: string }[] = [];
-  let storedPhotos = 0;
+  for (const [index, photo] of photos.entries()) {
+    const type = clean(photo.type, 80);
+    if (!ALLOWED_TYPES.includes(type)) continue;
 
-  for (const [index, img] of accepted.entries()) {
-    const base64 = img.dataUrl.split(',')[1];
-    if (!base64) continue;
+    const path = `${log.id}/${index + 1}-${safeName(photo.name ?? '', index)}`;
 
-    const filename = clean(img.name, 120) || `bilde-${index + 1}.jpg`;
-    attachments.push({ filename, content: base64 });
-
-    const path = `${log.id}/${index + 1}-${filename.replace(/[^\w.\-]/g, '_')}`;
-    const { error: uploadError } = await supabase.storage
+    const { data: signed, error: signError } = await supabase.storage
       .from(BUCKET)
-      .upload(path, Buffer.from(base64, 'base64'), {
-        contentType: clean(img.type, 80) || 'image/jpeg',
-        upsert: false,
-      });
+      .createSignedUploadUrl(path);
 
-    if (uploadError) {
-      console.error('[maintenance] Kunne ikke laste opp bilde:', uploadError);
+    if (signError || !signed) {
+      console.error('[maintenance] Kunne ikke signere opplasting:', signError);
       continue;
     }
 
-    // captured_at kommer fra klienten når filen har et tidspunkt. Er det
-    // ukjent lar vi det stå tomt heller enn å påstå at opplastingstidspunktet
-    // er da bildet ble tatt.
-    const capturedAt = typeof img.capturedAt === 'string' ? img.capturedAt : null;
-
+    // Raden opprettes nå; fullfør-steget rydder bort de som aldri ble lastet opp.
     await supabase.from('maintenance_photos').insert({
       maintenance_log_id: log.id,
       storage_path: path,
-      captured_at: capturedAt,
+      captured_at: typeof photo.capturedAt === 'string' ? photo.capturedAt : null,
     });
-    storedPhotos += 1;
+
+    uploads.push({ index, path, token: signed.token });
   }
 
-  // ── Varsle NWC ──────────────────────────────────────────────────────────
-  const report = maintenanceReport({
-    name, boat, imo, serial, email, notes,
-    photoCount: storedPhotos,
+  // Uten bilder er rapporten komplett med én gang – varsle nå.
+  if (uploads.length === 0) {
+    await notifyMaintenance(log.id);
+  }
+
+  return NextResponse.json({
+    ok: true,
+    logId: log.id,
+    bucket: BUCKET,
+    uploads,
     matchedLadder: Boolean(ladder),
   });
-
-  await sendMail(
-    {
-      to: MAINTENANCE_EMAIL,
-      replyTo: email || undefined,
-      subject: `Vedlikehold registrert – ${boat} (${serial})`,
-      text: report,
-      attachments: attachments.length > 0 ? attachments : undefined,
-    },
-    { template: 'maintenance_internal', relatedType: 'maintenance_log', relatedId: log.id },
-  );
-
-  if (email) {
-    const receipt = maintenanceReceipt({ name, boat, serial, report });
-    await sendMail(
-      { to: email, replyTo: MAINTENANCE_EMAIL, ...receipt },
-      { template: 'maintenance_receipt', relatedType: 'maintenance_log', relatedId: log.id },
-    );
-  }
-
-  return NextResponse.json({ ok: true, matchedLadder: Boolean(ladder) });
 }
