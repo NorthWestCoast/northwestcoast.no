@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireStaff } from '@/lib/supabase/staff';
+import { sendInviteEmail } from '@/lib/invitations';
 
 /**
  * Server actions for admin.
@@ -13,7 +14,8 @@ import { requireStaff } from '@/lib/supabase/staff';
  * ble oppdaget nettopp fordi denne veien ble valgt.
  */
 
-export type ActionResult = { ok: true; message: string } | { ok: false; error: string };
+export type { ActionResult } from '@/components/action-form';
+import type { ActionResult } from '@/components/action-form';
 
 /** Normaliserer til kun siffer. Databasen validerer kontrollsifferet. */
 const digits = (value: FormDataEntryValue | null) =>
@@ -283,9 +285,23 @@ export async function inviteMember(formData: FormData): Promise<ActionResult> {
 
   if (error) return { ok: false, error: error.message };
 
+  // Uten e-post vet ikke personen at hun har fått tilgang; raden i databasen
+  // hjelper henne ikke. Feiler utsendingen, står invitasjonen likevel klar.
+  const { data: company } = await supabase
+    .from('companies')
+    .select('name')
+    .eq('id', companyId)
+    .maybeSingle();
+
+  await sendInviteEmail({
+    email,
+    companyName: company?.name ?? 'NorthWest Coast',
+    invitedBy: user.email,
+  });
+
   revalidatePath(`/admin/selskap/${companyId}`);
   return {
     ok: true,
-    message: `${email} er invitert. Invitasjonen løses inn når de logger inn med denne adressen.`,
+    message: `${email} er invitert og varslet på e-post.`,
   };
 }

@@ -3953,3 +3953,194 @@ footer {
   .adm-section { padding: 1.1rem; }
   .adm-head { padding: 0.9rem 1rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MIN SIDE (kundeportal)
+   ══════════════════════════════════════════════════════════════════════════ */
+.ms-head {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(10, 22, 40, 0.97);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+.ms-head-inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+}
+.ms-brand { color: var(--white); text-decoration: none; font-weight: 600; font-size: 0.92rem; }
+.ms-nav { display: flex; flex-wrap: wrap; gap: 1.1rem; margin-right: auto; }
+.ms-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.86rem;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+}
+.ms-nav a:hover { color: var(--white); border-bottom-color: var(--green); }
+.ms-user { color: var(--text-muted); font-size: 0.78rem; }
+
+.ms-main {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2.25rem 1.5rem 4.5rem;
+  background: var(--navy);
+  color: var(--text-dim);
+  min-height: 60vh;
+}
+
+.ms-main h1 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: 2rem;
+  color: var(--white);
+  margin-bottom: 1.5rem;
+}
+.ms-main h2 { font-size: 1.05rem; color: var(--white); font-weight: 600; margin-bottom: 0.5rem; }
+.ms-main h3 { font-size: 0.95rem; color: var(--white); font-weight: 600; margin-bottom: 0.5rem; }
+
+.ms-crumb { margin-bottom: 0.6rem; font-size: 0.82rem; }
+.ms-crumb a { color: var(--green); text-decoration: none; }
+.ms-crumb a:hover { text-decoration: underline; }
+
+.ms-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+.ms-title-row h1, .ms-title-row h2 { margin-bottom: 0; }
+
+.ms-section {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+}
+
+.ms-muted { color: var(--text-muted); font-size: 0.88rem; line-height: 1.65; }
+.ms-hint { margin-bottom: 1rem; font-size: 0.8rem; }
+.ms-muted a, .ms-delivery a { color: var(--green); text-decoration: none; }
+.ms-muted a:hover { text-decoration: underline; }
+
+/* Varselboks øverst – det som haster */
+.ms-alert { padding: 1.4rem 1.5rem; margin-bottom: 1.5rem; border-radius: 0.9rem; }
+.ms-alert h2 { margin-bottom: 0.7rem; }
+.ms-alert ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.ms-alert li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.87rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.ms-alert li:last-child { border-bottom: none; padding-bottom: 0; }
+.ms-alert li a { color: var(--white); font-family: var(--font-dm-mono), monospace; text-decoration: none; }
+.ms-alert li a:hover { text-decoration: underline; }
+.ms-alert-foot { margin-top: 0.9rem; font-size: 0.82rem; color: var(--text-muted); }
+.ms-alert-foot a { color: inherit; text-decoration: underline; }
+
+.ms-alert-red   { background: rgba(231, 76, 60, 0.1);  border: 1px solid rgba(231, 76, 60, 0.45); }
+.ms-alert-red h2 { color: #ff9e94; }
+.ms-alert-amber { background: rgba(241, 196, 15, 0.09); border: 1px solid rgba(241, 196, 15, 0.42); }
+.ms-alert-amber h2 { color: #f4d35e; }
+.ms-alert-green { background: rgba(46, 204, 113, 0.08); border: 1px solid rgba(46, 204, 113, 0.35); }
+.ms-alert-green h2 { color: #7ee2a8; }
+
+/* Kort */
+.ms-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+.ms-card {
+  display: block;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.8rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 204, 113, 0.06); }
+.ms-card h3 { font-family: var(--font-dm-mono), monospace; font-size: 0.95rem; }
+
+/* Nøkkel/verdi */
+.ms-kv { display: grid; gap: 0.3rem; margin-bottom: 0.9rem; }
+.ms-kv > div { display: flex; gap: 0.6rem; font-size: 0.83rem; }
+.ms-kv dt { color: var(--text-muted); min-width: 7rem; flex: 0 0 auto; }
+.ms-kv dd { margin: 0; color: var(--text-dim); }
+.ms-kv-wide { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin-bottom: 0; }
+
+.ms-cert {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Tabeller */
+.ms-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; display: block; overflow-x: auto; }
+.ms-table th {
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  white-space: nowrap;
+}
+.ms-table td { padding: 0.6rem 0.7rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); vertical-align: top; }
+.ms-table tr:last-child td { border-bottom: none; }
+
+/* Statusmerker */
+.ms-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.ms-badge-sub { font-size: 0.68rem; opacity: 0.8; }
+.ms-badge-ok       { background: rgba(46, 204, 113, 0.15); color: #7ee2a8; border: 1px solid rgba(46, 204, 113, 0.4); }
+.ms-badge-due_soon { background: rgba(241, 196, 15, 0.13); color: #f4d35e; border: 1px solid rgba(241, 196, 15, 0.42); }
+.ms-badge-overdue  { background: rgba(231, 76, 60, 0.14);  color: #ff9e94; border: 1px solid rgba(231, 76, 60, 0.48); }
+.ms-badge-unknown  { background: rgba(255, 255, 255, 0.07); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.16); }
+.ms-badge-neutral  { background: rgba(255, 255, 255, 0.07); color: var(--text-dim); border: 1px solid rgba(255, 255, 255, 0.16); }
+
+.ms-delivery {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  font-size: 0.83rem;
+  color: var(--text-muted);
+}
+
+.ms-empty-state {
+  max-width: 34rem;
+  padding: 2.5rem 0;
+}
+.ms-empty-state h1 { margin-bottom: 1rem; }
+.ms-empty-state p { color: var(--text-dim); line-height: 1.7; margin-bottom: 0.9rem; }
+.ms-empty-state a { color: var(--green); text-decoration: none; }
+
+/* Skjemaene i Min side gjenbruker admin-stilene. */
+.ms-section .adm-form { gap: 0.9rem; }
+
+@media (max-width: 720px) {
+  .ms-main { padding: 1.5rem 1.1rem 3rem; }
+  .ms-section { padding: 1.15rem; }
+  .ms-kv > div { flex-direction: column; gap: 0.1rem; }
+  .ms-kv dt { min-width: 0; }
+}

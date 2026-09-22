@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { requireStaff } from '@/lib/supabase/staff';
-import ActionForm from '@/components/admin/action-form';
+import ActionForm from '@/components/action-form';
 import { createVessel, inviteMember } from '../../actions';
 
 export default async function SelskapDetaljPage({

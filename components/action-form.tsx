@@ -1,7 +1,14 @@
 'use client';
 
 import { useActionState } from 'react';
-import type { ActionResult } from '@/app/admin/actions';
+
+/**
+ * Felles resultatform for server actions i admin og Min side.
+ * Holdes her, slik at komponenten ikke må importere fra en app-rute.
+ */
+export type ActionResult =
+  | { ok: true; message: string }
+  | { ok: false; error: string };
 
 /**
  * Skjema knyttet til en server action, med tilbakemelding.

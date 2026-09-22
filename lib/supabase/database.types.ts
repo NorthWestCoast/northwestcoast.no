@@ -126,6 +126,21 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['ladders']['Insert']>;
         Relationships: [];
       };
+      deliveries: {
+        Row: {
+          id: string;
+          order_id: string;
+          shipped_at: string | null;
+          delivered_at: string | null;
+          carrier: string | null;
+          tracking_reference: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       service_reports: {
         Row: {
           id: string;
@@ -184,7 +199,11 @@ export type Database = {
           role?: CompanyRole;
           invited_by?: string | null;
         };
-        Update: Partial<Database['public']['Tables']['company_invitations']['Insert']>;
+        // accepted_at settes ved innløsning, og er derfor skrivbar selv om
+        // den ikke gir mening å oppgi når invitasjonen opprettes.
+        Update: Partial<
+          Database['public']['Tables']['company_invitations']['Insert']
+        > & { accepted_at?: string | null };
         Relationships: [];
       };
       products: {

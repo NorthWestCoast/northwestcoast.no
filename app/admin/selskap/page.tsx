@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/supabase/staff';
-import ActionForm from '@/components/admin/action-form';
+import ActionForm from '@/components/action-form';
 import { createCompany } from '../actions';
 
 export default async function SelskapPage() {
