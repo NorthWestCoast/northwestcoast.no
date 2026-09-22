@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
 import OrderConfigurator from '@/components/order-configurator';
+import { pageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Bestill Argostep Livbåtleider | NorthWest Coast',
+export const metadata: Metadata = pageMetadata({
+  title: 'Bestill Argostep Livbåtleider',
   description:
     'Bestill din Argostep Livbåtleider. Velg lengde mellom 3 og 15 meter og tilbehør – og se leideren i 3D mens du konfigurerer.',
-};
+  path: '/bestill',
+});
 
 export default function BestillPage() {
   return (

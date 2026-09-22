@@ -1,7 +1,16 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
 import { ARTICLES } from '@/lib/articles';
+import { pageMetadata } from '@/lib/site';
+
+export const metadata: Metadata = pageMetadata({
+  title: 'Nyheter',
+  description:
+    'Nyheter, kundecaser og forskrifter for maritime leidere – fra NorthWest Coast på Sunnmøre.',
+  path: '/nyheter',
+});
 
 export default function NyheterPage() {
   return (

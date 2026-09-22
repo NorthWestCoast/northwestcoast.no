@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { track } from '@/lib/analytics';
 
 type ImageFile = { name: string; type: string; dataUrl: string };
 
@@ -51,7 +52,9 @@ export default function MaintenanceForm() {
           boat: data.boat,
           imo: data.imo,
           serial: data.serial,
+          email: data.email,
           notes: data.notes,
+          company_website: data.company_website, // honeypot
           images,
         }),
       });
@@ -59,6 +62,7 @@ export default function MaintenanceForm() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? 'Noe gikk galt. Prøv igjen.');
       }
+      track('Service: Maintenance logged', { props: { withImages: images.length > 0 } });
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Noe gikk galt. Prøv igjen.');
@@ -72,7 +76,10 @@ export default function MaintenanceForm() {
       <div className="mnt-success">
         <div className="mnt-success-icon" aria-hidden="true">✓</div>
         <h3>Vedlikehold registrert</h3>
-        <p>Takk! Rapporten er sendt til NorthWest Coast. Vi tar kontakt ved behov.</p>
+        <p>
+          Takk! Rapporten er sendt til NorthWest Coast. Oppga du e-post, har du fått en
+          kvittering du kan bruke som dokumentasjon ved tilsyn. Vi tar kontakt ved behov.
+        </p>
       </div>
     );
   }
@@ -100,6 +107,16 @@ export default function MaintenanceForm() {
         <div className="mnt-row">
           <label htmlFor="serial">Serienummer på leider *</label>
           <input id="serial" name="serial" type="text" placeholder="F.eks. ARG-2024-0142" required />
+        </div>
+        <div className="mnt-row">
+          <label htmlFor="email">E-post</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="For kvittering du kan vise ved tilsyn"
+            autoComplete="email"
+          />
         </div>
         <div className="mnt-row">
           <label htmlFor="notes">Kommentar</label>
@@ -148,6 +165,16 @@ export default function MaintenanceForm() {
           </div>
         </div>
       </div>
+
+      {/* Honeypot – skjult for mennesker, fylles ut av bots */}
+      <input
+        type="text"
+        name="company_website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hp-field"
+      />
 
       {error && <p className="mnt-error">{error}</p>}
 

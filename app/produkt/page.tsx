@@ -6,12 +6,16 @@ import Wave from '@/components/wave';
 import Features from '@/components/features';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
+import JsonLd from '@/components/json-ld';
+import { graph, organizationSchema, productSchema } from '@/lib/structured-data';
+import { pageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Argostep Livbåtleider – Produkt | NorthWest Coast',
+export const metadata: Metadata = pageMetadata({
+  title: 'Argostep Livbåtleider',
   description:
     'Argostep Livbåtleider – modulær, lett og sterk maritim leider i glassfiberarmert plast. ISO 799-1:2019 sertifisert og godkjent av Sjøfartsdirektoratet. Leveres fra 2 til 15 meter.',
-};
+  path: '/produkt',
+});
 
 const SPECS = [
   { key: 'Lengder', val: '2 – 15 meter (standard)' },
@@ -32,6 +36,8 @@ const VESSELS = [
 export default function ProduktPage() {
   return (
     <>
+      <JsonLd data={graph(organizationSchema, productSchema)} />
+
       <Nav />
 
       <div className="subpage-header">

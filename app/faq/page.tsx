@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
-import { FAQS } from '@/components/faq';
+import { FAQS } from '@/lib/faqs';
+import { track } from '@/lib/analytics';
 
 const CATEGORIES = ['Alle', 'Produkt', 'Sertifisering', 'Montering', 'Leveranse'];
 
@@ -12,6 +13,7 @@ export default function FaqPage() {
   const [category, setCategory] = useState('Alle');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const filtered = FAQS.filter((faq) => {
     const matchCat = category === 'Alle' || faq.category === category;
@@ -22,17 +24,31 @@ export default function FaqPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     setLoading(true);
     const data = Object.fromEntries(new FormData(e.currentTarget));
+
     try {
-      await fetch('/api/contact', {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, product: 'FAQ-spørsmål' }),
       });
-    } catch { /* fail silently */ }
-    setLoading(false);
-    setSubmitted(true);
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Vi klarte ikke å sende spørsmålet. Ring +47 904 07 341.');
+      }
+
+      track('Lead: Contact form', { props: { product: 'FAQ-spørsmål' } });
+      setSubmitted(true);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Vi klarte ikke å sende spørsmålet. Prøv igjen.',
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -111,6 +127,18 @@ export default function FaqPage() {
               <label>Spørsmål *</label>
               <textarea name="message" placeholder="Hva lurer du på?" required />
             </div>
+
+            {/* Honeypot – skjult for mennesker, fylles ut av bots */}
+            <input
+              type="text"
+              name="company_website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="hp-field"
+            />
+
+            {error && <p className="config-error">{error}</p>}
 
             {!submitted ? (
               <button

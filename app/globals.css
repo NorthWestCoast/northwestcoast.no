@@ -3485,3 +3485,91 @@ footer {
   .mnt-form { padding: 1.5rem; }
   .mnt-row { grid-template-columns: 1fr; gap: 0.5rem; padding: 1rem; }
 }
+
+/* ── HONEYPOT ──
+   Skjult for mennesker uten display:none, som noen bots hopper over. */
+.hp-field {
+  position: absolute !important;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── KONFIGURATOR: KONTAKTSTEG ── */
+.config-checkout {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.4rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+}
+
+.config-checkout-head {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: var(--white);
+  line-height: 1.3;
+}
+
+.config-checkout-head span {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-dm-sans), 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.config-checkout .config-submit { margin-top: 0.3rem; }
+.config-checkout .config-note { margin-top: 0; }
+.config-checkout .config-note a { color: var(--green); text-decoration: none; }
+.config-checkout .config-note a:hover { text-decoration: underline; }
+
+.config-error {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  background: rgba(231, 76, 60, 0.12);
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  border-radius: 0.7rem;
+  color: #ff9e94;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .config-checkout { padding: 1.1rem; }
+  .config-checkout .form-row { grid-template-columns: 1fr; }
+}
+
+/* ── NYHETSBREV: FEILMELDING ── */
+.nl-error {
+  margin-top: 1rem;
+  color: #ff9e94;
+  font-size: 0.85rem;
+}
+
+/* ── VEDLIKEHOLD: PLASSHOLDER FOR VIDEO ── */
+.mnt-video-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 0.9rem;
+}
+.mnt-video-placeholder span { font-size: 2.4rem; }
+.mnt-video-placeholder h2 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: 1.35rem;
+  color: var(--white);
+}
+.mnt-video-placeholder p { color: var(--text-dim); font-size: 0.9rem; max-width: 34rem; }
+.mnt-video-placeholder a { color: var(--green); text-decoration: none; }
+.mnt-video-placeholder a:hover { text-decoration: underline; }
