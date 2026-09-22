@@ -13,11 +13,15 @@ import Contact from '@/components/contact';
 import Newsletter from '@/components/newsletter';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
+import JsonLd from '@/components/json-ld';
+import { graph, organizationSchema, productSchema, websiteSchema } from '@/lib/structured-data';
 
 // Home page component
 export default function HomePage() {
   return (
     <>
+      <JsonLd data={graph(organizationSchema, websiteSchema, productSchema)} />
+
       <Nav />
 
       <Hero />
