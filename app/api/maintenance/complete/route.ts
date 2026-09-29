@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, rateLimit } from '@/lib/api-guard';
+import { clean, clientIp, langOf, rateLimit } from '@/lib/api-guard';
 import { hasServiceRole } from '@/lib/supabase/server';
 import { notifyMaintenance } from '../notify';
 
@@ -35,6 +35,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Ikke konfigurert.' }, { status: 500 });
   }
 
-  const notified = await notifyMaintenance(logId);
+  const notified = await notifyMaintenance(logId, langOf(body));
   return NextResponse.json({ ok: notified });
 }

@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, rateLimit } from '@/lib/api-guard';
+import { clean, clientIp, isBot, isEmail, langOf, rateLimit, tr } from '@/lib/api-guard';
 import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
 import { CONTACT_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
 import { contactInternal } from '@/lib/mail/templates';
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true });
 
   if (!rateLimit(`contact:${clientIp(req)}`)) {
     return NextResponse.json(
-      { error: `For mange forespørsler. Prøv igjen om noen minutter, eller ring ${SUPPORT_PHONE}.` },
+      { error: tr(lang, `For mange forespørsler. Prøv igjen om noen minutter, eller ring ${SUPPORT_PHONE}.`, `Too many requests. Please try again in a few minutes, or call ${SUPPORT_PHONE}.`) },
       { status: 429 },
     );
   }
@@ -24,10 +25,10 @@ export async function POST(req: NextRequest) {
   const message = clean(body.message, 4000);
 
   if (!name || !email) {
-    return NextResponse.json({ error: 'Navn og e-post er påkrevd' }, { status: 400 });
+    return NextResponse.json({ error: tr(lang, 'Navn og e-post er påkrevd', 'Name and email are required') }, { status: 400 });
   }
   if (!isEmail(email)) {
-    return NextResponse.json({ error: 'E-postadressen ser ikke gyldig ut.' }, { status: 400 });
+    return NextResponse.json({ error: tr(lang, 'E-postadressen ser ikke gyldig ut.', 'The email address does not look valid.') }, { status: 400 });
   }
 
   // Lagre først. En henvendelse som ligger i databasen er ikke tapt selv om
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
   // kunden få vite det, ikke en falsk kvittering.
   if (!stored && !result.ok) {
     return NextResponse.json(
-      { error: `Vi klarte ikke å sende meldingen nå. Ring oss på ${SUPPORT_PHONE}.` },
+      { error: tr(lang, `Vi klarte ikke å sende meldingen nå. Ring oss på ${SUPPORT_PHONE}.`, `We could not send your message right now. Please call us on ${SUPPORT_PHONE}.`) },
       { status: 502 },
     );
   }

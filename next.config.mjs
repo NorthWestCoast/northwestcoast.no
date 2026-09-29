@@ -16,34 +16,49 @@ const nextConfig = {
   },
 
   // Gamle URL-er fra dagens live-nettsted, slik at lenker og søkerangering
-  // følger med ved overgangen.
+  // følger med ved overgangen. Nye norske sider ligger på rot, engelske under /en.
   async redirects() {
-    // [gammel sti, ny sti]. Engelske sider finnes ikke ennå, så /en/* på det
-    // gamle nettstedet lander på de norske sidene. Når /en er bygget, pek
-    // /en/<sti> til /en/<ny sti> i stedet.
+    // [gammel sti, ny sti på norsk, ny sti på engelsk]
     const map = [
-      ['news', '/nyheter'],
-      ['products', '/produkt'],
+      ['news', '/nyheter', '/en/nyheter'],
+      ['products', '/produkt', '/en/produkt'],
       // Kontakt var egen side; skjemaet ligger nå nederst på forsiden.
-      ['contact-us', '/#kontakt'],
-      ['about-us', '/'],
+      ['contact-us', '/#kontakt', '/en#kontakt'],
+      ['about-us', '/', '/en'],
       // Innlogging finnes fortsatt, nå som innloggingslenke på e-post.
-      ['login', '/logg-inn'],
-      ['register', '/logg-inn'],
-      ['faq', '/faq'],
-      ['leveranse-ms-skar-senior', '/nyheter'],
-      ['hvordan-bruke-var-leider', '/nyheter'],
-      ['hvordan-installere-var-leider', '/nyheter'],
+      ['login', '/logg-inn', '/logg-inn'],
+      ['register', '/logg-inn', '/logg-inn'],
+      ['leveranse-ms-skar-senior', '/nyheter', '/en/nyheter'],
+      ['hvordan-bruke-var-leider', '/nyheter', '/en/nyheter'],
+      ['hvordan-installere-var-leider', '/nyheter', '/en/nyheter'],
     ];
-    const rules = [
-      { source: '/no', destination: '/', permanent: true },
-      { source: '/en', destination: '/', permanent: true },
-    ];
-    for (const [from, to] of map) {
-      rules.push({ source: `/no/${from}`, destination: to, permanent: true });
-      rules.push({ source: `/en/${from}`, destination: to, permanent: true });
+    const rules = [];
+    for (const [from, no, en] of map) {
+      rules.push({ source: `/no/${from}`, destination: no, permanent: true });
+      rules.push({ source: `/en/${from}`, destination: en, permanent: true });
     }
+    // Én kanonisk adresse per side: norsk ligger på rot, ikke under /no.
+    rules.push({ source: '/no', destination: '/', permanent: true });
+    rules.push({ source: '/no/:path*', destination: '/:path*', permanent: true });
     return rules;
+  },
+
+  // Norsk er standardspråk og ligger på rot (/produkt), selv om filene ligger
+  // under app/(site)/[lang]. Rewrites fungerer uten middleware, så sidene kan
+  // fortsatt genereres statisk. afterFiles: public-filer og rutehandlere
+  // (sitemap, robots, llms.txt, /api, /og) vinner før språkreglene kjører.
+  async rewrites() {
+    // Innloggede områder og tekniske stier hører ikke til språkskallet.
+    const skip = 'no|en|api|og|minside|admin|logg-inn|auth|los|personvern|_next';
+    return {
+      beforeFiles: [],
+      afterFiles: [
+        { source: '/', destination: '/no' },
+        { source: `/:path((?!${skip})[^/]+)`, destination: '/no/:path' },
+        { source: `/:path((?!${skip})[^/]+)/:rest*`, destination: '/no/:path/:rest*' },
+      ],
+      fallback: [],
+    };
   },
 
   async headers() {

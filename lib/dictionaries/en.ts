@@ -40,7 +40,7 @@ export const en: Dict = {
     vedlikehold: {
       title: 'Ladder maintenance | NorthWest Coast',
       description:
-        'See how to maintain the Argostep lifeboat ladder and log completed maintenance for your vessel.',
+        'See how to maintain the Argostep lifeboat ladder and log completed maintenance for your vessel – with an email receipt as documentation.',
     },
     faq: {
       title: 'Frequently asked questions | NorthWest Coast',
@@ -342,6 +342,10 @@ export const en: Dict = {
     company: 'Company',
     about: 'About us',
     certifications: 'Certifications',
+    orderList: 'Order / price list',
+    maintenance: 'Maintenance',
+    news: 'News',
+    privacy: 'Privacy',
     contact: 'Contact',
     faq: 'FAQ',
     office: 'Office',
@@ -384,6 +388,16 @@ export const en: Dict = {
   },
 
   order: {
+    errorSend: 'We could not send the order. Please call +47 904 07 341.',
+    errorRetry: 'We could not send the order. Please try again.',
+    checkoutSub: 'We confirm price and delivery time – no obligation.',
+    sendRequest: 'Send request →',
+    sendRequestValue: (amount: string) => `Send request · ${amount} kr →`,
+    confirmRequest: (units: number) => `✓ Thank you! We have received your request for ${units} ladder(s) and sent you a confirmation by email. We will be in touch with a final quote and delivery time.`,
+    preferPhone: 'Prefer to talk to someone?',
+    callUs: 'Call +47 904 07 341',
+    vesselCompany: 'Vessel/Company',
+    notesPlaceholderBase: 'Preferred delivery time, installation, special requirements…',
     onRequest: 'Price on request',
     onRequestNote: 'The price for this length is agreed on request. It is not included in the total.',
     label: 'Ordering',
@@ -501,9 +515,18 @@ export const en: Dict = {
   },
 
   maintenance: {
+    maxImages: (n: number) => `Max ${n} photos per report.`,
+    tooLarge25: (fileName: string) => `The image “${fileName}” is too large (max 25 MB).`,
+    processing: 'Processing…',
+    saving: 'Saving report…',
+    uploadingImage: (i: number, n: number) => `Uploading photo ${i} of ${n}…`,
+    finishing: 'Finishing…',
+    emailPlaceholderReceipt: 'For a receipt you can show at inspection',
+    partialWarning: 'Note: not all photos were uploaded – probably poor coverage. The report itself is registered. Feel free to send the photos to',
+    compressHint: 'Photos are compressed automatically before upload, so they go quickly even with poor coverage on board.',
     label: 'Maintenance',
     title: 'Ladder maintenance',
-    sub: 'Watch the video showing how maintenance is carried out, and log completed maintenance for your vessel at the bottom of the page.',
+    sub: 'Log completed maintenance for your vessel – and get an email receipt you can use as documentation at inspection.',
     videoTitle: 'Maintenance of the Argostep lifeboat ladder',
     videoSoon: 'The maintenance video is coming soon',
     videoFallback: 'Need guidance or spare parts now? Call',
@@ -532,7 +555,7 @@ export const en: Dict = {
     sending: 'Sending…',
     successTitle: 'Maintenance logged',
     successBody:
-      'Thank you! The report has been sent to NorthWest Coast. If you entered an email address, you will receive a receipt you can file with the vessel’s maintenance documentation.',
+      'Thank you! The report has been sent to NorthWest Coast. If you entered an email address, you have received a receipt you can use as documentation at inspection.',
     tooLarge: (fileName: string) => `The image “${fileName}” is too large (max 5 MB).`,
   },
 

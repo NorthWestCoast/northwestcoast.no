@@ -19,7 +19,7 @@ const LINK_TTL_SECONDS = 60 * 60 * 24 * 90; // 90 dager
  * Rydder samtidig bort bilderader der opplastingen aldri kom fram, slik at
  * loggen viser det som faktisk finnes.
  */
-export async function notifyMaintenance(logId: string): Promise<boolean> {
+export async function notifyMaintenance(logId: string, lang: 'no' | 'en' = 'no'): Promise<boolean> {
   const supabase = createServiceSupabase();
 
   const { data: log } = await supabase
@@ -94,7 +94,19 @@ export async function notifyMaintenance(logId: string): Promise<boolean> {
   if (log.reporter_email) {
     // Kvitteringen til fartøyet er dokumentasjon ved tilsyn, så den skal
     // inneholde selve rapporten – men ikke bildelenkene, som er interne.
-    const receipt = maintenanceReceipt({ name, boat, serial, report });
+    // Kvitteringen skrives på kundens språk; den interne rapporten er alltid norsk.
+    const customerReport = maintenanceReport({
+      name,
+      boat,
+      imo: log.imo_raw ?? undefined,
+      serial,
+      email: log.reporter_email ?? undefined,
+      notes: log.notes ?? undefined,
+      photoCount: links.length,
+      matchedLadder: Boolean(log.ladder_id),
+      lang,
+    });
+    const receipt = maintenanceReceipt({ name, boat, serial, report: customerReport, lang });
     await sendMail(
       { to: log.reporter_email, replyTo: MAINTENANCE_EMAIL, ...receipt },
       { template: 'maintenance_receipt', relatedType: 'maintenance_log', relatedId: log.id },

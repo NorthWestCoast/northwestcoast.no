@@ -1,5 +1,6 @@
 import { PRICE_TABLE, fmt, MIN_PRICE, MAX_PRICE } from '@/lib/pricing';
 import { ORG, SITE_URL } from '@/lib/site';
+import { localePath } from '@/lib/i18n';
 
 /**
  * llms.txt: en kort, lesbar oppsummering for AI-assistenter (llmstxt.org).
@@ -33,14 +34,23 @@ export function GET() {
 
 ${sizes}
 
-## Pages
+## Pages (English)
 
-- [Product](${SITE_URL}/produkt): specifications, certification and suitable vessels
-- [Ladder calculator](${SITE_URL}/kalkulator): work out the ladder length from freeboard and mounting point, then order. A sizing aid, not a compliance certificate – final requirements are confirmed by class society, flag state or the Norwegian Maritime Authority
-- [Order](${SITE_URL}/bestill): configure length and storage cabinet and send an order
-- [FAQ](${SITE_URL}/faq): approval, lengths, service life, mounting, delivery, material, spare parts
-- [Maintenance](${SITE_URL}/vedlikehold): log completed maintenance for a vessel
-- [News](${SITE_URL}/nyheter)
+- [Product](${SITE_URL}${localePath('en', '/produkt')}): specifications, certification and suitable vessels
+- [Ladder calculator](${SITE_URL}${localePath('en', '/kalkulator')}): work out the ladder length from freeboard and mounting point, then order. A sizing aid, not a compliance certificate – final requirements are confirmed by class society, flag state or the Norwegian Maritime Authority
+- [Order](${SITE_URL}${localePath('en', '/bestill')}): configure length and storage cabinet and send an order
+- [FAQ](${SITE_URL}${localePath('en', '/faq')}): approval, lengths, service life, mounting, delivery, material, spare parts
+- [Maintenance](${SITE_URL}${localePath('en', '/vedlikehold')}): log completed maintenance for a vessel
+- [News](${SITE_URL}${localePath('en', '/nyheter')})
+
+## Sider (norsk)
+
+- [Produkt](${SITE_URL}/produkt)
+- [Leiderkalkulator](${SITE_URL}/kalkulator)
+- [Bestill](${SITE_URL}/bestill)
+- [Ofte stilte spørsmål](${SITE_URL}/faq)
+- [Vedlikehold](${SITE_URL}/vedlikehold)
+- [Nyheter](${SITE_URL}/nyheter)
 
 ## Contact
 

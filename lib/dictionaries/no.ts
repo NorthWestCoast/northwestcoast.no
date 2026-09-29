@@ -37,7 +37,7 @@ export const no = {
     vedlikehold: {
       title: 'Vedlikehold av leider | NorthWest Coast',
       description:
-        'Se hvordan du vedlikeholder Argostep livbåtleideren og registrer utført vedlikehold for ditt fartøy.',
+        'Se hvordan du vedlikeholder Argostep livbåtleideren og registrer utført vedlikehold for ditt fartøy – med kvittering på e-post som dokumentasjon.',
     },
     faq: {
       title: 'Ofte stilte spørsmål | NorthWest Coast',
@@ -336,6 +336,10 @@ export const no = {
     company: 'Selskap',
     about: 'Om oss',
     certifications: 'Sertifiseringer',
+    orderList: 'Bestill / prisliste',
+    maintenance: 'Vedlikehold',
+    news: 'Nyheter',
+    privacy: 'Personvern',
     contact: 'Kontakt',
     faq: 'FAQ',
     office: 'Kontor',
@@ -378,6 +382,16 @@ export const no = {
   },
 
   order: {
+    errorSend: 'Vi klarte ikke å sende bestillingen. Ring +47 904 07 341.',
+    errorRetry: 'Vi klarte ikke å sende bestillingen. Prøv igjen.',
+    checkoutSub: 'Vi bekrefter pris og leveringstid – ingen forpliktelse.',
+    sendRequest: 'Send forespørsel →',
+    sendRequestValue: (amount: string) => `Send forespørsel · ${amount} kr →`,
+    confirmRequest: (units: number) => `✓ Takk! Vi har mottatt forespørselen på ${units} leider(e) og sendt deg en bekreftelse på e-post. Vi tar kontakt for endelig tilbud og leveringstid.`,
+    preferPhone: 'Foretrekker du å snakke med noen?',
+    callUs: 'Ring +47 904 07 341',
+    vesselCompany: 'Fartøy/Rederi',
+    notesPlaceholderBase: 'Ønsket leveringstid, montering, spesialtilpasning…',
     onRequest: 'Pris på forespørsel',
     onRequestNote: 'Prisen på denne lengden avtales ved forespørsel. Den er ikke med i totalsummen.',
     label: 'Bestilling',
@@ -495,9 +509,18 @@ export const no = {
   },
 
   maintenance: {
+    maxImages: (n: number) => `Maks ${n} bilder per rapport.`,
+    tooLarge25: (fileName: string) => `Bildet "${fileName}" er for stort (maks 25 MB).`,
+    processing: 'Behandler…',
+    saving: 'Lagrer rapport…',
+    uploadingImage: (i: number, n: number) => `Laster opp bilde ${i} av ${n}…`,
+    finishing: 'Fullfører…',
+    emailPlaceholderReceipt: 'For kvittering du kan vise ved tilsyn',
+    partialWarning: 'Merk: ikke alle bildene ble lastet opp – sannsynligvis dårlig dekning. Selve rapporten er registrert. Send gjerne bildene til',
+    compressHint: 'Bildene komprimeres automatisk før opplasting, så de går raskt også med dårlig dekning om bord.',
     label: 'Vedlikehold',
     title: 'Vedlikehold av leider',
-    sub: 'Se videoen som viser hvordan vedlikeholdet utføres, og registrer utført vedlikehold for ditt fartøy nederst på siden.',
+    sub: 'Registrer utført vedlikehold for ditt fartøy – så får du en kvittering på e-post som dokumentasjon ved tilsyn.',
     videoTitle: 'Vedlikehold av Argostep livbåtleider',
     videoSoon: 'Vedlikeholdsvideoen kommer snart',
     videoFallback: 'Trenger du veiledning eller reservedeler nå? Ring',
@@ -525,7 +548,7 @@ export const no = {
     sending: 'Sender…',
     successTitle: 'Vedlikehold registrert',
     successBody:
-      'Takk! Rapporten er sendt til NorthWest Coast. Har du lagt inn e-post, får du en kvittering du kan legge ved fartøyets vedlikeholdsdokumentasjon.',
+      'Takk! Rapporten er sendt til NorthWest Coast. Oppga du e-post, har du fått en kvittering du kan bruke som dokumentasjon ved tilsyn.',
     tooLarge: (fileName: string) => `Bildet "${fileName}" er for stort (maks 5 MB).`,
   },
 

@@ -1,3 +1,6 @@
+import JsonLd from '@/components/json-ld';
+import { faqLd, productLd } from '@/lib/seo';
+import { DEFAULT_LANG, isLang } from '@/lib/i18n';
 import Nav from '@/components/nav';
 import Hero from '@/components/hero';
 import Features from '@/components/features';
@@ -13,15 +16,15 @@ import Contact from '@/components/contact';
 import Newsletter from '@/components/newsletter';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
-import JsonLd from '@/components/json-ld';
-import { graph, organizationSchema, productSchema, websiteSchema } from '@/lib/structured-data';
 
 // Home page component
-export default function HomePage() {
+export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang: raw } = await params;
+  const lang = isLang(raw) ? raw : DEFAULT_LANG;
+
   return (
     <>
-      <JsonLd data={graph(organizationSchema, websiteSchema, productSchema)} />
-
+      <JsonLd data={[productLd(lang), faqLd(lang, 4)]} />
       <Nav />
 
       <Hero />

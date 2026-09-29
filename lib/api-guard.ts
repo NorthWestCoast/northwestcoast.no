@@ -61,3 +61,15 @@ export function isEmail(value: string): boolean {
 export function isBot(body: Record<string, unknown>): boolean {
   return clean(body.company_website).length > 0;
 }
+
+export type ApiLang = 'no' | 'en';
+
+/** Språket klienten oppgir. Ukjente verdier faller tilbake på norsk. */
+export function langOf(body: Record<string, unknown>): ApiLang {
+  return body.lang === 'en' ? 'en' : 'no';
+}
+
+/** Velger tekst etter språk – brukes til feilmeldinger som vises til kunden. */
+export function tr(lang: ApiLang, no: string, en: string): string {
+  return lang === 'en' ? en : no;
+}

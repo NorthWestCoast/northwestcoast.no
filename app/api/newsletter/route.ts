@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, rateLimit } from '@/lib/api-guard';
+import { clean, clientIp, isBot, isEmail, rateLimit, langOf, tr } from '@/lib/api-guard';
 import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
 import { CONTACT_EMAIL, sendMail } from '@/lib/mail';
 
@@ -12,23 +12,24 @@ import { CONTACT_EMAIL, sendMail } from '@/lib/mail';
  */
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true });
 
   if (!rateLimit(`newsletter:${clientIp(req)}`, { limit: 3 })) {
-    return NextResponse.json({ error: 'For mange forsøk. Prøv igjen om litt.' }, { status: 429 });
+    return NextResponse.json({ error: tr(lang, 'For mange forsøk. Prøv igjen om litt.', 'Too many attempts. Please try again shortly.') }, { status: 429 });
   }
 
   const email = clean(body.email, 160).toLowerCase();
 
   if (!isEmail(email)) {
-    return NextResponse.json({ error: 'Skriv inn en gyldig e-postadresse.' }, { status: 400 });
+    return NextResponse.json({ error: tr(lang, 'Skriv inn en gyldig e-postadresse.', 'Please enter a valid email address.') }, { status: 400 });
   }
 
   if (!hasServiceRole()) {
     console.error('[newsletter] Supabase er ikke konfigurert – påmelding tapt:', email);
     return NextResponse.json(
-      { error: 'Vi klarte ikke å registrere deg nå. Prøv igjen senere.' },
+      { error: tr(lang, 'Vi klarte ikke å registrere deg nå. Prøv igjen senere.', 'We could not sign you up right now. Please try again later.') },
       { status: 500 },
     );
   }
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
   if (error) {
     console.error('[newsletter] Kunne ikke lagre påmelding:', error);
     return NextResponse.json(
-      { error: 'Vi klarte ikke å registrere deg nå. Prøv igjen senere.' },
+      { error: tr(lang, 'Vi klarte ikke å registrere deg nå. Prøv igjen senere.', 'We could not sign you up right now. Please try again later.') },
       { status: 502 },
     );
   }

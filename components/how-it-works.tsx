@@ -1,35 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-
-const STEPS = [
-  {
-    n: 1,
-    title: 'Modulært System',
-    desc: 'Enkel klikk-kobling for hvert trinn. Vedlikehold uten spesialverktøy – bytt ett trinn ved behov.',
-  },
-  {
-    n: 2,
-    title: 'Materialvalg',
-    desc: 'Høykvalitets glassfiberarmert plast for trinn og fester. Stropper sikkert festet til hvert trinn – lett vekt og høy styrke.',
-  },
-  {
-    n: 3,
-    title: 'Lagringsløsning',
-    desc: 'Dedikert skap beskyttet mot vær og vind. Forlenger levetiden og eliminerer slitasje fra eksponering.',
-  },
-  {
-    n: 4,
-    title: 'Rask Utsetting',
-    desc: 'Klikkbare forlengere gir stabil støtte. Montering og demontering utføres raskt av én person.',
-  },
-];
+import { useT } from '@/components/lang-provider';
 
 const VIDEO_ID = '3bB9M9vF80A';
 
 export default function HowItWorks() {
   const sectionRef = useRef<HTMLElement>(null);
   const [playing, setPlaying] = useState(false);
+  const t = useT();
+
+  const steps = [t.how.steps.modular, t.how.steps.material, t.how.steps.storage, t.how.steps.deploy];
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -44,12 +25,9 @@ export default function HowItWorks() {
     <section className="how" id="hvordan" ref={sectionRef}>
       <div className="how-grid reveal">
         <div>
-          <div className="lbl">Se den i aksjon</div>
-          <h2 className="stitle">Hvordan Argostep Fungerer</h2>
-          <p className="sub" style={{ marginBottom: '1.8rem' }}>
-            Argostep forenkler ombordstigning. Sammenlignet med tradisjonelle treleidere
-            er Argostep lettere, sterkere og mer holdbar – takket være glassfiberarmert plast.
-          </p>
+          <div className="lbl">{t.how.label}</div>
+          <h2 className="stitle">{t.how.title}</h2>
+          <p className="sub" style={{ marginBottom: '1.8rem' }}>{t.how.sub}</p>
           <div className="video-box">
             {playing ? (
               <iframe
@@ -60,7 +38,7 @@ export default function HowItWorks() {
                 style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
               />
             ) : (
-              <button className="yt-facade" onClick={() => setPlaying(true)} aria-label="Spill av video">
+              <button className="yt-facade" onClick={() => setPlaying(true)} aria-label={t.how.playLabel}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://i.ytimg.com/vi/${VIDEO_ID}/maxresdefault.jpg`}
@@ -80,16 +58,16 @@ export default function HowItWorks() {
 
         <div>
           <div className="steps">
-            {STEPS.map((s, i) => (
+            {steps.map((step, i) => (
               <div
                 className="step reveal"
-                key={s.n}
+                key={step.title}
                 style={{ transitionDelay: `${i * 0.1}s` }}
               >
-                <div className="step-n">{s.n}</div>
+                <div className="step-n">{i + 1}</div>
                 <div>
-                  <h4>{s.title}</h4>
-                  <p>{s.desc}</p>
+                  <h4>{step.title}</h4>
+                  <p>{step.desc}</p>
                 </div>
               </div>
             ))}

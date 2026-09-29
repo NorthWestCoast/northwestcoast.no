@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Script from 'next/script';
+import { useLang, useT } from '@/components/lang-provider';
 import { track, trackOrder } from '@/lib/analytics';
 import {
   LENGTHS,
@@ -18,6 +19,8 @@ type CartItem = OrderLine & { id: number };
 let nextId = 1;
 
 export default function OrderConfigurator() {
+  const lang = useLang();
+  const t = useT();
   // Currently configured (draft) item
   const [length, setLength] = useState(6);
   const [qty, setQty] = useState(1);
@@ -84,6 +87,7 @@ export default function OrderConfigurator() {
           vessel: data.vessel,
           notes: data.notes,
           company_website: data.company_website, // honeypot
+          lang,
           // Kun konfigurasjon sendes – serveren regner ut prisen selv.
           items: cart.map(({ length: l, qty: q, cabinet: c }) => ({ length: l, qty: q, cabinet: c })),
         }),
@@ -91,14 +95,14 @@ export default function OrderConfigurator() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? 'Vi klarte ikke å sende bestillingen. Ring +47 904 07 341.');
+        throw new Error(body.error ?? t.order.errorSend);
       }
 
       trackOrder('Order: Submitted', grandTotal, { lines: cart.length, units: totalUnits });
       setSent(true);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Vi klarte ikke å sende bestillingen. Prøv igjen.',
+        err instanceof Error ? err.message : t.order.errorRetry,
       );
     } finally {
       setSending(false);
@@ -117,7 +121,7 @@ export default function OrderConfigurator() {
         {/* @ts-expect-error – model-viewer is a custom web component */}
         <model-viewer
           src="/3d-models/leider-compressed-v2.glb"
-          alt="Argostep 3D modell"
+          alt={t.viewer.modelAlt}
           auto-rotate
           camera-controls
           shadow-intensity="1"
@@ -128,22 +132,24 @@ export default function OrderConfigurator() {
           ar
         />
         <div className="config-viewer-badge">
-          {row.onRequest ? `${length} m` : `${length} m · ${row.steps} trinn`}
+          {row.onRequest ? `${length} m` : `${length} m · ${row.steps} ${t.order.steps}`}
         </div>
-        <div className="config-viewer-hint">Dra for å rotere</div>
+        <div className="config-viewer-hint">{t.order.rotateHint}</div>
       </div>
 
       {/* Options */}
       <div className="config-panel">
-        <div className="lbl">Konfigurer din leider</div>
+        <div className="lbl">{t.order.configureLabel}</div>
         <h2 className="stitle">{row.productName}</h2>
         <p className="config-product-no">
-          {row.onRequest ? 'Pris på forespørsel' : `Produktnr. ${row.productNumber} · ${row.steps} trinn`}
+          {row.onRequest
+            ? t.order.onRequest
+            : `${t.order.productNo} ${row.productNumber} · ${row.steps} ${t.order.steps}`}
         </p>
 
         <div className="config-block">
           <div className="config-row">
-            <label htmlFor="length">Lengde</label>
+            <label htmlFor="length">{t.order.length}</label>
             <span className="config-value">{length} m</span>
           </div>
           <select
@@ -157,7 +163,7 @@ export default function OrderConfigurator() {
             }}
           >
             {LENGTHS.map((v) => (
-              <option key={v} value={v}>{v} meter</option>
+              <option key={v} value={v}>{v} {t.order.meters}</option>
             ))}
           </select>
         </div>
@@ -165,7 +171,7 @@ export default function OrderConfigurator() {
         {!row.onRequest && (
         <div className="config-block">
           <div className="config-row">
-            <label>Tilbehør</label>
+            <label>{t.order.accessories}</label>
           </div>
           <div className="config-extras">
             <button
@@ -178,8 +184,8 @@ export default function OrderConfigurator() {
                 {cabinet ? '✓' : ''}
               </span>
               <span className="config-extra-label">
-                {`Oppbevaringsskap ${row.cabinetName}`}
-                {cabinet && <span className="config-extra-tag">Valgt</span>}
+                {`${t.order.cabinet} ${row.cabinetName}`}
+                {cabinet && <span className="config-extra-tag">{t.order.selected}</span>}
               </span>
               <span className="config-extra-price">+{fmt(row.cabinetPrice)} kr</span>
             </button>
@@ -189,23 +195,23 @@ export default function OrderConfigurator() {
 
         <div className="config-block">
           <div className="config-row">
-            <label>Antall</label>
+            <label>{t.order.quantity}</label>
             <div className="config-qty">
-              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Færre">−</button>
+              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label={t.order.fewer}>−</button>
               <span>{qty}</span>
-              <button type="button" onClick={() => setQty((q) => q + 1)} aria-label="Flere">+</button>
+              <button type="button" onClick={() => setQty((q) => q + 1)} aria-label={t.order.more}>+</button>
             </div>
           </div>
         </div>
 
         <button type="button" className="btn-primary config-add" onClick={addToOrder}>
-          {row.onRequest ? 'Legg til i bestilling' : `Legg til i bestilling · ${fmt(draftTotal)} kr`}
+          {row.onRequest ? t.order.addToOrder : `${t.order.addToOrder} · ${fmt(draftTotal)} kr`}
         </button>
 
         {/* Order list */}
         {cart.length > 0 && (
           <div className="config-cart">
-            <div className="config-cart-head">Din bestilling ({cart.length})</div>
+            <div className="config-cart-head">{t.order.yourOrder} ({cart.length})</div>
             {cart.map((it) => {
               const r = rowFor(it.length);
               return (
@@ -214,18 +220,18 @@ export default function OrderConfigurator() {
                     <strong>{r.productName}</strong>
                     <span className="config-cart-meta">
                       {[
-                        r.onRequest ? 'Pris på forespørsel' : `Produktnr. ${r.productNumber}`,
-                        it.cabinet ? `Skap ${r.cabinetName}` : null,
+                        r.onRequest ? t.order.onRequest : `${t.order.productNo} ${r.productNumber}`,
+                        it.cabinet ? `${t.order.cabinet} ${r.cabinetName}` : null,
                       ].filter(Boolean).join(' · ')}
                     </span>
                   </div>
                   <div className="config-cart-qty">
-                    <button type="button" onClick={() => updateQty(it.id, -1)} aria-label="Færre">−</button>
+                    <button type="button" onClick={() => updateQty(it.id, -1)} aria-label={t.order.fewer}>−</button>
                     <span>{it.qty}</span>
-                    <button type="button" onClick={() => updateQty(it.id, 1)} aria-label="Flere">+</button>
+                    <button type="button" onClick={() => updateQty(it.id, 1)} aria-label={t.order.more}>+</button>
                   </div>
                   <div className="config-cart-price">{r.onRequest ? '–' : `${fmt(lineTotal(it))} kr`}</div>
-                  <button type="button" className="config-cart-remove" onClick={() => removeItem(it.id)} aria-label="Fjern">
+                  <button type="button" className="config-cart-remove" onClick={() => removeItem(it.id)} aria-label={t.order.remove}>
                     ×
                   </button>
                 </div>
@@ -236,23 +242,20 @@ export default function OrderConfigurator() {
 
         <div className="config-total">
           <div>
-            <span className="config-total-label">Totalsum</span>
+            <span className="config-total-label">{t.order.total}</span>
             <span className="config-total-sub">
-              {cart.length === 0 ? 'Legg til minst én leider' : `${totalUnits} leider(e)`}
+              {cart.length === 0 ? t.order.emptyHint : `${totalUnits} ${t.order.ladderCount}`}
             </span>
           </div>
           <span className="config-total-amount">
             {cart.length > 0 && cart.every((it) => rowFor(it.length).onRequest)
-              ? 'Pris på forespørsel'
+              ? t.order.onRequest
               : `${fmt(grandTotal)} kr`}
           </span>
         </div>
 
         {sent ? (
-          <div className="config-confirm">
-            ✓ Takk! Vi har mottatt forespørselen på {totalUnits} leider(e) og sendt deg en
-            bekreftelse på e-post. Vi tar kontakt for endelig tilbud og leveringstid.
-          </div>
+          <div className="config-confirm">{t.order.confirmRequest(totalUnits)}</div>
         ) : !checkoutOpen ? (
           <button
             type="button"
@@ -260,43 +263,43 @@ export default function OrderConfigurator() {
             onClick={openCheckout}
             disabled={cart.length === 0}
           >
-            Send bestilling →
+            {t.order.submit}
           </button>
         ) : (
           <form className="config-checkout" onSubmit={handleSubmit}>
             <div className="config-checkout-head">
-              Hvor skal vi sende tilbudet?
-              <span>Vi bekrefter pris og leveringstid – ingen forpliktelse.</span>
+              {t.order.leadTitle}
+              <span>{t.order.checkoutSub}</span>
             </div>
 
             <div className="form-row">
               <div className="fg">
-                <label htmlFor="order-name">Navn *</label>
-                <input id="order-name" name="name" type="text" placeholder="Ditt navn" required autoComplete="name" />
+                <label htmlFor="order-name">{t.order.fields.name}</label>
+                <input id="order-name" name="name" type="text" placeholder={t.order.fields.namePlaceholder} required autoComplete="name" />
               </div>
               <div className="fg">
-                <label htmlFor="order-email">E-post *</label>
-                <input id="order-email" name="email" type="email" placeholder="epost@firma.no" required autoComplete="email" />
+                <label htmlFor="order-email">{t.order.fields.email}</label>
+                <input id="order-email" name="email" type="email" placeholder={t.order.fields.emailPlaceholder} required autoComplete="email" />
               </div>
             </div>
 
             <div className="form-row">
               <div className="fg">
-                <label htmlFor="order-phone">Telefon</label>
-                <input id="order-phone" name="phone" type="tel" placeholder="+47 000 00 000" autoComplete="tel" />
+                <label htmlFor="order-phone">{t.order.fields.phone}</label>
+                <input id="order-phone" name="phone" type="tel" placeholder={t.order.fields.phonePlaceholder} autoComplete="tel" />
               </div>
               <div className="fg">
-                <label htmlFor="order-vessel">Fartøy/Rederi</label>
-                <input id="order-vessel" name="vessel" type="text" placeholder="F.eks. MS Havbris" autoComplete="organization" />
+                <label htmlFor="order-vessel">{t.order.vesselCompany}</label>
+                <input id="order-vessel" name="vessel" type="text" placeholder={t.order.fields.companyPlaceholder} autoComplete="organization" />
               </div>
             </div>
 
             <div className="fg">
-              <label htmlFor="order-notes">Kommentar</label>
+              <label htmlFor="order-notes">{t.order.fields.notes}</label>
               <textarea
                 id="order-notes"
                 name="notes"
-                placeholder="Ønsket leveringstid, montering, spesialtilpasning…"
+                placeholder={t.order.notesPlaceholderBase}
               />
             </div>
 
@@ -314,19 +317,19 @@ export default function OrderConfigurator() {
 
             <button type="submit" className="btn-primary config-submit" disabled={sending}>
               {sending
-                ? 'Sender…'
+                ? t.order.sending
                 : cart.every((it) => rowFor(it.length).onRequest)
-                  ? 'Send forespørsel →'
-                  : `Send forespørsel · ${fmt(grandTotal)} kr →`}
+                  ? t.order.sendRequest
+                  : t.order.sendRequestValue(fmt(grandTotal))}
             </button>
 
             <p className="config-note">
-              Foretrekker du å snakke med noen?{' '}
+              {t.order.preferPhone}{' '}
               <a
                 href="tel:+4790407341"
                 onClick={() => track('Lead: Phone click', { props: { source: 'configurator' } })}
               >
-                Ring +47 904 07 341
+                {t.order.callUs}
               </a>
             </p>
           </form>
@@ -334,11 +337,11 @@ export default function OrderConfigurator() {
 
         {cart.some((it) => rowFor(it.length).onRequest) && (
           <p className="config-note">
-            Prisen på 2 m avtales på forespørsel og er ikke med i totalsummen.
+            {t.order.onRequestNote}
           </p>
         )}
         <p className="config-note">
-          Prisen er veiledende eks. mva. Endelig tilbud bekreftes etter kontakt.
+          {t.order.note}
         </p>
       </div>
     </div>

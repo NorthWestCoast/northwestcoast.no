@@ -38,6 +38,24 @@ function orderSummary(lines: OrderLineView[]): string {
     .join('\n\n');
 }
 
+function orderSummaryEn(lines: OrderLineView[]): string {
+  return lines
+    .map((line) =>
+      line.onRequest
+        ? `${line.qty} × ${line.productName} – price on request`
+        : [
+            `${line.qty} × ${line.productName} (${line.productNumber}${
+              line.steps ? `, ${line.steps} steps` : ''
+            })`,
+            line.cabinetName ? `  + Storage cabinet ${line.cabinetName}` : null,
+            `  Sum: NOK ${fmt(line.lineTotal)}`,
+          ]
+            .filter(Boolean)
+            .join('\n'),
+    )
+    .join('\n\n');
+}
+
 export function orderInternal(args: {
   orderNumber: string;
   name: string;
@@ -79,7 +97,32 @@ export function orderReceipt(args: {
   name: string;
   lines: OrderLineView[];
   total: number;
+  lang?: 'no' | 'en';
 }) {
+  if (args.lang === 'en') {
+    return {
+      subject: `We have received your order (${args.orderNumber}) – NorthWest Coast`,
+      text: [
+        `Hi ${args.name},`,
+        ``,
+        `Thank you for your request. We have registered it as ${args.orderNumber} and`,
+        `will be in touch with confirmation and delivery time.`,
+        ``,
+        orderSummaryEn(args.lines),
+        ``,
+        `Total: NOK ${fmt(args.total)} excl. VAT.`,
+        ``,
+        `Prices are indicative. The final quote is confirmed by us.`,
+        ``,
+        `Need us quickly: ${SUPPORT_PHONE} / ${CONTACT_EMAIL}`,
+        ``,
+        `Kind regards`,
+        `NorthWest Coast AS`,
+        `PO Box 79, 6281 Søvik, Norway`,
+      ].join('\n'),
+    };
+  }
+
   return {
     subject: `Vi har mottatt bestillingen din (${args.orderNumber}) – NorthWest Coast`,
     text: [
@@ -135,7 +178,23 @@ export function maintenanceReport(args: {
   notes?: string;
   photoCount: number;
   matchedLadder: boolean;
+  lang?: 'no' | 'en';
 }) {
+  if (args.lang === 'en') {
+    return [
+      `Name: ${args.name}`,
+      `Vessel name: ${args.boat}`,
+      `IMO no.: ${args.imo || '–'}`,
+      `Ladder serial number: ${args.serial}`,
+      `Email: ${args.email || '–'}`,
+      ``,
+      `Comment:`,
+      args.notes || '–',
+      ``,
+      `Attached photos: ${args.photoCount}`,
+    ].join('\n');
+  }
+
   return [
     `Navn: ${args.name}`,
     `Navn på båt: ${args.boat}`,
@@ -153,7 +212,30 @@ export function maintenanceReport(args: {
   ].join('\n');
 }
 
-export function maintenanceReceipt(args: { name: string; boat: string; serial: string; report: string }) {
+export function maintenanceReceipt(args: {
+  name: string;
+  boat: string;
+  serial: string;
+  report: string;
+  lang?: 'no' | 'en';
+}) {
+  if (args.lang === 'en') {
+    return {
+      subject: `Receipt: maintenance logged – ${args.boat} (${args.serial})`,
+      text: [
+        `Hi ${args.name},`,
+        ``,
+        `We have registered the maintenance carried out on your Argostep ladder.`,
+        `Keep this email as documentation.`,
+        ``,
+        args.report,
+        ``,
+        `Kind regards`,
+        `NorthWest Coast AS`,
+      ].join('\n'),
+    };
+  }
+
   return {
     subject: `Kvittering: vedlikehold registrert – ${args.boat} (${args.serial})`,
     text: [

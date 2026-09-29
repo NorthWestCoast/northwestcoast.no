@@ -1,19 +1,16 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { Facebook, Instagram, Linkedin } from 'lucide-react';
+import { useLang, useT } from '@/components/lang-provider';
+import { localePath } from '@/lib/i18n';
 import { SOCIAL_URLS } from '@/lib/site';
 
-/**
- * Sosiale profiler settes med env-variabler. Er en ikke satt, vises ikonet
- * ikke – tidligere pekte alle tre på f.eks. facebook.com (forsiden), som
- * sendte besøkende ut av siden uten å lande noe sted.
- */
-const SOCIALS = [
-  { key: 'facebook',  label: 'f',  url: SOCIAL_URLS.facebook,  name: 'Facebook' },
-  { key: 'instagram', label: 'ig', url: SOCIAL_URLS.instagram, name: 'Instagram' },
-  { key: 'linkedin',  label: 'in', url: SOCIAL_URLS.linkedin,  name: 'LinkedIn' },
-].filter((s): s is typeof s & { url: string } => Boolean(s.url));
-
 export default function Footer() {
+  const lang = useLang();
+  const t = useT();
+
   return (
     <>
       <footer>
@@ -24,61 +21,71 @@ export default function Footer() {
             width={140}
             height={42}
           />
-          <p>
-            Maritimt sikkerhetsutstyr av høy kvalitet. Norsk produksjon fra Sunnmøre.
-          </p>
-          {SOCIALS.length > 0 && (
-            <div className="fsocial">
-              {SOCIALS.map((s) => (
-                <a
-                  key={s.key}
-                  href={s.url}
-                  className="fsoc"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.name}
-                >
-                  {s.label}
-                </a>
-              ))}
-            </div>
-          )}
+          <p>{t.footer.tagline}</p>
+          <div className="fsocial">
+            <a
+              href={SOCIAL_URLS.facebook}
+              className="fsoc"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+            >
+              <Facebook size={17} strokeWidth={1.8} />
+            </a>
+            <a
+              href={SOCIAL_URLS.instagram}
+              className="fsoc"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+            >
+              <Instagram size={17} strokeWidth={1.8} />
+            </a>
+            <a
+              href={SOCIAL_URLS.linkedin}
+              className="fsoc"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+            >
+              <Linkedin size={17} strokeWidth={1.8} />
+            </a>
+          </div>
         </div>
 
         <div className="fcol">
-          <h4>Produkter</h4>
+          <h4>{t.footer.products}</h4>
           <ul>
-            <li><Link href="/produkt">Argostep Livbåtleider</Link></li>
-            <li><Link href="/kalkulator">Leiderkalkulator</Link></li>
-            <li><Link href="/bestill">Bestill / prisliste</Link></li>
-            <li><Link href="/vedlikehold">Vedlikehold</Link></li>
+            <li><Link href={localePath(lang, '/produkt')}>{t.footer.ladder}</Link></li>
+            <li><Link href={localePath(lang, '/kalkulator')}>{t.calculator.navLabel}</Link></li>
+            <li><Link href={localePath(lang, '/bestill')}>{t.footer.orderList}</Link></li>
+            <li><Link href={localePath(lang, '/vedlikehold')}>{t.footer.maintenance}</Link></li>
           </ul>
         </div>
 
         <div className="fcol">
-          <h4>Selskap</h4>
+          <h4>{t.footer.company}</h4>
           <ul>
-            {/* Absolutte stier – ankerlenkene virket bare fra forsiden. */}
-            <li><Link href="/#sertifisering">Sertifiseringer</Link></li>
-            <li><Link href="/#kontakt">Kontakt</Link></li>
-            <li><Link href="/faq">FAQ</Link></li>
-            <li><Link href="/nyheter">Nyheter</Link></li>
-            <li><Link href="/personvern">Personvern</Link></li>
+            <li><Link href={`${localePath(lang, '/')}#sertifisering`}>{t.footer.certifications}</Link></li>
+            <li><Link href={`${localePath(lang, '/')}#kontakt`}>{t.footer.contact}</Link></li>
+            <li><Link href={localePath(lang, '/faq')}>{t.footer.faq}</Link></li>
+            <li><Link href={localePath(lang, '/nyheter')}>{t.footer.news}</Link></li>
+            {/* Personvernerklæringen finnes bare på norsk. */}
+            <li><Link href="/personvern">{t.footer.privacy}</Link></li>
           </ul>
         </div>
 
         <div className="fcol">
-          <h4>Kontor</h4>
+          <h4>{t.footer.office}</h4>
           <address>
-            <span>Postboks 79</span>
-            <span>6281 Søvik, Norge</span>
-            <span>Org.nr: 998 196 159</span>
+            <span>{t.footer.addressLine1}</span>
+            <span>{t.footer.addressLine2}</span>
+            <span>{t.footer.orgNo}</span>
             <span style={{ marginTop: '0.3rem' }}>
               <a
                 href="tel:+4790407341"
                 className="plausible-event-name=Lead:+Phone+click plausible-event-source=footer"
-                style={{ color: 'var(--text-muted)', textDecoration: 'none' }}
-              >
+                style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
                 +47 904 07 341
               </a>
             </span>
@@ -86,8 +93,7 @@ export default function Footer() {
               <a
                 href="mailto:arve@astep.no"
                 className="plausible-event-name=Lead:+Email+click plausible-event-source=footer"
-                style={{ color: 'var(--text-muted)', textDecoration: 'none' }}
-              >
+                style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
                 arve@astep.no
               </a>
             </span>
@@ -96,8 +102,8 @@ export default function Footer() {
       </footer>
 
       <div className="fbot">
-        <span>© 2026 Northwestcoast AS. Alle rettigheter forbeholdt.</span>
-        <span>Designet med ❤️ i Ålesund 🇳🇴</span>
+        <span>{t.footer.rights}</span>
+        <span>{t.footer.madeWith}</span>
       </div>
     </>
   );

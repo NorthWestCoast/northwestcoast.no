@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useLang, useT } from '@/components/lang-provider';
 import { track } from '@/lib/analytics';
 import { prepareImage, type PreparedImage } from '@/lib/images';
 import { createClient } from '@/lib/supabase/client';
@@ -35,6 +36,8 @@ const formatBytes = (bytes: number) =>
     : `${Math.round(bytes / 1024)} kB`;
 
 export default function MaintenanceForm() {
+  const lang = useLang();
+  const t = useT();
   const [images, setImages] = useState<Attachment[]>([]);
   const [preparing, setPreparing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,12 +57,12 @@ export default function MaintenanceForm() {
 
       for (const file of Array.from(files)) {
         if (images.length + accepted.length >= MAX_IMAGES) {
-          setError(`Maks ${MAX_IMAGES} bilder per rapport.`);
+          setError(t.maintenance.maxImages(MAX_IMAGES));
           break;
         }
         if (!file.type.startsWith('image/')) continue;
         if (file.size > MAX_ORIGINAL_BYTES) {
-          setError(`Bildet "${file.name}" er for stort (maks 25 MB).`);
+          setError(t.maintenance.tooLarge25(file.name));
           continue;
         }
 
@@ -89,7 +92,7 @@ export default function MaintenanceForm() {
 
     try {
       // ── 1. Lagre teksten og hent signerte opplastings-URL-er ───────────
-      setProgress('Lagrer rapport…');
+      setProgress(t.maintenance.saving);
 
       const res = await fetch('/api/maintenance', {
         method: 'POST',
@@ -102,6 +105,7 @@ export default function MaintenanceForm() {
           email: data.email,
           notes: data.notes,
           company_website: data.company_website, // honeypot
+          lang,
           photos: images.map((img) => ({
             name: img.file.name,
             type: img.file.type,
@@ -112,7 +116,7 @@ export default function MaintenanceForm() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? 'Noe gikk galt. Prøv igjen.');
+        throw new Error(body.error ?? t.errors.generic);
       }
 
       const { logId, bucket, uploads } = (await res.json()) as {
@@ -133,7 +137,7 @@ export default function MaintenanceForm() {
           const image = images[upload.index];
           if (!image) continue;
 
-          setProgress(`Laster opp bilde ${position + 1} av ${uploads.length}…`);
+          setProgress(t.maintenance.uploadingImage(position + 1, uploads.length));
 
           const { error: uploadError } = await supabase.storage
             .from(bucket)
@@ -147,11 +151,11 @@ export default function MaintenanceForm() {
         }
 
         // ── 3. Varsle NWC ────────────────────────────────────────────────
-        setProgress('Fullfører…');
+        setProgress(t.maintenance.finishing);
         await fetch('/api/maintenance/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ logId }),
+          body: JSON.stringify({ logId, lang }),
         }).catch(() => {
           // Rapporten er lagret uansett; varselet kan tas av en
           // opprydningsjobb. Ikke vis dette som en feil for mannskapet.
@@ -162,7 +166,7 @@ export default function MaintenanceForm() {
       setPartial(uploaded < uploads.length);
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Noe gikk galt. Prøv igjen.');
+      setError(err instanceof Error ? err.message : t.errors.generic);
     } finally {
       setLoading(false);
       setProgress(null);
@@ -173,15 +177,11 @@ export default function MaintenanceForm() {
     return (
       <div className="mnt-success">
         <div className="mnt-success-icon" aria-hidden="true">✓</div>
-        <h3>Vedlikehold registrert</h3>
-        <p>
-          Takk! Rapporten er sendt til NorthWest Coast. Oppga du e-post, har du fått en
-          kvittering du kan bruke som dokumentasjon ved tilsyn.
-        </p>
+        <h3>{t.maintenance.successTitle}</h3>
+        <p>{t.maintenance.successBody}</p>
         {partial && (
           <p className="mnt-warning">
-            Merk: ikke alle bildene ble lastet opp – sannsynligvis dårlig dekning.
-            Selve rapporten er registrert. Send gjerne bildene til{' '}
+            {t.maintenance.partialWarning}{' '}
             <a href="mailto:arve@astep.no">arve@astep.no</a>.
           </p>
         )}
@@ -192,47 +192,47 @@ export default function MaintenanceForm() {
   return (
     <form className="mnt-form" onSubmit={handleSubmit}>
       <div className="mnt-form-head">
-        <h2>Registrer vedlikehold</h2>
-        <p>Fyll inn opplysningene under og legg gjerne ved bilder av leideren.</p>
+        <h2>{t.maintenance.formTitle}</h2>
+        <p>{t.maintenance.formSub}</p>
       </div>
 
       <div className="mnt-table">
         <div className="mnt-row">
-          <label htmlFor="name">Navn *</label>
-          <input id="name" name="name" type="text" placeholder="Ditt navn" required />
+          <label htmlFor="name">{t.maintenance.name}</label>
+          <input id="name" name="name" type="text" placeholder={t.maintenance.namePlaceholder} required />
         </div>
         <div className="mnt-row">
-          <label htmlFor="boat">Navn på båt *</label>
-          <input id="boat" name="boat" type="text" placeholder="F.eks. MS Havbris" required />
+          <label htmlFor="boat">{t.maintenance.boat}</label>
+          <input id="boat" name="boat" type="text" placeholder={t.maintenance.boatPlaceholder} required />
         </div>
         <div className="mnt-row">
-          <label htmlFor="imo">IMO nr</label>
-          <input id="imo" name="imo" type="text" placeholder="F.eks. 9074729" />
+          <label htmlFor="imo">{t.maintenance.imo}</label>
+          <input id="imo" name="imo" type="text" placeholder={t.maintenance.imoPlaceholder} />
         </div>
         <div className="mnt-row">
-          <label htmlFor="serial">Serienummer på leider *</label>
-          <input id="serial" name="serial" type="text" placeholder="F.eks. ARG-2024-0142" required />
+          <label htmlFor="serial">{t.maintenance.serial}</label>
+          <input id="serial" name="serial" type="text" placeholder={t.maintenance.serialPlaceholder} required />
         </div>
         <div className="mnt-row">
-          <label htmlFor="email">E-post</label>
+          <label htmlFor="email">{t.maintenance.email}</label>
           <input
             id="email"
             name="email"
             type="email"
-            placeholder="For kvittering du kan vise ved tilsyn"
+            placeholder={t.maintenance.emailPlaceholderReceipt}
             autoComplete="email"
           />
         </div>
         <div className="mnt-row">
-          <label htmlFor="notes">Kommentar</label>
+          <label htmlFor="notes">{t.maintenance.notes}</label>
           <textarea
             id="notes"
             name="notes"
-            placeholder="Beskriv utført vedlikehold, tilstand eller avvik (valgfritt)"
+            placeholder={t.maintenance.notesPlaceholder}
           />
         </div>
         <div className="mnt-row mnt-row-files">
-          <label htmlFor="images">Bilder</label>
+          <label htmlFor="images">{t.maintenance.images}</label>
           <div className="mnt-files">
             <input
               id="images"
@@ -249,7 +249,7 @@ export default function MaintenanceForm() {
               onClick={() => fileInputRef.current?.click()}
               disabled={preparing || images.length >= MAX_IMAGES}
             >
-              {preparing ? 'Behandler…' : '+ Legg ved bilder'}
+              {preparing ? t.maintenance.processing : t.maintenance.addImages}
             </button>
 
             {images.length > 0 && (
@@ -266,7 +266,7 @@ export default function MaintenanceForm() {
                       type="button"
                       className="mnt-file-remove"
                       onClick={() => removeImage(img.id)}
-                      aria-label={`Fjern ${img.file.name}`}
+                      aria-label={`${t.maintenance.removeImage} ${img.file.name}`}
                     >
                       ✕
                     </button>
@@ -276,8 +276,7 @@ export default function MaintenanceForm() {
             )}
 
             <p className="mnt-file-hint">
-              Bildene komprimeres automatisk før opplasting, så de går raskt
-              også med dårlig dekning om bord.
+              {t.maintenance.compressHint}
             </p>
           </div>
         </div>
@@ -296,7 +295,7 @@ export default function MaintenanceForm() {
       {error && <p className="mnt-error">{error}</p>}
 
       <button type="submit" className="btn-primary mnt-submit" disabled={loading || preparing}>
-        {loading ? (progress ?? 'Sender…') : 'Send inn vedlikehold →'}
+        {loading ? (progress ?? t.maintenance.sending) : t.maintenance.submit}
       </button>
     </form>
   );

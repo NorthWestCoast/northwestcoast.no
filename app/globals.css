@@ -8,6 +8,9 @@
   --green: #2ecc71;
   --green-dark: #1aab57;
   --green-glow: rgba(46, 204, 113, 0.15);
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 4px;
   --sand: #e8e0d4;
   --sand-light: #f2ece4;
   --white: #fff;
@@ -72,11 +75,12 @@ nav {
 
 .nav-links {
   display: flex;
-  gap: 0.6rem;
+  gap: 1.35rem;
   list-style: none;
 }
 
 .nav-links a {
+  position: relative;
   display: inline-flex;
   align-items: center;
   color: var(--text-dim);
@@ -84,16 +88,32 @@ nav {
   font-size: 0.8rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.5rem 1.05rem;
-  border-radius: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
+  padding: 0.5rem 0.35rem;
+  transition: color 0.2s;
 }
 
-.nav-links a:hover {
-  color: var(--navy);
+/* Understreken vokser ut fra midten ved hover. */
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 0.35rem;
+  right: 0.35rem;
+  bottom: 0.15rem;
+  height: 2px;
+  border-radius: 2px;
   background: var(--green);
-  border-color: var(--green);
+  transform: scaleX(0);
+  transition: transform 0.22s ease;
+}
+
+.nav-links a:hover,
+.nav-links a:focus-visible {
+  color: var(--white);
+}
+
+.nav-links a:hover::after,
+.nav-links a:focus-visible::after {
+  transform: scaleX(1);
 }
 
 .nav-cta {
@@ -101,7 +121,7 @@ nav {
   color: var(--navy);
   font-weight: 700;
   padding: 0.62rem 1.5rem;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   text-decoration: none;
   font-size: 0.87rem;
   letter-spacing: 0.04em;
@@ -120,21 +140,76 @@ nav {
   align-items: center;
 }
 
-.nav-lang button {
+.nav-lang a {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6rem;
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--text-dim);
-  border-radius: 0.4rem;
+  border-radius: var(--r-md);
   padding: 0.2rem 0.5rem;
   font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  text-decoration: none;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.nav-lang button.active,
-.nav-lang button:hover {
+.nav-lang a.active {
   border-color: var(--green);
   color: var(--green);
+}
+
+.nav-lang a:hover,
+.nav-lang a:focus-visible {
+  border-color: var(--green);
+  color: var(--white);
+}
+
+/* Flagget fyller hele knappen og ligger bak teksten. Det er absolutt
+   posisjonert, så knappen endrer aldri bredde når det tones inn. */
+.nav-lang-flag {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  pointer-events: none;
+}
+
+.nav-lang-flag svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Demper flagget slik at etiketten holder seg lesbar oppå det. */
+.nav-lang-flag::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 22, 40, 0.55);
+}
+
+.nav-lang-label {
+  position: relative;
+  z-index: 1;
+}
+
+.nav-lang a:hover .nav-lang-flag,
+.nav-lang a:focus-visible .nav-lang-flag {
+  opacity: 1;
+}
+
+/* På touch finnes ingen hover-tilstand – der vises flagget permanent,
+   ellers står det bare en tom luke i knappen. */
+@media (hover: none) {
+  .nav-lang-flag { opacity: 1; }
 }
 
 /* Desktop: show lang in nav, hide in drawer */
@@ -232,30 +307,30 @@ nav {
 .btn-primary {
   background: var(--green);
   color: var(--navy);
-  font-weight: 700;
-  padding: 0.9rem 2rem;
-  border-radius: 3rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--r-md);
   text-decoration: none;
   font-size: 0.93rem;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.25s;
-  box-shadow: 0 0 28px rgba(46, 204, 113, 0.35);
-  border: 2px solid var(--green);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  border: 1px solid var(--green);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 48px rgba(46, 204, 113, 0.55);
+  background: var(--green-dark);
+  border-color: var(--green-dark);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--white);
   font-weight: 500;
-  padding: 0.9rem 2rem;
-  border-radius: 3rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--r-md);
   text-decoration: none;
   font-size: 0.93rem;
   border: 1.5px solid rgba(255, 255, 255, 0.28);
@@ -343,7 +418,7 @@ nav {
   height: 3.8rem;
   margin: 0 auto 1rem;
   background: rgba(26, 171, 87, 0.08);
-  border-radius: 0.9rem;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -422,11 +497,10 @@ h2.stitle.dark { color: var(--navy); }
 
 .video-box {
   position: relative;
-  border-radius: 1.4rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   aspect-ratio: 16/9;
   border: 1px solid rgba(46, 204, 113, 0.2);
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
   background: var(--navy);
 }
 
@@ -484,7 +558,7 @@ h2.stitle.dark { color: var(--navy); }
   gap: 1.1rem;
   align-items: flex-start;
   padding: 1.3rem;
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.07);
   transition: border-color 0.2s;
@@ -495,7 +569,7 @@ h2.stitle.dark { color: var(--navy); }
 .step-n {
   width: 2.2rem;
   height: 2.2rem;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   background: var(--green);
   color: var(--navy);
   font-weight: 700;
@@ -540,7 +614,7 @@ h2.stitle.dark { color: var(--navy); }
   font-weight: 600;
   font-size: 0.83rem;
   padding: 0.5rem 1.2rem;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -590,7 +664,7 @@ h2.stitle.dark { color: var(--navy); }
 }
 
 .g-card {
-  border-radius: 1.2rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   position: relative;
   cursor: pointer;
@@ -601,7 +675,6 @@ h2.stitle.dark { color: var(--navy); }
 
 .g-card:hover {
   transform: scale(1.02);
-  box-shadow: 0 20px 50px rgba(10, 22, 40, 0.25);
 }
 
 .g-card img {
@@ -624,7 +697,7 @@ h2.stitle.dark { color: var(--navy); }
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.3rem 0.8rem;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   letter-spacing: 0.04em;
 }
 
@@ -639,12 +712,64 @@ h2.stitle.dark { color: var(--navy); }
 }
 
 .viewer-box {
-  border-radius: 1.5rem;
+  position: relative;
+  border-radius: var(--r-lg);
   overflow: hidden;
   border: 1px solid rgba(46, 204, 113, 0.2);
-  background: linear-gradient(135deg, #0a1628, #0e2040);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  background: var(--navy-mid);
   height: 480px;
+}
+
+/* Fullskjerm-knapp i 3D-visningen */
+.viewer-fs-btn {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 22, 40, 0.72);
+  backdrop-filter: blur(6px);
+  color: var(--white);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.viewer-fs-btn:hover {
+  background: rgba(10, 22, 40, 0.92);
+  border-color: var(--green);
+  color: var(--green);
+}
+.viewer-fs-btn:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* Scenen fyller boksen, og er det eneste som løftes ut i fullskjerm. */
+.viewer-stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* Ekte fullskjerm via Fullscreen API */
+.viewer-stage:fullscreen {
+  width: 100%;
+  height: 100%;
+  background: var(--navy);
+}
+
+/* Reserveløsning der Fullscreen API ikke finnes (iOS Safari) */
+.viewer-stage.is-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  width: 100%;
+  height: 100%;
+  background: var(--navy);
 }
 
 model-viewer {
@@ -668,7 +793,7 @@ model-viewer {
   gap: 1rem;
   padding: 1rem 1.2rem;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 0.9rem;
+  border-radius: var(--r-md);
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
@@ -703,7 +828,7 @@ model-viewer {
 
 .cert-img {
   position: relative;
-  border-radius: 1.5rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   height: 400px;
 }
@@ -727,14 +852,14 @@ model-viewer {
   gap: 1rem;
   padding: 1.1rem 1.4rem;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 0.9rem;
+  border-radius: var(--r-md);
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .cert-tick {
   width: 2rem;
   height: 2rem;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   background: rgba(46, 204, 113, 0.12);
   border: 1.5px solid var(--green);
   display: flex;
@@ -769,7 +894,7 @@ model-viewer {
   gap: 0.6rem;
   padding: 0.8rem 1rem;
   background: rgba(46, 204, 113, 0.05);
-  border-radius: 0.7rem;
+  border-radius: var(--r-md);
   border: 1px solid rgba(46, 204, 113, 0.15);
   font-size: 0.85rem;
   color: var(--text-dim);
@@ -790,7 +915,7 @@ model-viewer {
 
 .mg-card {
   position: relative;
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
@@ -798,7 +923,6 @@ model-viewer {
 
 .mg-card:hover {
   transform: scale(1.02);
-  box-shadow: 0 16px 48px rgba(10, 22, 40, 0.2);
 }
 
 /* ── SUBPAGE HEADER ── */
@@ -842,7 +966,7 @@ model-viewer {
 .product-img {
   position: relative;
   height: 460px;
-  border-radius: 1.5rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   background: var(--sand);
 }
@@ -861,7 +985,7 @@ model-viewer {
   gap: 1rem;
   padding: 0.9rem 1.2rem;
   background: #fff;
-  border-radius: 0.8rem;
+  border-radius: var(--r-md);
   border: 1px solid rgba(10, 22, 40, 0.08);
 }
 
@@ -936,7 +1060,7 @@ model-viewer {
 }
 
 .photo-card {
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   position: relative;
   height: 200px;
@@ -976,7 +1100,7 @@ model-viewer {
 .testi-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.4rem;
+  border-radius: var(--r-lg);
   padding: 1.8rem;
   transition: border-color 0.2s;
 }
@@ -985,7 +1109,7 @@ model-viewer {
 
 .testi-ship {
   position: relative;
-  border-radius: 0.9rem;
+  border-radius: var(--r-md);
   overflow: hidden;
   height: 140px;
   margin-bottom: 1.4rem;
@@ -1022,7 +1146,7 @@ model-viewer {
 .tauthor-av {
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   background: rgba(46, 204, 113, 0.15);
   border: 1.5px solid var(--green);
   display: flex;
@@ -1056,15 +1180,12 @@ model-viewer {
 
 .news-card {
   background: #fff;
-  border-radius: 1.4rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(10, 22, 40, 0.08);
   transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .news-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(10, 22, 40, 0.15);
 }
 
 .news-img-box {
@@ -1093,7 +1214,7 @@ model-viewer {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.2rem 0.7rem;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   margin-bottom: 0.5rem;
 }
 
@@ -1140,12 +1261,11 @@ model-viewer {
 
 .news-mini {
   background: #fff;
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   display: flex;
   gap: 1rem;
   padding: 0.9rem;
-  box-shadow: 0 2px 12px rgba(10, 22, 40, 0.07);
   transition: transform 0.2s;
 }
 
@@ -1155,7 +1275,7 @@ model-viewer {
   position: relative;
   width: 80px;
   height: 80px;
-  border-radius: 0.6rem;
+  border-radius: var(--r-md);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -1195,7 +1315,7 @@ model-viewer {
 details.fi {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.9rem;
+  border-radius: var(--r-md);
   overflow: hidden;
   transition: border-color 0.2s;
 }
@@ -1259,7 +1379,7 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
 .ci-icon {
   width: 2.7rem;
   height: 2.7rem;
-  border-radius: 0.75rem;
+  border-radius: var(--r-md);
   background: rgba(46, 204, 113, 0.1);
   border: 1px solid rgba(46, 204, 113, 0.25);
   display: flex;
@@ -1314,7 +1434,7 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
 .fg textarea {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.7rem;
+  border-radius: var(--r-md);
   padding: 0.8rem 1rem;
   color: var(--white);
   font-family: var(--font-dm-sans), 'DM Sans', sans-serif;
@@ -1348,7 +1468,7 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
 
 /* ── NEWSLETTER ── */
 .nl {
-  background: linear-gradient(135deg, #061020 0%, #0a2e1a 100%);
+  background: #061020;
   padding: 5rem 4rem;
   text-align: center;
   border-top: 1px solid rgba(46, 204, 113, 0.15);
@@ -1377,7 +1497,7 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
   flex: 1;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   padding: 0.85rem 1.4rem;
   color: var(--white);
   font-family: var(--font-dm-sans), 'DM Sans', sans-serif;
@@ -1393,7 +1513,7 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
   color: var(--navy);
   font-weight: 700;
   border: none;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   padding: 0.85rem 1.6rem;
   cursor: pointer;
   font-family: var(--font-dm-sans), 'DM Sans', sans-serif;
@@ -1403,8 +1523,15 @@ details.fi[open] .fi-icon { transform: rotate(45deg); }
 }
 
 .nl-form button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(46, 204, 113, 0.35);
+  background: var(--green-dark);
+}
+
+.nl-form button:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
+
+.nl-error {
+  margin-top: 1rem;
+  color: #f0a0a0;
+  font-size: 0.85rem;
 }
 
 /* ── FOOTER ── */
@@ -1436,7 +1563,7 @@ footer {
 .fsoc {
   width: 2.3rem;
   height: 2.3rem;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -1447,6 +1574,8 @@ footer {
   color: var(--text-muted);
   transition: all 0.2s;
 }
+
+.fsoc svg { width: 1.05rem; height: 1.05rem; }
 
 .fsoc:hover {
   background: var(--green);
@@ -1510,7 +1639,9 @@ footer {
 
 .reveal.visible {
   opacity: 1;
-  transform: translateY(0);
+  /* Ikke translateY(0): enhver transform lager en containing block for
+     position: fixed, og da klarer ikke fullskjermvisningen å dekke skjermen. */
+  transform: none;
 }
 
 /* ── LIGHTBOX ── */
@@ -1529,8 +1660,14 @@ footer {
 .lightbox img {
   max-width: 90vw;
   max-height: 85vh;
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   object-fit: contain;
+}
+
+/* Bilder uten egen bakgrunn beholder sandflaten de har i galleriet. */
+.lightbox img.lb-contain {
+  background: var(--sand);
+  padding: 1.5rem;
 }
 
 .lb-close {
@@ -1574,7 +1711,7 @@ footer {
 .team-avatar {
   width: 3.5rem;
   height: 3.5rem;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   overflow: hidden;
   border: 2px solid var(--green);
   margin: 0 auto 0.4rem;
@@ -1615,7 +1752,7 @@ footer {
   padding: 0.85rem 1.2rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.75rem;
+  border-radius: var(--r-md);
   color: #fff;
   font-size: 0.95rem;
   font-family: inherit;
@@ -1645,7 +1782,7 @@ footer {
 .faq-full-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.2rem;
+  border-radius: var(--r-lg);
   padding: 2rem;
   transition: border-color 0.2s;
 }
@@ -1703,7 +1840,7 @@ footer {
   gap: 0.3rem;
   padding: 0.45rem 1.1rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   font-size: 0.82rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.75);
@@ -1747,7 +1884,7 @@ footer {
 .rv-overview-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.2rem;
+  border-radius: var(--r-lg);
   padding: 1.4rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -1769,7 +1906,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.65rem;
+  border-radius: var(--r-md);
   border: 1px solid;
   flex-shrink: 0;
 }
@@ -1823,7 +1960,7 @@ footer {
 .rv-intro-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.2rem;
+  border-radius: var(--r-lg);
   padding: 2rem;
   transition: border-color 0.2s;
 }
@@ -1885,7 +2022,7 @@ footer {
 .rv-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.4rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   transition: border-color 0.2s;
 }
@@ -1939,7 +2076,7 @@ footer {
   font-size: 0.72rem;
   font-weight: 700;
   padding: 0.3rem 0.75rem;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   white-space: nowrap;
 }
 
@@ -2029,7 +2166,7 @@ footer {
   color: rgba(245, 166, 35, 0.85);
   background: rgba(245, 166, 35, 0.07);
   border: 1px solid rgba(245, 166, 35, 0.2);
-  border-radius: 0.5rem;
+  border-radius: var(--r-md);
   padding: 0.5rem 0.75rem;
   margin-top: 0.5rem;
   line-height: 1.5;
@@ -2040,7 +2177,7 @@ footer {
   font-size: 0.72rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.4rem;
+  border-radius: var(--r-md);
   padding: 0.15rem 0.5rem;
   color: var(--text-muted);
   white-space: nowrap;
@@ -2059,9 +2196,8 @@ footer {
 
 .rv-table-wrap {
   overflow-x: auto;
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   border: 1px solid rgba(10, 22, 40, 0.12);
-  box-shadow: 0 2px 12px rgba(10, 22, 40, 0.06);
   margin-top: 1.5rem;
 }
 
@@ -2136,7 +2272,7 @@ footer {
 .rv-cert-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.2rem;
+  border-radius: var(--r-lg);
   padding: 2rem;
   transition: border-color 0.2s;
 }
@@ -2146,7 +2282,7 @@ footer {
 .rv-cert-icon {
   width: 3rem;
   height: 3rem;
-  border-radius: 0.8rem;
+  border-radius: var(--r-md);
   border: 1px solid;
   display: flex;
   align-items: center;
@@ -2252,7 +2388,7 @@ footer {
 .rv-maint-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.2rem;
+  border-radius: var(--r-lg);
   padding: 1.4rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -2274,7 +2410,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.65rem;
+  border-radius: var(--r-md);
   border: 1px solid;
   flex-shrink: 0;
   margin-top: 0.1rem;
@@ -2397,7 +2533,7 @@ footer {
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1.25rem;
-  border-radius: 0.75rem;
+  border-radius: var(--r-md);
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-muted);
@@ -2428,7 +2564,7 @@ footer {
   background: rgba(245, 166, 35, 0.2);
   color: #f5a623;
   border: 1px solid rgba(245, 166, 35, 0.35);
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   padding: 0.1rem 0.45rem;
   margin-left: 0.2rem;
 }
@@ -2451,7 +2587,7 @@ footer {
   color: #f5a623;
   background: rgba(245, 166, 35, 0.12);
   border: 1px solid rgba(245, 166, 35, 0.25);
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   padding: 0.15rem 0.6rem;
   margin-left: 0.5rem;
 }
@@ -2461,7 +2597,7 @@ footer {
   background: rgba(245, 166, 35, 0.06);
   border: 1px solid rgba(245, 166, 35, 0.35);
   border-left: 3px solid #f5a623;
-  border-radius: 0.75rem;
+  border-radius: var(--r-md);
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -2520,7 +2656,7 @@ footer {
 
 .rv-reg-card {
   background: #fff;
-  border-radius: 1.2rem;
+  border-radius: var(--r-lg);
   padding: 1.6rem;
   text-decoration: none;
   border: 1px solid rgba(10, 22, 40, 0.1);
@@ -2531,8 +2667,6 @@ footer {
 }
 
 .rv-reg-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(10, 22, 40, 0.12);
 }
 
 .rv-reg-card-top {
@@ -2629,17 +2763,24 @@ footer {
 
 .nav-drawer ul li a:hover { color: var(--green); }
 
-.nav-drawer-cta {
-  display: inline-block;
+.nav-drawer ul li a.nav-drawer-cta {
+  display: block;
+  text-align: center;
   margin-top: 1.5rem;
   background: var(--green);
   color: var(--navy) !important;
   font-weight: 700 !important;
-  padding: 0.75rem 1.8rem;
-  border-radius: 2rem;
+  padding: 0.85rem 1.8rem;
+  border-radius: var(--r-md);
   border-bottom: none !important;
-  font-size: 0.9rem !important;
+  font-size: 0.95rem !important;
   text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.nav-drawer ul li a.nav-drawer-cta:hover {
+  background: var(--green-dark);
+  color: var(--navy) !important;
 }
 
 .nav-backdrop {
@@ -2665,18 +2806,15 @@ footer {
 
 .nyheter-card {
   background: #fff;
-  border-radius: 1.4rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   text-decoration: none;
-  box-shadow: 0 4px 24px rgba(10, 22, 40, 0.08);
   transition: transform 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column;
 }
 
 .nyheter-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(10, 22, 40, 0.15);
 }
 
 .nyheter-card-img {
@@ -2841,7 +2979,39 @@ footer {
     height: 280px;
   }
 
-  .testi-grid { grid-template-columns: 1fr; }
+  /* Tre stablede kort ble over 1200px høyt på mobil. Sveip i stedet, med
+     neste kort synlig i kanten som hint om at det er mer å se. */
+  .testi-grid {
+    display: flex;
+    grid-template-columns: none;
+    gap: 1rem;
+    margin: 2.5rem -1.5rem 0;
+    padding: 0.5rem 1.5rem 1.25rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .testi-grid::-webkit-scrollbar { display: none; }
+
+  .testi-card {
+    flex: 0 0 82%;
+    scroll-snap-align: center;
+    padding: 1.5rem;
+  }
+
+  /* Kortene utenfor synsfeltet i karusellen skal ikke bli stående usynlige –
+     IntersectionObserver ser dem aldri. */
+  .testi-grid .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .testi-ship { height: 150px; margin-bottom: 1.2rem; }
+  .quote-mark { font-size: 3rem; margin-bottom: 0.7rem; }
+  .testi-card blockquote { margin-bottom: 1.2rem; }
   .news-grid  { grid-template-columns: 1fr; }
   .photostrip { grid-template-columns: repeat(2, 1fr); }
   .mg-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2905,6 +3075,15 @@ footer {
   .hero-stats .stat-num { font-size: 1.4rem; }
   .hero-stats .stat-label { font-size: 0.65rem; }
   section { padding: 3rem 1.2rem; }
+
+  /* Karusellen må følge den smalere sidepaddingen. */
+  .testi-grid {
+    margin-left: -1.2rem;
+    margin-right: -1.2rem;
+    padding-left: 1.2rem;
+    padding-right: 1.2rem;
+  }
+  .testi-card { flex-basis: 86%; }
 }
 
 /* ── BESTILL / KONFIGURATOR ── */
@@ -2924,10 +3103,10 @@ footer {
 
 .config-viewer {
   position: relative;
-  border-radius: 1.25rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   min-height: 520px;
-  background: radial-gradient(circle at 50% 35%, var(--navy-light) 0%, var(--navy) 70%);
+  background: var(--navy-mid);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -2953,7 +3132,7 @@ footer {
   font-weight: 600;
   letter-spacing: 0.03em;
   padding: 0.4rem 0.9rem;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
 }
 
 .config-viewer-hint {
@@ -2970,7 +3149,7 @@ footer {
 .config-panel {
   background: var(--navy-mid);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.25rem;
+  border-radius: var(--r-lg);
   padding: 2.25rem;
   display: flex;
   flex-direction: column;
@@ -3058,7 +3237,7 @@ footer {
   font-family: inherit;
   font-size: 0.82rem;
   padding: 0.4rem 0.85rem;
-  border-radius: 2rem;
+  border-radius: var(--r-md);
   cursor: pointer;
   transition: all 0.18s;
 }
@@ -3078,7 +3257,7 @@ footer {
   font-family: inherit;
   font-size: 0.9rem;
   padding: 0.7rem 0.9rem;
-  border-radius: 0.6rem;
+  border-radius: var(--r-md);
   cursor: pointer;
 }
 
@@ -3097,7 +3276,7 @@ footer {
   font-family: inherit;
   font-size: 0.88rem;
   padding: 0.75rem 1rem;
-  border-radius: 0.6rem;
+  border-radius: var(--r-md);
   cursor: pointer;
   transition: all 0.18s;
   text-align: left;
@@ -3115,7 +3294,7 @@ footer {
   justify-content: center;
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 0.35rem;
+  border-radius: var(--r-md);
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: var(--white);
   font-size: 0.85rem;
@@ -3143,7 +3322,7 @@ footer {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   padding: 0.12rem 0.45rem;
-  border-radius: 0.3rem;
+  border-radius: var(--r-md);
 }
 .config-extra-price { flex: 0 0 auto; color: var(--green); font-weight: 600; font-size: 0.82rem; }
 
@@ -3155,7 +3334,7 @@ footer {
   padding: 1.25rem;
   background: var(--navy);
   border: 1px solid var(--green);
-  border-radius: 0.85rem;
+  border-radius: var(--r-md);
 }
 .config-total-label { display: block; color: var(--text-dim); font-size: 0.85rem; }
 .config-total-sub { display: block; color: var(--text-muted); font-size: 0.75rem; margin-top: 0.15rem; }
@@ -3177,7 +3356,7 @@ footer {
   padding: 1rem;
   background: rgba(46, 204, 113, 0.12);
   border: 1px solid var(--green);
-  border-radius: 0.75rem;
+  border-radius: var(--r-md);
   color: var(--green);
   font-weight: 600;
   font-size: 0.9rem;
@@ -3199,7 +3378,7 @@ footer {
 .config-qty button {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: var(--navy);
   color: var(--white);
@@ -3252,7 +3431,7 @@ footer {
 .config-cart-qty button {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: transparent;
   color: var(--text-dim);
@@ -3287,10 +3466,69 @@ footer {
   cursor: not-allowed;
 }
 
+/* Kontaktopplysninger i bestillingen */
+.config-lead {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.config-lead-head h3 {
+  color: var(--white);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+.config-lead-head p {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin: 0 0 1.1rem;
+}
+.config-lead-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+.config-field { display: flex; flex-direction: column; gap: 0.35rem; }
+.config-field-wide { grid-column: 1 / -1; }
+.config-field label {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.config-field input,
+.config-field textarea {
+  width: 100%;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--r-md);
+  transition: border-color 0.18s;
+}
+.config-field textarea { min-height: 90px; resize: vertical; }
+.config-field input:focus,
+.config-field textarea:focus { outline: none; border-color: var(--green); }
+.config-field input::placeholder,
+.config-field textarea::placeholder { color: rgba(255, 255, 255, 0.4); }
+
+.config-error {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: rgba(224, 106, 106, 0.1);
+  border: 1px solid rgba(224, 106, 106, 0.5);
+  border-radius: var(--r-md);
+  color: #f0a0a0;
+  font-size: 0.85rem;
+}
+
 @media (max-width: 900px) {
   .config-section { padding: 2.5rem 1.2rem; }
   .config-grid { grid-template-columns: 1fr; gap: 1.5rem; }
   .config-viewer { min-height: 380px; }
+  .config-lead-grid { grid-template-columns: 1fr; }
 }
 
 /* ── VEDLIKEHOLD / MAINTENANCE ── */
@@ -3309,11 +3547,10 @@ footer {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: #000;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 .mnt-video iframe {
   position: absolute;
@@ -3326,7 +3563,7 @@ footer {
 .mnt-form {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   padding: 2.5rem;
 }
 .mnt-form-head { margin-bottom: 2rem; }
@@ -3343,7 +3580,7 @@ footer {
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.75rem;
+  border-radius: var(--r-md);
   overflow: hidden;
 }
 .mnt-row {
@@ -3366,7 +3603,7 @@ footer {
   width: 100%;
   background: var(--navy);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 0.55rem;
+  border-radius: var(--r-md);
   padding: 0.7rem 0.9rem;
   color: #fff;
   font-family: inherit;
@@ -3391,7 +3628,7 @@ footer {
   font-size: 0.9rem;
   font-weight: 600;
   padding: 0.7rem 1.1rem;
-  border-radius: 0.55rem;
+  border-radius: var(--r-md);
   cursor: pointer;
   transition: all 0.18s;
 }
@@ -3411,7 +3648,7 @@ footer {
   gap: 0.75rem;
   background: var(--navy);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 0.5rem;
+  border-radius: var(--r-md);
   padding: 0.5rem 0.8rem;
 }
 .mnt-file-name {
@@ -3432,6 +3669,45 @@ footer {
   transition: color 0.18s;
 }
 .mnt-file-remove:hover { color: #e06a6a; }
+
+.mnt-video-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 2rem;
+  text-align: center;
+  background: var(--navy-mid);
+}
+.mnt-video-empty h2 {
+  color: var(--white);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+.mnt-video-empty p { color: var(--text-dim); font-size: 0.92rem; margin: 0; max-width: 34rem; }
+.mnt-video-empty a { color: var(--green); text-decoration: none; }
+.mnt-video-empty a:hover { text-decoration: underline; }
+
+.mnt-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.mnt-consent input {
+  margin-top: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--green);
+  flex: 0 0 auto;
+  cursor: pointer;
+}
 
 .mnt-error {
   margin-top: 1rem;
@@ -3455,7 +3731,7 @@ footer {
   text-align: center;
   background: rgba(46, 204, 113, 0.1);
   border: 1px solid var(--green);
-  border-radius: 1rem;
+  border-radius: var(--r-lg);
   padding: 3rem 2rem;
 }
 .mnt-success-icon {
@@ -3467,7 +3743,7 @@ footer {
   justify-content: center;
   background: var(--green);
   color: #fff;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   font-size: 1.6rem;
   font-weight: 700;
 }
@@ -4162,6 +4438,42 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
 @media (max-width: 720px) {
   .ms-download { margin-left: 0; }
 }
+/* ── 404 ── */
+.nf {
+  min-height: 100vh;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+.nf-code {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: clamp(4rem, 14vw, 8rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--green);
+}
+.nf h1 {
+  font-family: var(--font-playfair), Georgia, serif;
+  color: var(--white);
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 700;
+  margin: 0;
+}
+.nf p {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin: 0;
+  max-width: 32rem;
+}
+.nf .btn-primary { display: inline-flex; margin-top: 0.6rem; }
+.nf-help { font-size: 0.85rem !important; color: var(--text-muted) !important; margin-top: 0.5rem !important; }
+.nf-help a { color: var(--green); text-decoration: none; }
+.nf-help a:hover { text-decoration: underline; }
 
 /* ── LEIDERKALKULATOR ── */
 .calc-section {
@@ -4181,7 +4493,7 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
 .calc-panel {
   background: var(--navy-mid);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.85rem;
+  border-radius: var(--r-lg);
   padding: 2rem;
 }
 
@@ -4230,7 +4542,7 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   font-family: inherit;
   font-size: 0.92rem;
   padding: 0.65rem 0.85rem;
-  border-radius: 0.6rem;
+  border-radius: var(--r-md);
   transition: border-color 0.18s;
 }
 .calc-field textarea { min-height: 90px; resize: vertical; }
@@ -4274,7 +4586,7 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   padding: 1.15rem 1.25rem;
   background: var(--navy);
   border: 1px solid var(--green);
-  border-radius: 0.6rem;
+  border-radius: var(--r-md);
 }
 .calc-required-label { color: var(--text-dim); font-size: 0.85rem; }
 .calc-required-value { color: var(--green); font-size: 1.7rem; font-weight: 800; }
@@ -4299,7 +4611,7 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   padding: 1.15rem 1.25rem;
   background: var(--navy);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.6rem;
+  border-radius: var(--r-md);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -4326,7 +4638,7 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
 .calc-notice {
   margin-top: 1.5rem;
   padding: 1.25rem;
-  border-radius: 0.6rem;
+  border-radius: var(--r-md);
   background: var(--navy);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
@@ -4379,13 +4691,42 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
 .calc-help-error { color: #f0a0a0; }
 .calc-help-ok { color: var(--green); }
 
+
 .calc-help-error { color: #f0a0a0; }
 .calc-help-ok { color: var(--green); }
+.news-date { display: inline-flex; align-items: center; gap: 0.4rem; }
+.vinfo-icon, .ci-icon { color: var(--green); }
 
-/* Direkte svar på produktsiden */
-.answers { background: var(--sand-light); padding: 3.5rem 4rem; }
-.answers-grid { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
-.answers h2 { font-family: var(--font-playfair), Georgia, serif; color: var(--navy); font-size: 1.35rem; margin: 0 0 0.6rem; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Direkte svar – kort og sitérbart for både lesere og AI-assistenter. */
+.answers {
+  background: var(--sand-light);
+  padding: 3.5rem 4rem;
+}
+.answers-grid {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+.answers h2 {
+  font-family: var(--font-playfair), Georgia, serif;
+  color: var(--navy);
+  font-size: 1.35rem;
+  margin: 0 0 0.6rem;
+}
 .answers p { color: #345; line-height: 1.7; font-size: 0.98rem; margin: 0 0 0.9rem; }
 .answers .news-link { color: var(--green-dark); }
 @media (max-width: 960px) {

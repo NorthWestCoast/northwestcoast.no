@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, rateLimit } from '@/lib/api-guard';
+import { clean, clientIp, isBot, isEmail, langOf, rateLimit, tr } from '@/lib/api-guard';
 import {
   LENGTHS,
   PRICE_TABLE,
@@ -19,7 +19,12 @@ export const maxDuration = 30;
 const MAX_LINES = 20;
 const MAX_QTY = 99;
 
-const GENERIC_ERROR = `Vi klarte ikke å ta imot bestillingen akkurat nå. Ring oss på ${SUPPORT_PHONE}.`;
+const genericError = (lang: 'no' | 'en') =>
+  tr(
+    lang,
+    `Vi klarte ikke å ta imot bestillingen akkurat nå. Ring oss på ${SUPPORT_PHONE}.`,
+    `We could not take your order right now. Please call us on ${SUPPORT_PHONE}.`,
+  );
 
 /** Plukker ut gyldige ordrelinjer. Priser kommer aldri fra klienten. */
 function parseLines(raw: unknown): OrderLine[] {
@@ -83,12 +88,13 @@ function calculationNote(raw: unknown): string {
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true });
 
   if (!rateLimit(`order:${clientIp(req)}`)) {
     return NextResponse.json(
-      { error: `For mange forespørsler. Prøv igjen om noen minutter, eller ring ${SUPPORT_PHONE}.` },
+      { error: tr(lang, `For mange forespørsler. Prøv igjen om noen minutter, eller ring ${SUPPORT_PHONE}.`, `Too many requests. Please try again in a few minutes, or call ${SUPPORT_PHONE}.`) },
       { status: 429 },
     );
   }
@@ -114,13 +120,13 @@ export async function POST(req: NextRequest) {
     .join('\n\n');
 
   if (!name || !email) {
-    return NextResponse.json({ error: 'Navn og e-post er påkrevd.' }, { status: 400 });
+    return NextResponse.json({ error: tr(lang, 'Navn og e-post er påkrevd.', 'Name and email are required.') }, { status: 400 });
   }
   if (!isEmail(email)) {
-    return NextResponse.json({ error: 'E-postadressen ser ikke gyldig ut.' }, { status: 400 });
+    return NextResponse.json({ error: tr(lang, 'E-postadressen ser ikke gyldig ut.', 'The email address does not look valid.') }, { status: 400 });
   }
   if (lines.length === 0) {
-    return NextResponse.json({ error: 'Bestillingen er tom.' }, { status: 400 });
+    return NextResponse.json({ error: tr(lang, 'Bestillingen er tom.', 'The order is empty.') }, { status: 400 });
   }
 
   const total = orderTotal(lines);
@@ -133,7 +139,7 @@ export async function POST(req: NextRequest) {
   // bestillingen trygg, og en e-post som feiler kan sendes på nytt.
   if (!hasServiceRole()) {
     console.error('[order] Supabase er ikke konfigurert – kan ikke ta imot bestilling.');
-    return NextResponse.json({ error: GENERIC_ERROR }, { status: 500 });
+    return NextResponse.json({ error: genericError(lang) }, { status: 500 });
   }
 
   const supabase = createServiceSupabase();
@@ -154,7 +160,7 @@ export async function POST(req: NextRequest) {
 
   if (orderError || !order) {
     console.error('[order] Kunne ikke lagre bestilling:', orderError);
-    return NextResponse.json({ error: GENERIC_ERROR }, { status: 500 });
+    return NextResponse.json({ error: genericError(lang) }, { status: 500 });
   }
 
   // Produkt-ID-ene slås opp fra katalogen, slik at ordrelinjene peker på
@@ -218,6 +224,7 @@ export async function POST(req: NextRequest) {
   );
 
   const receipt = orderReceipt({
+    lang,
     orderNumber: order.order_number,
     name, lines: view, total,
   });

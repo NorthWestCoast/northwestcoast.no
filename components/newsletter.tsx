@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLang, useT } from '@/components/lang-provider';
 import { track } from '@/lib/analytics';
 
 export default function Newsletter() {
@@ -8,11 +9,12 @@ export default function Newsletter() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+  const lang = useLang();
+  const t = useT();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!email) return;
-
     setError(null);
     setLoading(true);
 
@@ -22,18 +24,16 @@ export default function Newsletter() {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, company_website: honeypot }),
+        body: JSON.stringify({ email, lang, company_website: honeypot }),
       });
-
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? 'Vi klarte ikke å registrere deg. Prøv igjen.');
+        throw new Error(body.error ?? t.errors.generic);
       }
-
       track('Lead: Newsletter');
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Vi klarte ikke å registrere deg. Prøv igjen.');
+      setError(err instanceof Error ? err.message : t.errors.generic);
     } finally {
       setLoading(false);
     }
@@ -41,41 +41,41 @@ export default function Newsletter() {
 
   return (
     <div className="nl">
-      <div className="lbl" style={{ justifyContent: 'center', marginBottom: '0.8rem' }}>Nyhetsbrev</div>
-      <h2>Registrer deg for å motta nyhetsbrev</h2>
-      <p>Siste nyheter om maritim sikkerhet, Argostep og norske sjøfartsforskrifter.</p>
+      <div className="lbl" style={{ justifyContent: 'center', marginBottom: '0.8rem' }}>
+        {t.newsletter.label}
+      </div>
+      <h2>{t.newsletter.title}</h2>
+      <p>{t.newsletter.sub}</p>
 
       {submitted ? (
         <p style={{ color: 'var(--green)', fontWeight: 600, marginTop: '1.5rem' }}>
-          ✓ Du er registrert!
+          {t.newsletter.success}
         </p>
       ) : (
-        <form className="nl-form" onSubmit={handleSubmit}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Din e-postadresse..."
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-          {/* Honeypot – skjult for mennesker, fylles ut av bots */}
-          <input
-            type="text"
-            name="company_website"
-            tabIndex={-1}
-            autoComplete="off"
-            aria-hidden="true"
-            className="hp-field"
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Sender…' : 'Registrer'}
-          </button>
-        </form>
+        <>
+          <form className="nl-form" onSubmit={handleSubmit}>
+            <input
+              type="email"
+              placeholder={t.newsletter.placeholder}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input
+              type="text"
+              name="company_website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="hp-field"
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? t.newsletter.sending : t.newsletter.submit}
+            </button>
+          </form>
+          {error && <p className="nl-error">{error}</p>}
+        </>
       )}
-
-      {error && <p className="nl-error">{error}</p>}
     </div>
   );
 }

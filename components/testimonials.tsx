@@ -2,36 +2,25 @@
 
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { Ship } from 'lucide-react';
+import { useT } from '@/components/lang-provider';
 
-const TESTIMONIALS = [
-  {
-    shipImg: '/images/tindskjaer.jpg',
-    shipAlt: 'M/S Tindskjær',
-    quote: 'Vi fikk godkjenning! Veldig fornøyd med dette. Også flott for små jobber langs skutesiden.',
-    initials: 'MT',
-    name: 'M/S Tindskjær',
-    company: 'Tindskjær AS',
-  },
-  {
-    shipImg: null,
-    shipAlt: null,
-    quote: 'Enkel å montere og tar minimalt med plass. Anbefales på det sterkeste!',
-    initials: 'RS',
-    name: 'Ro Spirit',
-    company: 'Rostein AS',
-  },
-  {
-    shipImg: '/images/ms-skar-senior.jpeg',
-    shipAlt: 'M/S Skår Senior',
-    quote: 'Solid kvalitet og gjennomtenkt design. Vi er veldig fornøyde med produktet.',
-    initials: 'RV',
-    name: 'Ronja Vest',
-    company: 'Sølvtrans Rederi AS',
-  },
+const SHIPS = [
+  { shipImg: '/images/tindskjaer.jpg',      shipAlt: 'M/S Tindskjær',   initials: 'MT', name: 'M/S Tindskjær', company: 'Tindskjær AS' },
+  { shipImg: null,                          shipAlt: null,              initials: 'RS', name: 'Ro Spirit',     company: 'Rostein AS' },
+  { shipImg: '/images/ms-skar-senior.jpeg', shipAlt: 'M/S Skår Senior', initials: 'RV', name: 'Ronja Vest',    company: 'Sølvtrans Rederi AS' },
 ];
 
 export default function Testimonials() {
   const sectionRef = useRef<HTMLElement>(null);
+  const t = useT();
+
+  const quotes = [
+    t.testimonials.quotes.tindskjaer,
+    t.testimonials.quotes.rostein,
+    t.testimonials.quotes.solvtrans,
+  ];
+  const testimonials = SHIPS.map((ship, i) => ({ ...ship, quote: quotes[i] }));
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -45,44 +34,44 @@ export default function Testimonials() {
   return (
     <section className="testi" ref={sectionRef}>
       <div className="reveal" style={{ textAlign: 'center' }}>
-        <div className="lbl lbl-center">Kundetilbakemeldinger</div>
-        <h2 className="stitle" style={{ textAlign: 'center' }}>Hva våre kunder sier</h2>
+        <div className="lbl lbl-center">{t.testimonials.label}</div>
+        <h2 className="stitle" style={{ textAlign: 'center' }}>{t.testimonials.title}</h2>
         <p className="sub" style={{ margin: '0.7rem auto', textAlign: 'center' }}>
-          Velg Argostep og bli en av våre mange fornøyde kunder langs norskekysten.
+          {t.testimonials.sub}
         </p>
       </div>
 
       <div className="testi-grid reveal">
-        {TESTIMONIALS.map((t, i) => (
+        {testimonials.map((item, i) => (
           <div
             className="testi-card reveal"
-            key={t.name}
+            key={item.name}
             style={{ transitionDelay: `${i * 0.1}s` }}
           >
             <div className="testi-ship">
-              {t.shipImg ? (
-                <Image src={t.shipImg} alt={t.shipAlt!} fill style={{ objectFit: 'cover' }} />
+              {item.shipImg ? (
+                <Image src={item.shipImg} alt={item.shipAlt!} fill sizes="(max-width: 960px) 85vw, 33vw" style={{ objectFit: 'cover' }} />
               ) : (
                 <div style={{
-                  background: 'linear-gradient(135deg,#0a1628,#1a3358)',
+                  background: 'var(--navy-light)',
+                  color: 'var(--text-muted)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '4rem',
-                  borderRadius: '0.9rem',
+                  borderRadius: 'var(--r-lg)',
                   height: '140px',
                 }}>
-                  ⛵
+                  <Ship size={44} strokeWidth={1.2} />
                 </div>
               )}
             </div>
             <div className="quote-mark">&ldquo;</div>
-            <blockquote>{t.quote}</blockquote>
+            <blockquote>{item.quote}</blockquote>
             <div className="testi-author">
-              <div className="tauthor-av">{t.initials}</div>
+              <div className="tauthor-av">{item.initials}</div>
               <div>
-                <div className="tauthor-name">{t.name}</div>
-                <div className="tauthor-co">{t.company}</div>
+                <div className="tauthor-name">{item.name}</div>
+                <div className="tauthor-co">{item.company}</div>
               </div>
             </div>
           </div>

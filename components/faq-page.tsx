@@ -1,24 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import Nav from '@/components/nav';
-import Footer from '@/components/footer';
-import { FAQS } from '@/lib/faqs';
+import { FAQ_ITEMS, type FaqCategory } from '@/lib/faq-items';
+import { useLang, useT } from '@/components/lang-provider';
 import { track } from '@/lib/analytics';
 
-const CATEGORIES = ['Alle', 'Produkt', 'Sertifisering', 'Montering', 'Leveranse'];
+const CATEGORIES: (FaqCategory | 'all')[] = [
+  'all',
+  'product',
+  'certification',
+  'installation',
+  'delivery',
+];
 
-export default function FaqPage() {
+export default function FaqPageContent() {
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('Alle');
+  const [category, setCategory] = useState<FaqCategory | 'all'>('all');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lang = useLang();
+  const t = useT();
 
-  const filtered = FAQS.filter((faq) => {
-    const matchCat = category === 'Alle' || faq.category === category;
+  const filtered = FAQ_ITEMS.filter(({ key, category: cat }) => {
+    const item = t.faq.items[key];
+    const matchCat = category === 'all' || cat === category;
     const q = search.toLowerCase();
-    const matchSearch = !q || faq.q.toLowerCase().includes(q) || faq.a.toLowerCase().includes(q);
+    const matchSearch =
+      !q || item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
 
@@ -32,20 +41,16 @@ export default function FaqPage() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, product: 'FAQ-spørsmål' }),
+        body: JSON.stringify({ ...data, lang, product: 'FAQ-spørsmål' }),
       });
-
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? 'Vi klarte ikke å sende spørsmålet. Ring +47 904 07 341.');
+        throw new Error(body.error ?? t.errors.generic);
       }
-
       track('Lead: Contact form', { props: { product: 'FAQ-spørsmål' } });
       setSubmitted(true);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Vi klarte ikke å sende spørsmålet. Prøv igjen.',
-      );
+      setError(err instanceof Error ? err.message : t.errors.generic);
     } finally {
       setLoading(false);
     }
@@ -53,20 +58,12 @@ export default function FaqPage() {
 
   return (
     <>
-      <Nav />
-
-      <div className="subpage-header">
-        <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>Hjelp &amp; Support</div>
-        <h1>Ofte stilte spørsmål</h1>
-        <p>Finn svar på de vanligste spørsmålene om Argostep.</p>
-      </div>
-
       <section className="faq-full">
         <div className="faq-full-controls">
           <input
             className="faq-search"
             type="search"
-            placeholder="Søk i spørsmål og svar…"
+            placeholder={t.faq.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -77,7 +74,7 @@ export default function FaqPage() {
                 className={`tab${category === cat ? ' active' : ''}`}
                 onClick={() => setCategory(cat)}
               >
-                {cat}
+                {t.faq.categories[cat]}
               </button>
             ))}
           </div>
@@ -86,46 +83,49 @@ export default function FaqPage() {
         <div className="faq-full-list">
           {filtered.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
-              Ingen spørsmål matcher søket ditt.
+              {t.faq.noMatch}
             </p>
           ) : (
-            filtered.map((faq) => (
-              <details className="fi" key={faq.q}>
-                <summary className="fq">
-                  {faq.q}
-                  <span className="fi-icon">+</span>
-                </summary>
-                <p className="fa">{faq.a}</p>
-              </details>
-            ))
+            filtered.map(({ key }) => {
+              const item = t.faq.items[key];
+              return (
+                <details className="fi" key={key}>
+                  <summary className="fq">
+                    {item.q}
+                    <span className="fi-icon">+</span>
+                  </summary>
+                  <p className="fa">{item.a}</p>
+                </details>
+              );
+            })
           )}
         </div>
       </section>
 
       <section className="faq-contact">
         <div className="faq-contact-inner">
-          <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>Kontakt</div>
+          <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>{t.contact.label}</div>
           <h2 className="stitle" style={{ textAlign: 'center', color: '#fff' }}>
-            Ikke funnet svaret?
+            {t.faq.contactHeading}
           </h2>
           <p className="sub" style={{ textAlign: 'center', margin: '0.75rem auto 2.5rem' }}>
-            Kontakt oss direkte – vi hjelper gjerne.
+            {t.faq.contactSub}
           </p>
 
           <form className="contact-form" onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="fg">
-                <label>Navn *</label>
-                <input name="name" type="text" placeholder="Ditt navn" required />
+                <label>{t.contact.form.name}</label>
+                <input name="name" type="text" placeholder={t.contact.form.namePlaceholder} required />
               </div>
               <div className="fg">
-                <label>E-post *</label>
-                <input name="email" type="email" placeholder="epost@firma.no" required />
+                <label>{t.contact.form.email}</label>
+                <input name="email" type="email" placeholder={t.contact.form.emailPlaceholder} required />
               </div>
             </div>
             <div className="fg">
-              <label>Spørsmål *</label>
-              <textarea name="message" placeholder="Hva lurer du på?" required />
+              <label>{t.faq.questionLabel}</label>
+              <textarea name="message" placeholder={t.faq.questionPlaceholder} required />
             </div>
 
             {/* Honeypot – skjult for mennesker, fylles ut av bots */}
@@ -155,7 +155,7 @@ export default function FaqPage() {
                 }}
                 disabled={loading}
               >
-                {loading ? 'Sender…' : 'Send spørsmål →'}
+                {loading ? t.contact.form.sending : t.faq.submit}
               </button>
             ) : (
               <div style={{
@@ -167,14 +167,12 @@ export default function FaqPage() {
                 color: 'var(--green)',
                 fontWeight: 600,
               }}>
-                ✓ Takk! Vi tar kontakt snart.
+                {t.contact.form.success}
               </div>
             )}
           </form>
         </div>
       </section>
-
-      <Footer />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { ARTICLES } from '@/lib/articles';
 import { SITE_URL } from '@/lib/site';
+import { localePath } from '@/lib/i18n';
 
 /** Datoer i artiklene er på formatet DD.MM.YYYY. */
 function parseNorwegianDate(date: string): Date {
@@ -9,25 +10,45 @@ function parseNorwegianDate(date: string): Date {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
+const PAGES: { path: string; priority: number; changeFrequency: 'weekly' | 'monthly' }[] = [
+  { path: '/', priority: 1, changeFrequency: 'monthly' },
+  { path: '/produkt', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/kalkulator', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/bestill', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/faq', priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/vedlikehold', priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/galleri', priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/nyheter', priority: 0.6, changeFrequency: 'weekly' },
+];
+
+/** Norsk er kanonisk; engelsk oppgis som språkalternativ (hreflang). */
+function entry(
+  path: string,
+  priority: number,
+  changeFrequency: 'weekly' | 'monthly' | 'yearly',
+  lastModified?: Date,
+): MetadataRoute.Sitemap[number] {
+  return {
+    url: `${SITE_URL}${localePath('no', path)}`,
+    lastModified,
+    changeFrequency,
+    priority,
+    alternates: {
+      languages: {
+        'nb-NO': `${SITE_URL}${localePath('no', path)}`,
+        en: `${SITE_URL}${localePath('en', path)}`,
+      },
+    },
+  };
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/`,             changeFrequency: 'monthly', priority: 1 },
-    { url: `${SITE_URL}/bestill`,      changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/produkt`,      changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/kalkulator`,   changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/galleri`,      changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${SITE_URL}/faq`,          changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_URL}/vedlikehold`,  changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_URL}/nyheter`,      changeFrequency: 'weekly',  priority: 0.6 },
-    { url: `${SITE_URL}/personvern`,   changeFrequency: 'yearly',  priority: 0.3 },
+  return [
+    ...PAGES.map((p) => entry(p.path, p.priority, p.changeFrequency)),
+    ...ARTICLES.map((a) =>
+      entry(`/nyheter/${a.slug}`, 0.5, 'yearly', parseNorwegianDate(a.date)),
+    ),
+    // Personvernerklæringen finnes bare på norsk.
+    { url: `${SITE_URL}/personvern`, changeFrequency: 'yearly', priority: 0.3 },
   ];
-
-  const articles: MetadataRoute.Sitemap = ARTICLES.map((article) => ({
-    url: `${SITE_URL}/nyheter/${article.slug}`,
-    lastModified: parseNorwegianDate(article.date),
-    changeFrequency: 'yearly',
-    priority: 0.5,
-  }));
-
-  return [...pages, ...articles];
 }

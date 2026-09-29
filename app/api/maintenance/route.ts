@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, rateLimit } from '@/lib/api-guard';
+import { clean, clientIp, isBot, isEmail, rateLimit, langOf, tr } from '@/lib/api-guard';
 import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
 import { SUPPORT_PHONE } from '@/lib/mail';
 import { notifyMaintenance } from './notify';
@@ -35,12 +35,13 @@ function safeName(name: string, index: number): string {
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true, uploads: [] });
 
   if (!rateLimit(`maintenance:${clientIp(req)}`)) {
     return NextResponse.json(
-      { error: 'For mange forsøk. Prøv igjen om noen minutter.' },
+      { error: tr(lang, 'For mange forsøk. Prøv igjen om noen minutter.', 'Too many attempts. Please try again in a few minutes.') },
       { status: 429 },
     );
   }
@@ -58,18 +59,18 @@ export async function POST(req: NextRequest) {
 
   if (!name || !boat || !serial) {
     return NextResponse.json(
-      { error: 'Navn, navn på båt og serienummer er påkrevd' },
+      { error: tr(lang, 'Navn, navn på båt og serienummer er påkrevd', 'Name, vessel name and serial number are required') },
       { status: 400 },
     );
   }
   if (email && !isEmail(email)) {
-    return NextResponse.json({ error: 'E-postadressen ser ikke gyldig ut.' }, { status: 400 });
+    return NextResponse.json({ error: tr(lang, 'E-postadressen ser ikke gyldig ut.', 'The email address does not look valid.') }, { status: 400 });
   }
 
   if (!hasServiceRole()) {
     console.error('[maintenance] Supabase er ikke konfigurert – rapport tapt.');
     return NextResponse.json(
-      { error: `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.` },
+      { error: tr(lang, `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.`, `We could not save the report right now. Please call us on ${SUPPORT_PHONE}.`) },
       { status: 500 },
     );
   }
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
   if (logError || !log) {
     console.error('[maintenance] Kunne ikke lagre rapport:', logError);
     return NextResponse.json(
-      { error: `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.` },
+      { error: tr(lang, `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.`, `We could not save the report right now. Please call us on ${SUPPORT_PHONE}.`) },
       { status: 500 },
     );
   }
