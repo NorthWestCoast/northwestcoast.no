@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { SOCIAL_URLS } from '@/lib/site';
 
 /**
  * Sosiale profiler settes med env-variabler. Er en ikke satt, vises ikonet
@@ -7,9 +8,9 @@ import Link from 'next/link';
  * sendte besøkende ut av siden uten å lande noe sted.
  */
 const SOCIALS = [
-  { key: 'facebook',  label: 'f',  url: process.env.NEXT_PUBLIC_FACEBOOK_URL,  name: 'Facebook' },
-  { key: 'instagram', label: 'ig', url: process.env.NEXT_PUBLIC_INSTAGRAM_URL, name: 'Instagram' },
-  { key: 'linkedin',  label: 'in', url: process.env.NEXT_PUBLIC_LINKEDIN_URL,  name: 'LinkedIn' },
+  { key: 'facebook',  label: 'f',  url: SOCIAL_URLS.facebook,  name: 'Facebook' },
+  { key: 'instagram', label: 'ig', url: SOCIAL_URLS.instagram, name: 'Instagram' },
+  { key: 'linkedin',  label: 'in', url: SOCIAL_URLS.linkedin,  name: 'LinkedIn' },
 ].filter((s): s is typeof s & { url: string } => Boolean(s.url));
 
 export default function Footer() {

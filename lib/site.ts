@@ -43,6 +43,13 @@ export const ORG = {
   country: 'NO',
 } as const;
 
+/** Offisielle profiler (hentet fra dagens live-nettsted). Env kan overstyre. */
+export const SOCIAL_URLS = {
+  facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL ?? 'https://www.facebook.com/northwestcoastas',
+  instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://www.instagram.com/northwestcoastas/',
+  linkedin: process.env.NEXT_PUBLIC_LINKEDIN_URL ?? 'https://www.linkedin.com/company/northwestcoast-as/',
+} as const;
+
 /** Delingsbildet som genereres av app/opengraph-image.tsx. */
 const OG_IMAGE = {
   url: '/opengraph-image',
