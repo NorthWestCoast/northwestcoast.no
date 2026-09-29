@@ -40,7 +40,7 @@ export default function OrderConfigurator() {
   const totalUnits = useMemo(() => cart.reduce((s, it) => s + it.qty, 0), [cart]);
 
   const addToOrder = () => {
-    setCart((prev) => [...prev, { id: nextId++, length, qty, cabinet }]);
+    setCart((prev) => [...prev, { id: nextId++, length, qty, cabinet: cabinet && !row.onRequest }]);
     trackOrder('Order: Add to cart', draftTotal, {
       length,
       cabinet,
@@ -127,7 +127,9 @@ export default function OrderConfigurator() {
           loading="eager"
           ar
         />
-        <div className="config-viewer-badge">{length} m · {row.steps} trinn</div>
+        <div className="config-viewer-badge">
+          {row.onRequest ? `${length} m` : `${length} m · ${row.steps} trinn`}
+        </div>
         <div className="config-viewer-hint">Dra for å rotere</div>
       </div>
 
@@ -135,7 +137,9 @@ export default function OrderConfigurator() {
       <div className="config-panel">
         <div className="lbl">Konfigurer din leider</div>
         <h2 className="stitle">{row.productName}</h2>
-        <p className="config-product-no">Produktnr. {row.productNumber} · {row.steps} trinn</p>
+        <p className="config-product-no">
+          {row.onRequest ? 'Pris på forespørsel' : `Produktnr. ${row.productNumber} · ${row.steps} trinn`}
+        </p>
 
         <div className="config-block">
           <div className="config-row">
@@ -158,6 +162,7 @@ export default function OrderConfigurator() {
           </select>
         </div>
 
+        {!row.onRequest && (
         <div className="config-block">
           <div className="config-row">
             <label>Tilbehør</label>
@@ -180,6 +185,7 @@ export default function OrderConfigurator() {
             </button>
           </div>
         </div>
+        )}
 
         <div className="config-block">
           <div className="config-row">
@@ -193,7 +199,7 @@ export default function OrderConfigurator() {
         </div>
 
         <button type="button" className="btn-primary config-add" onClick={addToOrder}>
-          Legg til i bestilling · {fmt(draftTotal)} kr
+          {row.onRequest ? 'Legg til i bestilling' : `Legg til i bestilling · ${fmt(draftTotal)} kr`}
         </button>
 
         {/* Order list */}
@@ -208,7 +214,7 @@ export default function OrderConfigurator() {
                     <strong>{r.productName}</strong>
                     <span className="config-cart-meta">
                       {[
-                        `Produktnr. ${r.productNumber}`,
+                        r.onRequest ? 'Pris på forespørsel' : `Produktnr. ${r.productNumber}`,
                         it.cabinet ? `Skap ${r.cabinetName}` : null,
                       ].filter(Boolean).join(' · ')}
                     </span>
@@ -218,7 +224,7 @@ export default function OrderConfigurator() {
                     <span>{it.qty}</span>
                     <button type="button" onClick={() => updateQty(it.id, 1)} aria-label="Flere">+</button>
                   </div>
-                  <div className="config-cart-price">{fmt(lineTotal(it))} kr</div>
+                  <div className="config-cart-price">{r.onRequest ? '–' : `${fmt(lineTotal(it))} kr`}</div>
                   <button type="button" className="config-cart-remove" onClick={() => removeItem(it.id)} aria-label="Fjern">
                     ×
                   </button>
@@ -235,7 +241,11 @@ export default function OrderConfigurator() {
               {cart.length === 0 ? 'Legg til minst én leider' : `${totalUnits} leider(e)`}
             </span>
           </div>
-          <span className="config-total-amount">{fmt(grandTotal)} kr</span>
+          <span className="config-total-amount">
+            {cart.length > 0 && cart.every((it) => rowFor(it.length).onRequest)
+              ? 'Pris på forespørsel'
+              : `${fmt(grandTotal)} kr`}
+          </span>
         </div>
 
         {sent ? (
@@ -303,7 +313,11 @@ export default function OrderConfigurator() {
             {error && <p className="config-error">{error}</p>}
 
             <button type="submit" className="btn-primary config-submit" disabled={sending}>
-              {sending ? 'Sender…' : `Send forespørsel · ${fmt(grandTotal)} kr →`}
+              {sending
+                ? 'Sender…'
+                : cart.every((it) => rowFor(it.length).onRequest)
+                  ? 'Send forespørsel →'
+                  : `Send forespørsel · ${fmt(grandTotal)} kr →`}
             </button>
 
             <p className="config-note">
@@ -318,6 +332,11 @@ export default function OrderConfigurator() {
           </form>
         )}
 
+        {cart.some((it) => rowFor(it.length).onRequest) && (
+          <p className="config-note">
+            Prisen på 2 m avtales på forespørsel og er ikke med i totalsummen.
+          </p>
+        )}
         <p className="config-note">
           Prisen er veiledende eks. mva. Endelig tilbud bekreftes etter kontakt.
         </p>

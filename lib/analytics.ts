@@ -24,6 +24,8 @@ export type AnalyticsEvent =
   | 'Order: Add to cart'    // lagt en leider i bestillingen
   | 'Order: Begin checkout' // åpnet kontaktskjemaet i konfiguratoren
   | 'Order: Submitted'      // bestillingsforespørsel sendt (med verdi)
+  | 'Calculator: Result'    // kalkulatoren ga en anbefalt lengde
+  | 'Calculator: Order submitted' // bestilling sendt fra kalkulatoren (med verdi)
   | 'Lead: Contact form'    // kontaktskjema sendt
   | 'Lead: Newsletter'      // nyhetsbrev registrert
   | 'Lead: Phone click'     // klikk på telefonnummer

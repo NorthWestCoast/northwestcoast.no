@@ -20,9 +20,14 @@ export type PriceRow = {
   cabinetNumber: string;
   cabinetName: string;
   cabinetPrice: number;
+  /** Ingen fast pris ennå – går som prisforespørsel og teller ikke i summer. */
+  onRequest?: boolean;
 };
 
 export const PRICE_TABLE: PriceRow[] = [
+  // 2 m er i sortimentet, men pris og produktnummer er ikke fastsatt. Fyll inn
+  // her (og legg produktet i products-tabellen) når de finnes, og fjern onRequest.
+  { length: 2,  steps: 0,  productNumber: '',        productName: 'Argostep – 2ML',  price: 0,     cabinetNumber: '',        cabinetName: '',            cabinetPrice: 0, onRequest: true },
   { length: 3,  steps: 10, productNumber: '400-031', productName: 'Argostep – 3ML',  price: 9499,  cabinetNumber: '400-061', cabinetName: 'ASC-LC3-5',   cabinetPrice: 9000 },
   { length: 4,  steps: 13, productNumber: '400-032', productName: 'Argostep – 4ML',  price: 10999, cabinetNumber: '400-062', cabinetName: 'ASC-LC3-5',   cabinetPrice: 9000 },
   { length: 5,  steps: 16, productNumber: '400-033', productName: 'Argostep – 5ML',  price: 12499, cabinetNumber: '400-063', cabinetName: 'ASC-LC3-5',   cabinetPrice: 9000 },
@@ -38,10 +43,11 @@ export const PRICE_TABLE: PriceRow[] = [
   { length: 15, steps: 46, productNumber: '400-043', productName: 'Argostep – 15ML', price: 30599, cabinetNumber: '400-068', cabinetName: 'ASC-LC11-16', cabinetPrice: 12000 },
 ];
 
-export const LENGTHS = PRICE_TABLE.map((r) => r.length); // 3..15
+export const LENGTHS = PRICE_TABLE.map((r) => r.length); // 2..15
 
-export const MIN_PRICE = Math.min(...PRICE_TABLE.map((r) => r.price));
-export const MAX_PRICE = Math.max(...PRICE_TABLE.map((r) => r.price));
+const PRICED = PRICE_TABLE.filter((r) => !r.onRequest);
+export const MIN_PRICE = Math.min(...PRICED.map((r) => r.price));
+export const MAX_PRICE = Math.max(...PRICED.map((r) => r.price));
 
 /** Én linje i bestillingen, slik klienten sender den. Aldri med pris. */
 export type OrderLine = {
@@ -53,12 +59,13 @@ export type OrderLine = {
 export const fmt = (n: number) => n.toLocaleString('nb-NO');
 
 export function rowFor(length: number): PriceRow {
-  return PRICE_TABLE.find((r) => r.length === length) ?? PRICE_TABLE[0];
+  return PRICE_TABLE.find((r) => r.length === length) ?? PRICED[0];
 }
 
 /** Enhetspris (leider + evt. skap) for en gitt lengde. */
 export function unitPrice(length: number, cabinet: boolean): number {
   const row = rowFor(length);
+  if (row.onRequest) return 0;
   return row.price + (cabinet ? row.cabinetPrice : 0);
 }
 

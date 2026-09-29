@@ -16,12 +16,16 @@ export type OrderLineView = {
   qty: number;
   cabinetName: string | null;
   lineTotal: number;
+  /** Pris avtales på forespørsel – vises uten sum. */
+  onRequest?: boolean;
 };
 
 function orderSummary(lines: OrderLineView[]): string {
   return lines
     .map((line) =>
-      [
+      line.onRequest
+        ? `${line.qty} × ${line.productName} – pris på forespørsel`
+        : [
         `${line.qty} × ${line.productName} (${line.productNumber}${
           line.steps ? `, ${line.steps} trinn` : ''
         })`,

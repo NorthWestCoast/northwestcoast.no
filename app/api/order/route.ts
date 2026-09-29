@@ -48,8 +48,37 @@ function toView(lines: OrderLine[]): OrderLineView[] {
       qty: line.qty,
       cabinetName: line.cabinet ? row.cabinetName : null,
       lineTotal: lineTotal(line),
+      onRequest: row.onRequest === true,
     };
   });
+}
+
+const num = (value: unknown) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+/**
+ * Målene fra leiderkalkulatoren. Lagres som tekst i notatfeltet så de følger
+ * ordren og kan etterprøves før vi bekrefter – de påvirker aldri prisen.
+ */
+function calculationNote(raw: unknown): string {
+  if (!raw || typeof raw !== 'object') return '';
+  const c = raw as Record<string, unknown>;
+  const m = (v: unknown) => {
+    const n = num(v);
+    return n === null ? '–' : `${n} m`;
+  };
+  return [
+    'Fra leiderkalkulatoren:',
+    `  Fribord: ${m(c.freeboard)}`,
+    `  Festepunkt over dekk: ${m(c.mountHeight)}`,
+    `  Tillegg under vannlinjen: ${m(c.margin)}`,
+    `  Nødvendig lengde: ${m(c.required)}`,
+    `  Valgt lengde: ${m(c.chosenLength)}`,
+    `  Fartøystype: ${clean(c.vesselType, 40) || '–'}`,
+    `  LOA: ${m(c.loa)}`,
+  ].join('\n');
 }
 
 export async function POST(req: NextRequest) {
@@ -68,8 +97,21 @@ export async function POST(req: NextRequest) {
   const email = clean(body.email, 160);
   const phone = clean(body.phone, 40);
   const vessel = clean(body.vessel, 160);
-  const notes = clean(body.notes, 2000);
+  const imo = clean(body.imo, 20);
   const lines = parseLines(body.items);
+
+  // Kommentar + IMO + kalkulatoroppsett samles i ett notat, så alt følger ordren.
+  const requestLines = lines
+    .filter((line) => rowFor(line.length).onRequest)
+    .map((line) => `${line.qty} × ${rowFor(line.length).productName} – pris på forespørsel`);
+  const notes = [
+    clean(body.notes, 2000),
+    imo ? `IMO: ${imo}` : '',
+    requestLines.length ? `Pris på forespørsel:\n${requestLines.join('\n')}` : '',
+    calculationNote(body.calculation),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 
   if (!name || !email) {
     return NextResponse.json({ error: 'Navn og e-post er påkrevd.' }, { status: 400 });

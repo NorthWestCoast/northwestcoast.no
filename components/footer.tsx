@@ -48,6 +48,7 @@ export default function Footer() {
           <h4>Produkter</h4>
           <ul>
             <li><Link href="/produkt">Argostep Livbåtleider</Link></li>
+            <li><Link href="/kalkulator">Leiderkalkulator</Link></li>
             <li><Link href="/bestill">Bestill / prisliste</Link></li>
             <li><Link href="/vedlikehold">Vedlikehold</Link></li>
           </ul>
