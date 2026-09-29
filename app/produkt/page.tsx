@@ -7,7 +7,7 @@ import Features from '@/components/features';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
 import JsonLd from '@/components/json-ld';
-import { graph, organizationSchema, productSchema } from '@/lib/structured-data';
+import { breadcrumbSchema, graph, organizationSchema, productSchema } from '@/lib/structured-data';
 import { pageMetadata } from '@/lib/site';
 
 export const metadata: Metadata = pageMetadata({
@@ -36,7 +36,7 @@ const VESSELS = [
 export default function ProduktPage() {
   return (
     <>
-      <JsonLd data={graph(organizationSchema, productSchema)} />
+      <JsonLd data={graph(organizationSchema, productSchema, breadcrumbSchema([{ name: 'Argostep Livbåtleider', path: '/produkt' }]))} />
 
       <Nav />
 
@@ -86,6 +86,30 @@ export default function ProduktPage() {
               <Link href="/bestill" className="btn-primary">Bestill nå →</Link>
               <a href="tel:+4790407341" className="btn-ghost">Ring +47 904 07 341</a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Direkte svar – kort og sitérbart for lesere og AI-assistenter. */}
+      <section className="answers" aria-labelledby="answer-what">
+        <div className="answers-grid">
+          <div>
+            <h2 id="answer-what">Hva er Argostep?</h2>
+            <p>
+              Argostep er en lett, modulær entrings- og livbåtleider i glassfiberarmert plast fra
+              NorthWest Coast. Den er testet etter ISO 799-1:2019, godkjent av Sjøfartsdirektoratet
+              for norske fartøy under 15 meter, og leveres i standardlengder fra 2 til 15 meter.
+              Slitte trinn kan byttes enkeltvis, og leideren monteres uten spesialverktøy.
+            </p>
+          </div>
+          <div>
+            <h2>Hvilken lengde trenger fartøyet mitt?</h2>
+            <p>
+              Lengden avhenger av fribordet, høyden opp til festepunktet og hvor langt leideren skal
+              nå under vannlinjen. Legg inn målene i leiderkalkulatoren, så får du anbefalt lengde og
+              kan bestille den direkte.
+            </p>
+            <Link href="/kalkulator" className="news-link">Åpne leiderkalkulatoren →</Link>
           </div>
         </div>
       </section>

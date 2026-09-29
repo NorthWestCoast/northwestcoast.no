@@ -4381,3 +4381,14 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
 
 .calc-help-error { color: #f0a0a0; }
 .calc-help-ok { color: var(--green); }
+
+/* Direkte svar på produktsiden */
+.answers { background: var(--sand-light); padding: 3.5rem 4rem; }
+.answers-grid { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+.answers h2 { font-family: var(--font-playfair), Georgia, serif; color: var(--navy); font-size: 1.35rem; margin: 0 0 0.6rem; }
+.answers p { color: #345; line-height: 1.7; font-size: 0.98rem; margin: 0 0 0.9rem; }
+.answers .news-link { color: var(--green-dark); }
+@media (max-width: 960px) {
+  .answers { padding: 2.5rem 1.5rem; }
+  .answers-grid { grid-template-columns: 1fr; gap: 1.75rem; }
+}

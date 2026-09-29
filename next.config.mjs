@@ -18,24 +18,30 @@ const nextConfig = {
   // Gamle URL-er fra dagens live-nettsted, slik at lenker og søkerangering
   // følger med ved overgangen.
   async redirects() {
-    // [gammel sti, ny sti på norsk, ny sti på engelsk]
+    // [gammel sti, ny sti]. Engelske sider finnes ikke ennå, så /en/* på det
+    // gamle nettstedet lander på de norske sidene. Når /en er bygget, pek
+    // /en/<sti> til /en/<ny sti> i stedet.
     const map = [
-      ['news', '/nyheter', '/en/nyheter'],
-      ['products', '/produkt', '/en/produkt'],
+      ['news', '/nyheter'],
+      ['products', '/produkt'],
       // Kontakt var egen side; skjemaet ligger nå nederst på forsiden.
-      ['contact-us', '/#kontakt', '/en#kontakt'],
-      ['about-us', '/', '/en'],
-      ['login', '/logg-inn', '/logg-inn'],
-      ['register', '/logg-inn', '/logg-inn'],
-      ['faq', '/faq', '/en/faq'],
-      ['leveranse-ms-skar-senior', '/nyheter', '/en/nyheter'],
-      ['hvordan-bruke-var-leider', '/nyheter', '/en/nyheter'],
-      ['hvordan-installere-var-leider', '/nyheter', '/en/nyheter'],
+      ['contact-us', '/#kontakt'],
+      ['about-us', '/'],
+      // Innlogging finnes fortsatt, nå som innloggingslenke på e-post.
+      ['login', '/logg-inn'],
+      ['register', '/logg-inn'],
+      ['faq', '/faq'],
+      ['leveranse-ms-skar-senior', '/nyheter'],
+      ['hvordan-bruke-var-leider', '/nyheter'],
+      ['hvordan-installere-var-leider', '/nyheter'],
     ];
-    const rules = [{ source: '/no', destination: '/', permanent: true }];
-    for (const [from, no, en] of map) {
-      rules.push({ source: `/no/${from}`, destination: no, permanent: true });
-      rules.push({ source: `/en/${from}`, destination: en, permanent: true });
+    const rules = [
+      { source: '/no', destination: '/', permanent: true },
+      { source: '/en', destination: '/', permanent: true },
+    ];
+    for (const [from, to] of map) {
+      rules.push({ source: `/no/${from}`, destination: to, permanent: true });
+      rules.push({ source: `/en/${from}`, destination: to, permanent: true });
     }
     return rules;
   },
