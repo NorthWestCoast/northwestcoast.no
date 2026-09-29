@@ -1,0 +1,550 @@
+import type { Dict } from './no';
+
+export const en: Dict = {
+  htmlLang: 'en',
+  ogLocale: 'en_GB',
+  langName: 'English',
+
+  meta: {
+    keywords: [
+      'maritime ladder',
+      'embarkation ladder',
+      'Argostep',
+      'NorthWest Coast',
+      'lifeboat ladder',
+      'Norwegian Maritime Authority',
+      'ISO 799',
+      'fishing vessel',
+      'boarding',
+    ],
+    home: {
+      title: 'NorthWest Coast – Argostep Maritime Ladder',
+      description:
+        'Argostep – the lightweight, modular maritime ladder approved by the Norwegian Maritime Authority. Certified to ISO 799-1:2019. Made in Sunnmøre, Norway.',
+      ogDescription: 'Modular maritime ladder. Certified to ISO 799-1:2019. Made in Norway.',
+    },
+    produkt: {
+      title: 'Argostep Lifeboat Ladder – Product | NorthWest Coast',
+      description:
+        'Argostep Lifeboat Ladder – a modular, lightweight and strong maritime ladder in glass-fibre reinforced plastic. Certified to ISO 799-1:2019 and approved by the Norwegian Maritime Authority. Available from 2 to 15 metres.',
+    },
+    galleri: {
+      title: 'Gallery | NorthWest Coast',
+      description:
+        'See the Argostep lifeboat ladder in pictures – the product, storage cabinets and the ladder in daily use along the Norwegian coast.',
+    },
+    nyheter: {
+      title: 'News | NorthWest Coast',
+      description: 'News, cases and regulations for maritime ladders from NorthWest Coast.',
+    },
+    vedlikehold: {
+      title: 'Ladder maintenance | NorthWest Coast',
+      description:
+        'See how to maintain the Argostep lifeboat ladder and log completed maintenance for your vessel.',
+    },
+    faq: {
+      title: 'Frequently asked questions | NorthWest Coast',
+      description: 'Answers to the most common questions about the Argostep lifeboat ladder.',
+    },
+    kalkulator: {
+      title: 'Ladder calculator – find the right length | NorthWest Coast',
+      description:
+        'Work out which Argostep lifeboat ladder your vessel needs from freeboard and mounting point – and order the right length directly.',
+    },
+    bestill: {
+      title: 'Order the Argostep Lifeboat Ladder | NorthWest Coast',
+      description:
+        'Order your Argostep Lifeboat Ladder. Choose a length between 2 and 15 metres plus accessories – and see the ladder in 3D as you configure it.',
+    },
+  },
+
+  nav: {
+    produkt: 'Product',
+    galleri: 'Gallery',
+    nyheter: 'News',
+    vedlikehold: 'Maintenance',
+    faq: 'FAQ',
+    cta: 'Order now',
+    menu: 'Menu',
+    drawerCta: 'Order now →',
+    switchTo: 'Bytt til norsk',
+  },
+
+  hero: {
+    h1Suffix: 'lifeboat ladder',
+    eyebrow: 'The future of boarding',
+    desc: 'A lightweight, modular ladder designed around safety. Approved by the Norwegian Maritime Authority. Made in Sunnmøre, Norway.',
+    ctaOrder: 'Order now →',
+    ctaHow: '▶ See how it works',
+    statLengths: 'Lengths',
+    statIso: '799-1:2019',
+    statMade: 'Made in Norway',
+  },
+
+  features: {
+    handling: {
+      title: 'Easy Handling',
+      desc: 'Considerably lighter than wooden ladders. The click coupling makes deploying and retrieving quick.',
+    },
+    storage: {
+      title: 'Compact Storage',
+      desc: 'Stored in its own weatherproof cabinet – protects against wear and saves deck space.',
+    },
+    lifetime: {
+      title: 'Long Service Life',
+      desc: 'Replaceable components in reinforced plastic – change a single step, not the whole ladder.',
+    },
+    custom: {
+      title: 'Made to Measure',
+      desc: 'Adapted to your specifications. A flexible solution from 2 to 15 metres.',
+    },
+  },
+
+  how: {
+    label: 'See it in action',
+    title: 'How Argostep Works',
+    sub: 'Argostep makes boarding simpler. Compared with traditional wooden ladders, Argostep is lighter, stronger and more durable – thanks to glass-fibre reinforced plastic.',
+    playLabel: 'Play video',
+    steps: {
+      modular: {
+        title: 'Modular System',
+        desc: 'A simple click coupling for every step. Maintenance without special tools – replace a single step when needed.',
+      },
+      material: {
+        title: 'Material Choice',
+        desc: 'High-quality glass-fibre reinforced plastic for steps and fittings. Straps securely fastened to every step – low weight and high strength.',
+      },
+      storage: {
+        title: 'Storage Solution',
+        desc: 'A dedicated cabinet protected from wind and weather. Extends service life and eliminates wear from exposure.',
+      },
+      deploy: {
+        title: 'Rapid Deployment',
+        desc: 'Click-on extenders give stable support. Mounting and dismounting is done quickly by one person.',
+      },
+    },
+  },
+
+  gallery: {
+    label: 'Product gallery',
+    title: 'Argostep in pictures',
+    sub: 'From product to practice – see Argostep from every angle and in daily use along the Norwegian coast.',
+    seeAll: 'See all pictures →',
+    zoomHint: 'Click the images to enlarge.',
+    enlargedAlt: 'Enlarged image',
+    close: 'Close',
+    tabs: {
+      all: 'All',
+      ladder: 'Ladder',
+      storage: 'Storage',
+      inUse: 'In use',
+      references: 'References',
+    },
+    images: {
+      inUse: { alt: 'Ladder in use', label: 'Boarding from the ship’s side' },
+      mounted: { alt: 'Mounted on a vessel', label: 'Mounted on a passenger vessel' },
+      practice: { alt: 'Lifeboat ladder in use', label: 'Lifeboat ladder – test drill' },
+      full: { alt: 'Fully deployed', label: 'Fully Deployed' },
+      folded: { alt: 'Folded', label: 'Ultra-compact – Folded' },
+      folded2: { alt: 'Ladder folded', label: 'Compact when folded' },
+      cabinet: { alt: 'Storage cabinet', label: 'Storage cabinet' },
+      cabinetOpen: { alt: 'Open case', label: 'Cabinet interior' },
+      case1: { alt: 'Case on board', label: 'Compact storage on board' },
+      case2: { alt: 'Argostep case', label: 'Argostep case on deck' },
+      case3: { alt: 'Case detail', label: 'Case – detail' },
+      case4: { alt: 'Case on the quay', label: 'Ready for use at the quay' },
+      veidar: { alt: 'M/S Veidar', label: 'Installed on board M/S Veidar' },
+      tindskjaer: { alt: 'M/S Tindskjær', label: 'M/S Tindskjær' },
+      skar1: { alt: 'M/S Skår Senior', label: 'M/S Skår Senior' },
+      skar2: { alt: 'M/S Skår Senior installation', label: 'Argostep on M/S Skår Senior' },
+      skar3: { alt: 'M/S Skår Senior detail', label: 'Detail – M/S Skår Senior' },
+    },
+  },
+
+  viewer: {
+    label: 'Interactive 3D model',
+    title: 'See the Ladder in 3D',
+    sub: 'Rotate, zoom and explore Argostep in detail. Click and drag to rotate – scroll to zoom.',
+    modelAlt: 'Argostep 3D model',
+    fullscreen: 'View in full screen',
+    exitFullscreen: 'Exit full screen',
+    infos: {
+      deployed: {
+        title: 'Fully Deployed',
+        desc: 'See the ladder as it looks ready for use – with every step and strap in place.',
+      },
+      detail: {
+        title: 'True-to-Detail Model',
+        desc: 'Glass-fibre reinforced steps, click fittings and side straps shown in detail.',
+      },
+      scale: {
+        title: 'Correctly Scaled',
+        desc: 'The model shows the standard 7-step variant. Can you find the right length for your vessel?',
+      },
+    },
+  },
+
+  certs: {
+    label: 'Safety first',
+    title: 'Certified for Safety',
+    sub: 'Argostep is built to the highest standards – and we always aim to exceed them.',
+    cards: {
+      iso: { title: 'ISO 799-1:2019', sub: 'Certified for ships and marine technology' },
+      nma: {
+        title: 'Norwegian Maritime Authority',
+        sub: 'Approved for Norwegian vessels under 15 metres',
+      },
+      solas: { title: 'SOLAS compatible', sub: 'Meets international safety requirements' },
+    },
+    vesselsLabel: 'Suitable for',
+    vessels: {
+      fishing: 'Fishing vessels under 15 m',
+      service: 'Service vessels under 15 m',
+      cargo: 'Smaller cargo ships',
+      passenger: 'Passenger vessels',
+    },
+  },
+
+  testimonials: {
+    label: 'Customer feedback',
+    title: 'What our customers say',
+    sub: 'Choose Argostep and join our many satisfied customers along the Norwegian coast.',
+    quotes: {
+      tindskjaer:
+        'We got our approval! Very pleased with this. Also excellent for small jobs along the ship’s side.',
+      rostein: 'Easy to mount and takes up minimal space. Highly recommended!',
+      solvtrans: 'Solid quality and a well-thought-out design. We are very happy with the product.',
+    },
+  },
+
+  news: {
+    label: 'Latest news',
+    title: 'From the Blog',
+    sub: 'Keep up to date with news, cases and regulations for maritime ladders.',
+    readFull: 'Read the full article →',
+    seeAll: 'See all posts →',
+    readMore: 'Read more →',
+    back: '← Back to news',
+    pageLabel: 'From the blog',
+    pageTitle: 'Latest news',
+  },
+
+  faq: {
+    label: 'Questions & Answers',
+    title: 'Frequently asked questions',
+    sub: 'Haven’t found your answer? Contact us directly – we’re happy to help.',
+    contactCta: 'Get in touch →',
+    allCta: 'See all questions →',
+    pageLabel: 'Help & Support',
+    pageSub: 'Find answers to the most common questions about Argostep.',
+    searchPlaceholder: 'Search questions and answers…',
+    noMatch: 'No questions match your search.',
+    contactHeading: 'Haven’t found your answer?',
+    contactSub: 'Contact us directly – we’re happy to help.',
+    questionLabel: 'Question *',
+    questionPlaceholder: 'What would you like to know?',
+    submit: 'Send question →',
+    categories: {
+      all: 'All',
+      product: 'Product',
+      certification: 'Certification',
+      installation: 'Installation',
+      delivery: 'Delivery',
+    },
+    items: {
+      approved: {
+        q: 'Is the ladder approved for Norwegian ships?',
+        a: 'Yes. The Argostep embarkation and lifeboat ladder is tested and certified to ISO 799-1:2019 and approved by the Norwegian Maritime Authority for Norwegian vessels.',
+      },
+      lengths: {
+        q: 'Which lengths are available?',
+        a: 'The Argostep Lifeboat Ladder comes in standard lengths from 2 to 15 metres. Get in touch if you need something else and we will put together a package for you.',
+      },
+      lifetime: {
+        q: 'How long does a ladder last?',
+        a: 'It is designed for a long service life with replaceable components. Storing it in a cabinet from Northwestcoast increases that life considerably.',
+      },
+      mounting: {
+        q: 'How do I mount the ladder?',
+        a: 'Argostep is designed for easy mounting and dismounting without special tools. The ladder is mounted the same way as a traditional ladder.',
+      },
+      delivery: {
+        q: 'What is the delivery time for Argostep?',
+        a: 'Delivery time varies with the specification. Contact us for an exact quote and an estimated delivery time for your vessel.',
+      },
+      material: {
+        q: 'What material is the ladder made of?',
+        a: 'The steps and fittings are injection-moulded glass-fibre reinforced plastic – a material that combines low weight, high strength and excellent corrosion resistance in saltwater environments.',
+      },
+      weight: {
+        q: 'What does a standard Argostep weigh?',
+        a: 'You will find all the weights for the Argostep ladder under Order now.',
+      },
+      selfMount: {
+        q: 'Can I mount the ladder myself?',
+        a: 'Yes, Argostep is built for self-installation. The included mounting instructions and the click coupling system make it possible to mount the ladder without a professional.',
+      },
+      parts: {
+        q: 'Do you offer spare parts and service?',
+        a: 'Yes. One of the main advantages of Argostep is the modular system – individual steps and components can be ordered separately. Contact us for spare parts or a service agreement.',
+      },
+    },
+  },
+
+  contact: {
+    label: 'Contact us',
+    title: 'Get in Touch',
+    sub: 'Ask for a quote tailored to your vessel – we reply quickly.',
+    phone: 'Phone',
+    email: 'Email',
+    address: 'Address',
+    addressValue: 'PO Box 79, 6281 Søvik, Norway',
+    orgNo: 'Company no.',
+    founders: 'The founders',
+    form: {
+      name: 'Name *',
+      namePlaceholder: 'Your name',
+      email: 'Email *',
+      emailPlaceholder: 'you@company.com',
+      phone: 'Phone',
+      phonePlaceholder: '+47 000 00 000',
+      company: 'Vessel/Company',
+      companyPlaceholder: 'Vessel/Company',
+      product: 'Product',
+      productOptions: {
+        ladder: 'Argostep Lifeboat Ladder',
+        cabinet: 'Storage cabinet',
+        parts: 'Spare parts',
+      },
+      message: 'Message',
+      messagePlaceholder: 'Tell us about your needs (ladder length, vessel type, etc.)',
+      submit: 'Send Enquiry →',
+      sending: 'Sending…',
+      success: '✓ Thank you! We will be in touch shortly.',
+    },
+  },
+
+  newsletter: {
+    label: 'Newsletter',
+    title: 'Sign up for our newsletter',
+    sub: 'The latest on maritime safety, Argostep and Norwegian maritime regulations.',
+    placeholder: 'Your email address...',
+    submit: 'Sign up',
+    sending: 'Sending…',
+    success: '✓ You are signed up!',
+  },
+
+  footer: {
+    tagline: 'High-quality maritime safety equipment. Made in Sunnmøre, Norway.',
+    products: 'Products',
+    ladder: 'Argostep Lifeboat Ladder',
+    parts: 'Spare parts',
+    company: 'Company',
+    about: 'About us',
+    certifications: 'Certifications',
+    contact: 'Contact',
+    faq: 'FAQ',
+    office: 'Office',
+    addressLine1: 'PO Box 79',
+    addressLine2: '6281 Søvik, Norway',
+    orgNo: 'Company no.: 998 196 159',
+    rights: '© 2026 Northwestcoast AS. All rights reserved.',
+    madeWith: 'Designed in Ålesund',
+  },
+
+  product: {
+    answerTitle: 'What is Argostep?',
+    answerBody: 'Argostep is a lightweight, modular embarkation and lifeboat ladder in glass-fibre reinforced plastic from NorthWest Coast. It is tested to ISO 799-1:2019, approved by the Norwegian Maritime Authority for Norwegian vessels under 15 metres, and comes in standard lengths from 2 to 15 metres. Worn steps can be replaced individually, and the ladder is mounted without special tools.',
+    lengthTitle: 'Which length does my vessel need?',
+    lengthBody: 'The length depends on the freeboard, the height up to the mounting point and how far the ladder must reach below the waterline. Enter your measurements in the ladder calculator to get a recommended length and order it directly.',
+    lengthCta: 'Open the ladder calculator →',
+    label: 'Product',
+    title: 'Argostep Lifeboat Ladder',
+    sub: 'The lightweight, modular maritime ladder – built for safe boarding along the Norwegian coast. Certified, durable and tailored to your vessel.',
+    introLabel: 'Maritime ladder',
+    introTitle: 'Built for vessels on the Norwegian coast',
+    introSub: 'The Argostep Lifeboat Ladder is considerably lighter than traditional wooden ladders and far more durable. The modular click system makes deploying and retrieving fast – and worn steps can be replaced individually instead of the whole ladder.',
+    fullAlt: 'Argostep Lifeboat Ladder at full length',
+    inUseAlt: 'Argostep Lifeboat Ladder in use',
+    specs: {
+      lengths: { key: 'Lengths', val: '2 – 15 metres (standard)' },
+      material: { key: 'Material', val: 'Glass-fibre reinforced plastic' },
+      certification: { key: 'Certification', val: 'ISO 799-1:2019' },
+      approval: { key: 'Approval', val: 'Norwegian Maritime Authority' },
+      system: { key: 'System', val: 'Modular click coupling' },
+      maintenance: { key: 'Maintenance', val: 'Replaceable individual steps' },
+    },
+    call: 'Call +47 904 07 341',
+    fitLabel: 'Customisation',
+    fitTitle: 'Tailored to your vessel',
+    fitSub: 'The Argostep Lifeboat Ladder comes in standard lengths from 2 to 15 metres. Get in touch if you need something else and we will put together a package for you – including storage cabinets and spare parts.',
+    bandLabel: 'Ready to order?',
+    bandTitle: 'Secure your vessel with Argostep',
+    bandSub: 'Tell us about your vessel and we will put together the right ladder solution and send you a quote quickly.',
+  },
+
+  order: {
+    onRequest: 'Price on request',
+    onRequestNote: 'The price for this length is agreed on request. It is not included in the total.',
+    label: 'Ordering',
+    title: 'Order your Argostep',
+    sub: 'Configure the ladder for your vessel. Choose a length between 2 and 15 metres plus accessories – and see it in 3D as you go.',
+    configureLabel: 'Configure your ladder',
+    productNo: 'Product no.',
+    steps: 'steps',
+    length: 'Length',
+    meters: 'metres',
+    accessories: 'Accessories',
+    cabinet: 'Storage cabinet',
+    selected: 'Selected',
+    quantity: 'Quantity',
+    fewer: 'Fewer',
+    more: 'More',
+    remove: 'Remove',
+    addToOrder: 'Add to order',
+    yourOrder: 'Your order',
+    total: 'Total',
+    emptyHint: 'Add at least one ladder',
+    ladderCount: 'ladder(s)',
+    rotateHint: 'Drag to rotate',
+    leadTitle: 'Where should we send the quote?',
+    leadSub: 'We confirm price and delivery time – normally within one business day.',
+    submit: 'Send order →',
+    sending: 'Sending…',
+    confirm:
+      '✓ Thank you! We have received your order. You will get a receipt by email, and we will be in touch with confirmation and delivery time – normally within one business day.',
+    note: 'Prices are indicative and exclude VAT. The final quote is confirmed after contact.',
+    fields: {
+      name: 'Name *',
+      namePlaceholder: 'Your name',
+      email: 'Email *',
+      emailPlaceholder: 'you@company.com',
+      phone: 'Phone',
+      phonePlaceholder: '+47 000 00 000',
+      company: 'Vessel/Company',
+      companyPlaceholder: 'e.g. MS Havbris',
+      imo: 'IMO no.',
+      imoPlaceholder: 'e.g. 9074729',
+      notes: 'Comment',
+      notesPlaceholder: 'Installation, preferred delivery time or other needs (optional)',
+    },
+  },
+
+  calculator: {
+    label: 'Ladder calculator',
+    title: 'Find the right ladder for your vessel',
+    sub: 'Enter the measurements from your vessel and we work out the length you need – then you can order the right ladder straight away.',
+    navLabel: 'Calculator',
+
+    vesselHeading: 'The vessel',
+    vesselName: 'Vessel name',
+    vesselNamePlaceholder: 'e.g. MS Havbris',
+    imo: 'IMO no.',
+    imoPlaceholder: 'e.g. 9074729',
+    imoInvalid: 'This IMO number does not look right (the check digit does not match). Please check you typed it correctly.',
+    imoValid: 'Valid IMO number',
+    autofilled: 'Details fetched from',
+    imoHelp: 'IMO 7',
+    vesselType: 'Vessel type',
+    vesselTypeOther: 'Other vessel',
+    loa: 'Length overall (LOA)',
+    loaHelp: 'Only used to check which approval applies.',
+
+    measureHeading: 'Measurements',
+    freeboard: 'Freeboard to embarkation deck',
+    freeboardHelp:
+      'Vertical height from the waterline up to the deck where the ladder is deployed. Use the lightest seagoing condition – that gives the greatest freeboard.',
+    mountHeight: 'Height from deck to mounting point',
+    mountHeightHelp: 'Set 0 if the ladder is fastened at deck level. Otherwise the height up to the rail or bulwark.',
+    margin: 'Extension below the waterline',
+    marginHelp:
+      'An assumption, not a figure from the regulations. Adjust it to the requirement from your class society or flag state.',
+    metres: 'm',
+
+    resultHeading: 'Result',
+    requiredLength: 'Required length',
+    breakdown: 'Calculation',
+    breakdownFreeboard: 'Freeboard',
+    breakdownMount: 'Mounting point above deck',
+    breakdownMargin: 'Extension below the waterline',
+    recommended: 'Recommended ladder',
+    slack: (metres: string) => `${metres} m longer than required`,
+    steps: 'steps',
+    productNo: 'Product no.',
+    emptyState: 'Enter the freeboard and we will find the right length.',
+
+    tooLongTitle: 'Beyond standard lengths',
+    tooLongBody:
+      'The requirement exceeds the longest standard ladder of 15 metres. Get in touch and we will put together a solution for your vessel.',
+    atMinimumNote: 'The requirement is covered by the shortest ladder in the range.',
+    loaNote:
+      'The Norwegian Maritime Authority approval described here applies to vessels under 15 metres. Get in touch and we will confirm what applies to your vessel.',
+    belowRequiredNote: 'This length is shorter than the calculation requires.',
+
+    chooseLength: 'Choose the length yourself',
+    chooseLengthHelp: 'The recommendation is selected automatically. You can override it here.',
+    cabinet: 'Storage cabinet',
+    quantity: 'Number of ladders',
+    quantityHelp: 'One per embarkation station.',
+    total: 'Total',
+    priceNote: 'Prices are indicative and exclude VAT. The final quote is confirmed after contact.',
+
+    disclaimer:
+      'This calculator is a sizing aid – not a certificate of compliance. Final requirements for length and installation are confirmed by your class society, flag state or the Norwegian Maritime Authority. We go through the measurements with you before any order is confirmed.',
+
+    orderHeading: 'Order this ladder',
+    orderSub: 'We send your calculation along with the order so we can double-check the measurements before confirming.',
+    submit: 'Send order →',
+    sending: 'Sending…',
+    confirm:
+      '✓ Thank you! We have received your order together with your calculation. You will get a receipt by email and we will be in touch with confirmation – normally within one business day.',
+  },
+
+  maintenance: {
+    label: 'Maintenance',
+    title: 'Ladder maintenance',
+    sub: 'Watch the video showing how maintenance is carried out, and log completed maintenance for your vessel at the bottom of the page.',
+    videoTitle: 'Maintenance of the Argostep lifeboat ladder',
+    videoSoon: 'The maintenance video is coming soon',
+    videoFallback: 'Need guidance or spare parts now? Call',
+    videoFallbackMid: 'or send an email to',
+    videoFallbackEnd: '– we are happy to help.',
+    formTitle: 'Log maintenance',
+    formSub: 'Fill in the details below and feel free to attach photos of the ladder.',
+    name: 'Name *',
+    namePlaceholder: 'Your name',
+    email: 'Email',
+    emailPlaceholder: 'you@company.com',
+    boat: 'Vessel name *',
+    boatPlaceholder: 'e.g. MS Havbris',
+    imo: 'IMO no.',
+    imoPlaceholder: 'e.g. 9074729',
+    serial: 'Ladder serial number *',
+    serialPlaceholder: 'e.g. ARG-2024-0142',
+    notes: 'Comment',
+    notesPlaceholder: 'Describe the maintenance carried out, condition or any findings (optional)',
+    images: 'Photos',
+    addImages: '+ Attach photos',
+    removeImage: 'Remove',
+    consent:
+      'Email me a receipt and a reminder before the next recommended maintenance.',
+    submit: 'Submit maintenance →',
+    sending: 'Sending…',
+    successTitle: 'Maintenance logged',
+    successBody:
+      'Thank you! The report has been sent to NorthWest Coast. If you entered an email address, you will receive a receipt you can file with the vessel’s maintenance documentation.',
+    tooLarge: (fileName: string) => `The image “${fileName}” is too large (max 5 MB).`,
+  },
+
+  notFound: {
+    code: '404',
+    title: 'Page not found',
+    body: 'We could not find the page you were looking for. It may have moved or been removed.',
+    cta: 'Go to the homepage →',
+    help: 'Need help? Call',
+  },
+
+  errors: {
+    generic: 'Something went wrong. Please try again.',
+  },
+};

@@ -1,3 +1,6 @@
+import JsonLd from '@/components/json-ld';
+import { faqLd, productLd } from '@/lib/seo';
+import { DEFAULT_LANG, isLang } from '@/lib/i18n';
 import Nav from '@/components/nav';
 import Hero from '@/components/hero';
 import Features from '@/components/features';
@@ -15,9 +18,13 @@ import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
 
 // Home page component
-export default function HomePage() {
+export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang: raw } = await params;
+  const lang = isLang(raw) ? raw : DEFAULT_LANG;
+
   return (
     <>
+      <JsonLd data={[productLd(lang), faqLd(lang, 4)]} />
       <Nav />
 
       <Hero />

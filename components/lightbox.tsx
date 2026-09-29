@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useT } from '@/components/lang-provider';
 
 export default function Lightbox() {
+  const t = useT();
+
   useEffect(() => {
     const lb = document.getElementById('lightbox');
     if (!lb) return;
@@ -27,14 +30,17 @@ export default function Lightbox() {
     const lb = document.getElementById('lightbox');
     const img = document.getElementById('lb-img') as HTMLImageElement | null;
     if (lb) lb.classList.remove('open');
-    if (img) img.removeAttribute('src');
+    if (img) {
+      img.removeAttribute('src');
+      img.classList.remove('lb-contain');
+    }
   }
 
   return (
     <div id="lightbox" className="lightbox">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img id="lb-img" alt="Forstørret bilde" />
-      <button className="lb-close" onClick={close} aria-label="Lukk">✕</button>
+      <img id="lb-img" alt={t.gallery.enlargedAlt} />
+      <button className="lb-close" onClick={close} aria-label={t.gallery.close}>✕</button>
     </div>
   );
 }

@@ -3,9 +3,16 @@
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Calendar } from 'lucide-react';
+import { useLang, useT } from '@/components/lang-provider';
+import { ARTICLES, localizeArticle } from '@/lib/articles';
+import { localePath } from '@/lib/i18n';
 
 export default function News() {
   const sectionRef = useRef<HTMLElement>(null);
+  const lang = useLang();
+  const t = useT();
+  const featured = localizeArticle(ARTICLES[0], lang);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -19,11 +26,9 @@ export default function News() {
   return (
     <section className="news" id="nyheter" ref={sectionRef}>
       <div className="reveal">
-        <div className="lbl lbl-dark">Siste nytt</div>
-        <h2 className="stitle dark">Fra Bloggen</h2>
-        <p className="sub dark">
-          Hold deg oppdatert med nyheter, caser og forskrifter for maritime leidere.
-        </p>
+        <div className="lbl lbl-dark">{t.news.label}</div>
+        <h2 className="stitle dark">{t.news.title}</h2>
+        <p className="sub dark">{t.news.sub}</p>
       </div>
 
       <div className="news-grid reveal">
@@ -31,28 +36,27 @@ export default function News() {
         <div className="news-card">
           <div className="news-img-box">
             <Image
-              src="/images/leiderkasse.jpg"
-              alt="Ny leiderkasse"
-              fill
+              src={featured.image}
+              alt={featured.title}
+              fill sizes="(max-width: 960px) 100vw, 50vw"
               style={{ objectFit: 'cover' }}
             />
           </div>
           <div className="news-body">
-            <span className="news-tag">Nyheter</span>
-            <div className="news-date">📅 30.08.2026</div>
-            <h3>Ny leiderkasse på plass!</h3>
-            <p>
-              Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter.
-              På bildene ser du eksempler fra båten Geir, der kassene allerede er tatt i bruk.
-            </p>
-            <Link href="/nyheter/ny-leiderkasse" className="news-link">Les hele artikkelen →</Link>
+            <span className="news-tag">{featured.tag}</span>
+            <div className="news-date"><Calendar size={14} strokeWidth={1.6} /> {featured.date}</div>
+            <h3>{featured.title}</h3>
+            <p>{featured.excerpt}</p>
+            <Link href={localePath(lang, `/nyheter/${featured.slug}`)} className="news-link">
+              {t.news.readFull}
+            </Link>
           </div>
         </div>
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
         <Link
-          href="/nyheter"
+          href={localePath(lang, '/nyheter')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -63,7 +67,7 @@ export default function News() {
             fontSize: '0.95rem',
           }}
         >
-          Se alle innlegg →
+          {t.news.seeAll}
         </Link>
       </div>
     </section>

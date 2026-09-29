@@ -1,38 +1,70 @@
 'use client';
 
 import { useState } from 'react';
+import { useLang, useT } from '@/components/lang-provider';
+import { EVENTS, track } from '@/lib/analytics';
 
 export default function Newsletter() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+  const lang = useLang();
+  const t = useT();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
-    setSubmitted(true);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, lang }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? t.errors.generic);
+      }
+      track(EVENTS.newsletterSignup, { lang });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.errors.generic);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="nl">
-      <div className="lbl" style={{ justifyContent: 'center', marginBottom: '0.8rem' }}>Nyhetsbrev</div>
-      <h2>Registrer deg for å motta nyhetsbrev</h2>
-      <p>Siste nyheter om maritim sikkerhet, Argostep og norske sjøfartsforskrifter.</p>
+      <div className="lbl" style={{ justifyContent: 'center', marginBottom: '0.8rem' }}>
+        {t.newsletter.label}
+      </div>
+      <h2>{t.newsletter.title}</h2>
+      <p>{t.newsletter.sub}</p>
 
       {submitted ? (
         <p style={{ color: 'var(--green)', fontWeight: 600, marginTop: '1.5rem' }}>
-          ✓ Du er registrert!
+          {t.newsletter.success}
         </p>
       ) : (
-        <form className="nl-form" onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Din e-postadresse..."
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <button type="submit">Registrer</button>
-        </form>
+        <>
+          <form className="nl-form" onSubmit={handleSubmit}>
+            <input
+              type="email"
+              placeholder={t.newsletter.placeholder}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? t.newsletter.sending : t.newsletter.submit}
+            </button>
+          </form>
+          {error && <p className="nl-error">{error}</p>}
+        </>
       )}
     </div>
   );

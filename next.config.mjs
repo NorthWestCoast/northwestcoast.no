@@ -11,6 +11,30 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
+  // Gamle URL-er fra dagens live-nettsted, slik at lenker og søkerangering
+  // følger med ved overgangen. Nye norske sider ligger på rot, engelske under /en.
+  async redirects() {
+    // [gammel sti, ny sti på norsk, ny sti på engelsk]
+    const map = [
+      ['news', '/nyheter', '/en/nyheter'],
+      ['products', '/produkt', '/en/produkt'],
+      // Kontakt var egen side; skjemaet ligger nå nederst på forsiden.
+      ['contact-us', '/#kontakt', '/en#kontakt'],
+      ['about-us', '/', '/en'],
+      ['login', '/', '/en'],
+      ['register', '/', '/en'],
+      ['leveranse-ms-skar-senior', '/nyheter', '/en/nyheter'],
+      ['hvordan-bruke-var-leider', '/nyheter', '/en/nyheter'],
+      ['hvordan-installere-var-leider', '/nyheter', '/en/nyheter'],
+    ];
+    const rules = [];
+    for (const [from, no, en] of map) {
+      rules.push({ source: `/no/${from}`, destination: no, permanent: true });
+      rules.push({ source: `/en/${from}`, destination: en, permanent: true });
+    }
+    return rules;
+  },
+
   async headers() {
     return [
       {

@@ -2,22 +2,23 @@
 
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
-
-const CERTS = [
-  { title: 'ISO 799-1:2019', sub: 'Sertifisert for skip og maritim teknologi' },
-  { title: 'Sjøfartsdirektoratet', sub: 'Godkjent for norske fartøy under 15 meter' },
-  { title: 'SOLAS-kompatibel', sub: 'Oppfyller internasjonale sikkerhetskrav' },
-];
-
-const VESSELS = [
-  'Fiskefartøy under 15m',
-  'Servicefartøy under 15m',
-  'Mindre lasteskip',
-  'Passasjerfartøy',
-];
+import Link from 'next/link';
+import { useLang, useT } from '@/components/lang-provider';
+import { localePath } from '@/lib/i18n';
+import { openLightbox } from '@/lib/images';
 
 export default function Certifications() {
   const sectionRef = useRef<HTMLElement>(null);
+  const lang = useLang();
+  const t = useT();
+
+  const certs = [t.certs.cards.iso, t.certs.cards.nma, t.certs.cards.solas];
+  const vessels = [
+    t.certs.vessels.fishing,
+    t.certs.vessels.service,
+    t.certs.vessels.cargo,
+    t.certs.vessels.passenger,
+  ];
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -28,23 +29,15 @@ export default function Certifications() {
     return () => observer.disconnect();
   }, []);
 
-  const openLightbox = (src: string) => {
-    const lb = document.getElementById('lightbox') as HTMLElement | null;
-    const img = document.getElementById('lb-img') as HTMLImageElement | null;
-    if (lb && img) { img.src = src; lb.classList.add('open'); }
-  };
-
   return (
     <section className="certs" id="sertifisering" ref={sectionRef}>
       <div className="certs-grid reveal">
         <div>
-          <div className="lbl">Sikkerhet først</div>
-          <h2 className="stitle">Sertifisert for Sikkerhet</h2>
-          <p className="sub" style={{ marginBottom: '2rem' }}>
-            Argostep er bygget etter de høyeste standarder – og vi sikter alltid mot å overgå dem.
-          </p>
+          <div className="lbl">{t.certs.label}</div>
+          <h2 className="stitle">{t.certs.title}</h2>
+          <p className="sub" style={{ marginBottom: '2rem' }}>{t.certs.sub}</p>
           <div className="cert-cards">
-            {CERTS.map((c, i) => (
+            {certs.map((c, i) => (
               <div
                 className="cert-card reveal"
                 key={c.title}
@@ -58,9 +51,13 @@ export default function Certifications() {
               </div>
             ))}
           </div>
-          <a href="/bestill" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
-            Bestill nå →
-          </a>
+          <Link
+            href={localePath(lang, '/bestill')}
+            className="btn-primary"
+            style={{ marginTop: '2rem', display: 'inline-flex' }}
+          >
+            {t.hero.ctaOrder}
+          </Link>
         </div>
 
         <div>
@@ -71,15 +68,15 @@ export default function Certifications() {
           >
             <Image
               src="/images/leiderkasse3.jpg"
-              alt="Argostep ombord"
-              fill
+              alt={t.gallery.images.case3.alt}
+              fill sizes="(max-width: 960px) 100vw, 50vw"
               style={{ objectFit: 'cover' }}
             />
           </div>
 
-          <div className="lbl" style={{ marginTop: '2rem' }}>Egnet for</div>
+          <div className="lbl" style={{ marginTop: '2rem' }}>{t.certs.vesselsLabel}</div>
           <div className="vessel-grid">
-            {VESSELS.map((v) => (
+            {vessels.map((v) => (
               <div className="vessel" key={v}>{v}</div>
             ))}
           </div>

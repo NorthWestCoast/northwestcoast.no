@@ -1,36 +1,44 @@
+'use client';
+
 import Image from 'next/image';
+import Link from 'next/link';
+import { useLang, useT } from '@/components/lang-provider';
+import { localePath } from '@/lib/i18n';
 
 export default function Hero() {
+  const lang = useLang();
+  const t = useT();
+
   return (
     <div className="hero" id="topp">
       <div className="hero-bg-img" />
       <div className="hero-overlay" />
 
       <div className="hero-content">
-        <div className="hero-eyebrow">Fremtidens ombordstigning</div>
+        <div className="hero-eyebrow">{t.hero.eyebrow}</div>
         <h1>
           ARGO<em>STEP</em>
+          <span className="sr-only"> – {t.hero.h1Suffix}</span>
         </h1>
-        <p className="hero-desc">
-          En lett og modulær leider, designet med fokus på sikkerhet.
-          Godkjent av Sjøfartsdirektoratet. Produsert på Sunnmøre.
-        </p>
+        <p className="hero-desc">{t.hero.desc}</p>
         <div className="hero-actions">
-          <a href="/bestill" className="btn-primary">Bestill nå →</a>
-          <a href="#hvordan" className="btn-ghost">▶ Se hvordan det virker</a>
+          <Link href={localePath(lang, '/bestill')} className="btn-primary">
+            {t.hero.ctaOrder}
+          </Link>
+          <a href="#hvordan" className="btn-ghost">{t.hero.ctaHow}</a>
         </div>
         <div className="hero-stats">
           <div className="stat">
             <div className="stat-num">2–15m</div>
-            <div className="stat-label">Lengder</div>
+            <div className="stat-label">{t.hero.statLengths}</div>
           </div>
           <div className="stat">
             <div className="stat-num">ISO</div>
-            <div className="stat-label">799-1:2019</div>
+            <div className="stat-label">{t.hero.statIso}</div>
           </div>
           <div className="stat">
             <div className="stat-num">100%</div>
-            <div className="stat-label">Norsk produksjon</div>
+            <div className="stat-label">{t.hero.statMade}</div>
           </div>
         </div>
       </div>
@@ -39,7 +47,7 @@ export default function Hero() {
         <Image
           src="/images/ladder-hero.png"
           alt="Argostep leider"
-          fill
+          fill sizes="(max-width: 960px) 100vw, 50vw"
           style={{ objectFit: 'contain' }}
           priority
         />

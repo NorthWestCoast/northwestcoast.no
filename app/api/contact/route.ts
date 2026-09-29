@@ -1,37 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CONTACT_TO_EMAIL, notConfiguredMessage, resolveLang, sendMail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, email, phone, company, product, message } = body as Record<string, string>;
+  const { name, email, phone, company, product, message, lang: rawLang } =
+    body as Record<string, string>;
+  const lang = resolveLang(rawLang);
 
   if (!name || !email) {
     return NextResponse.json({ error: 'Navn og e-post er påkrevd' }, { status: 400 });
   }
 
-  // If RESEND_API_KEY is configured, send email
-  const apiKey = process.env.RESEND_API_KEY;
-  const toEmail = process.env.CONTACT_TO_EMAIL ?? 'arve@astep.no';
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'noreply@northwestcoast.no';
-
-  if (apiKey) {
-    const { Resend } = await import('resend');
-    const resend = new Resend(apiKey);
-
-    await resend.emails.send({
-      from: fromEmail,
-      to: toEmail,
-      subject: `Ny forespørsel fra ${name} – ${company ?? 'ukjent firma'}`,
+  try {
+    const delivered = await sendMail({
+      to: CONTACT_TO_EMAIL,
+      replyTo: email,
+      subject: `Ny forespørsel fra ${name} – ${company || 'ukjent firma'}`,
       text: [
         `Navn: ${name}`,
         `E-post: ${email}`,
-        `Telefon: ${phone ?? '–'}`,
-        `Fartøy/Rederi: ${company ?? '–'}`,
-        `Produkt: ${product ?? '–'}`,
+        `Telefon: ${phone || '–'}`,
+        `Fartøy/Rederi: ${company || '–'}`,
+        `Produkt: ${product || '–'}`,
+        `Språk: ${lang}`,
         ``,
         `Melding:`,
-        message ?? '–',
+        message || '–',
       ].join('\n'),
     });
+
+    if (!delivered) {
+      return NextResponse.json({ error: notConfiguredMessage(lang) }, { status: 503 });
+    }
+  } catch {
+    return NextResponse.json({ error: notConfiguredMessage(lang) }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });

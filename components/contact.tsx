@@ -1,17 +1,23 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Landmark, Mail, MapPin, Phone, User } from 'lucide-react';
+import { useLang, useT } from '@/components/lang-provider';
+import { EVENTS, track } from '@/lib/analytics';
 
 const TEAM = [
-  { initials: '👤', name: 'Kristian B. Dyb', email: 'kristian@astep.no' },
-  { initials: '👤', name: 'Arve Toven',      email: 'arve@astep.no' },
-  { initials: '👤', name: 'Tor Arne Reitan', email: 'tor@astep.no' },
+  { name: 'Kristian B. Dyb', email: 'kristian@astep.no' },
+  { name: 'Arve Toven',      email: 'arve@astep.no' },
+  { name: 'Tor Arne Reitan', email: 'tor@astep.no' },
 ];
 
 export default function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const lang = useLang();
+  const t = useT();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -24,22 +30,28 @@ export default function Contact() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     setLoading(true);
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form));
 
     try {
-      await fetch('/api/contact', {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, lang }),
       });
-    } catch {
-      // fail silently – show success regardless for UX
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? t.errors.generic);
+      }
+      track(EVENTS.contactSubmitted, { lang, product: String(data.product ?? '') });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.errors.generic);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-    setSubmitted(true);
   }
 
   return (
@@ -47,37 +59,35 @@ export default function Contact() {
       <div className="contact-grid">
         {/* Contact info */}
         <div className="reveal">
-          <div className="lbl">Kontakt oss</div>
-          <h2 className="stitle">Ta Kontakt</h2>
-          <p className="sub" style={{ marginBottom: '0.5rem' }}>
-            Be om tilbud tilpasset ditt fartøy – vi svarer raskt.
-          </p>
+          <div className="lbl">{t.contact.label}</div>
+          <h2 className="stitle">{t.contact.title}</h2>
+          <p className="sub" style={{ marginBottom: '0.5rem' }}>{t.contact.sub}</p>
           <div className="contact-info">
             <div className="ci">
-              <div className="ci-icon">📞</div>
+              <div className="ci-icon"><Phone size={18} strokeWidth={1.6} /></div>
               <div>
-                <h4>Telefon</h4>
+                <h4>{t.contact.phone}</h4>
                 <a href="tel:+4790407341">+47 904 07 341</a>
               </div>
             </div>
             <div className="ci">
-              <div className="ci-icon">✉️</div>
+              <div className="ci-icon"><Mail size={18} strokeWidth={1.6} /></div>
               <div>
-                <h4>E-post</h4>
+                <h4>{t.contact.email}</h4>
                 <a href="mailto:arve@astep.no">arve@astep.no</a>
               </div>
             </div>
             <div className="ci">
-              <div className="ci-icon">📍</div>
+              <div className="ci-icon"><MapPin size={18} strokeWidth={1.6} /></div>
               <div>
-                <h4>Adresse</h4>
-                <p>Postboks 79, 6281 Søvik, Norge</p>
+                <h4>{t.contact.address}</h4>
+                <p>{t.contact.addressValue}</p>
               </div>
             </div>
             <div className="ci">
-              <div className="ci-icon">🏛️</div>
+              <div className="ci-icon"><Landmark size={18} strokeWidth={1.6} /></div>
               <div>
-                <h4>Org.nr</h4>
+                <h4>{t.contact.orgNo}</h4>
                 <p>998 196 159</p>
               </div>
             </div>
@@ -85,11 +95,11 @@ export default function Contact() {
 
           {/* Team */}
           <div className="team-mini">
-            <p className="team-mini-label">Grunnleggerne</p>
+            <p className="team-mini-label">{t.contact.founders}</p>
             <div className="team-list">
               {TEAM.map((member) => (
                 <div className="team-member" key={member.email}>
-                  <div className="team-avatar">{member.initials}</div>
+                  <div className="team-avatar"><User size={16} strokeWidth={1.6} /></div>
                   <div className="team-name">{member.name}</div>
                   <div className="team-email">{member.email}</div>
                 </div>
@@ -102,39 +112,38 @@ export default function Contact() {
         <form className="contact-form reveal" onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="fg">
-              <label>Navn *</label>
-              <input name="name" type="text" placeholder="Ditt navn" required />
+              <label>{t.contact.form.name}</label>
+              <input name="name" type="text" placeholder={t.contact.form.namePlaceholder} required />
             </div>
             <div className="fg">
-              <label>E-post *</label>
-              <input name="email" type="email" placeholder="epost@firma.no" required />
+              <label>{t.contact.form.email}</label>
+              <input name="email" type="email" placeholder={t.contact.form.emailPlaceholder} required />
             </div>
           </div>
           <div className="form-row">
             <div className="fg">
-              <label>Telefon</label>
-              <input name="phone" type="tel" placeholder="+47 000 00 000" />
+              <label>{t.contact.form.phone}</label>
+              <input name="phone" type="tel" placeholder={t.contact.form.phonePlaceholder} />
             </div>
             <div className="fg">
-              <label>Fartøy/Rederi</label>
-              <input name="company" type="text" placeholder="Fartøy/Rederi" />
+              <label>{t.contact.form.company}</label>
+              <input name="company" type="text" placeholder={t.contact.form.companyPlaceholder} />
             </div>
           </div>
           <div className="fg">
-            <label>Produkt</label>
+            <label>{t.contact.form.product}</label>
             <select name="product">
-              <option>Argostep Livbåtleider</option>
-              <option>Oppbevaringsskap</option>
-              <option>Reservedeler</option>
+              <option>{t.contact.form.productOptions.ladder}</option>
+              <option>{t.contact.form.productOptions.cabinet}</option>
+              <option>{t.contact.form.productOptions.parts}</option>
             </select>
           </div>
           <div className="fg">
-            <label>Melding</label>
-            <textarea
-              name="message"
-              placeholder="Fortell oss om dine behov (lengde på leider, fartøystype, osv.)"
-            />
+            <label>{t.contact.form.message}</label>
+            <textarea name="message" placeholder={t.contact.form.messagePlaceholder} />
           </div>
+
+          {error && <p className="config-error">{error}</p>}
 
           {!submitted ? (
             <button
@@ -151,7 +160,7 @@ export default function Contact() {
               }}
               disabled={loading}
             >
-              {loading ? 'Sender…' : 'Send Forespørsel →'}
+              {loading ? t.contact.form.sending : t.contact.form.submit}
             </button>
           ) : (
             <div
@@ -165,7 +174,7 @@ export default function Contact() {
                 fontWeight: 600,
               }}
             >
-              ✓ Takk! Vi tar kontakt snart.
+              {t.contact.form.success}
             </div>
           )}
         </form>
