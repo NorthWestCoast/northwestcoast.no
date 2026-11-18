@@ -1,5 +1,6 @@
 import JsonLd from '@/components/json-ld';
 import { faqLd, productLd } from '@/lib/seo';
+import { getPriceTable } from '@/lib/catalog';
 import { DEFAULT_LANG, isLang } from '@/lib/i18n';
 import Nav from '@/components/nav';
 import Hero from '@/components/hero';
@@ -21,10 +22,11 @@ import Lightbox from '@/components/lightbox';
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang: raw } = await params;
   const lang = isLang(raw) ? raw : DEFAULT_LANG;
+  const table = await getPriceTable();
 
   return (
     <>
-      <JsonLd data={[productLd(lang), faqLd(lang, 4)]} />
+      <JsonLd data={[productLd(lang, table), faqLd(lang, 4)]} />
       <Nav />
 
       <Hero />

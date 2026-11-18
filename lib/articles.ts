@@ -9,6 +9,8 @@ export interface Article {
   tag: Localized;
   title: Localized;
   excerpt: Localized;
+  /** Kortere tekst til nyhetskortet på forsiden (ikke det samme som ingressen). */
+  teaser: Localized;
   body: Localized;
 }
 
@@ -19,6 +21,7 @@ export interface LocalizedArticle {
   tag: string;
   title: string;
   excerpt: string;
+  teaser: string;
   body: string;
 }
 
@@ -38,6 +41,10 @@ export const ARTICLES: Article[] = [
     excerpt: {
       no: 'Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter. Se eksempler fra den første installasjonen ombord på Geir.',
       en: 'We have just taken delivery of a new ladder case built for ladders between 11 and 15 metres. See examples from the first installation on board Geir.',
+    },
+    teaser: {
+      no: 'Vi har nylig fått inn en ny leiderkasse tilpasset leidere mellom 11 og 15 meter. På bildene ser du eksempler fra båten Geir, der kassene allerede er tatt i bruk.',
+      en: 'We have just taken delivery of a new ladder case built for ladders between 11 and 15 metres. In the pictures you can see examples from the vessel Geir, where the cases are already in use.',
     },
     body: {
       no: `
@@ -78,6 +85,7 @@ export function localizeArticle(article: Article, lang: Lang): LocalizedArticle 
     tag: article.tag[lang],
     title: article.title[lang],
     excerpt: article.excerpt[lang],
+    teaser: article.teaser[lang],
     body: article.body[lang],
   };
 }

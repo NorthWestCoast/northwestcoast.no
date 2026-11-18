@@ -5,24 +5,25 @@ import Script from 'next/script';
 import { useLang, useT } from '@/components/lang-provider';
 import { track, trackOrder } from '@/lib/analytics';
 import {
-  LENGTHS,
+  cabinetAvailable,
   fmt,
-  lineTotal,
-  orderTotal,
-  rowFor,
-  unitPrice,
+  makePricing,
   type OrderLine,
+  type PriceTable,
 } from '@/lib/pricing';
 
 type CartItem = OrderLine & { id: number };
 
 let nextId = 1;
 
-export default function OrderConfigurator() {
+export default function OrderConfigurator({ rows }: { rows: PriceTable }) {
   const lang = useLang();
   const t = useT();
   // Currently configured (draft) item
-  const [length, setLength] = useState(6);
+  const [length, setLength] = useState(() => {
+    const preferred = rows.find((r) => r.length === 6 && !r.onRequest);
+    return (preferred ?? rows.find((r) => !r.onRequest) ?? rows[0]).length;
+  });
   const [qty, setQty] = useState(1);
   const [cabinet, setCabinet] = useState(false);
 
@@ -34,16 +35,18 @@ export default function OrderConfigurator() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const row = useMemo(() => rowFor(length), [length]);
+  const { lengths, rowFor, unitPrice, lineTotal, orderTotal } = useMemo(() => makePricing(rows), [rows]);
+
+  const row = useMemo(() => rowFor(length), [rowFor, length]);
 
   const draftUnit = unitPrice(length, cabinet);
   const draftTotal = draftUnit * qty;
 
-  const grandTotal = useMemo(() => orderTotal(cart), [cart]);
+  const grandTotal = useMemo(() => orderTotal(cart), [orderTotal, cart]);
   const totalUnits = useMemo(() => cart.reduce((s, it) => s + it.qty, 0), [cart]);
 
   const addToOrder = () => {
-    setCart((prev) => [...prev, { id: nextId++, length, qty, cabinet: cabinet && !row.onRequest }]);
+    setCart((prev) => [...prev, { id: nextId++, length, qty, cabinet: cabinet && cabinetAvailable(row) }]);
     trackOrder('Order: Add to cart', draftTotal, {
       length,
       cabinet,
@@ -162,13 +165,13 @@ export default function OrderConfigurator() {
               track('Order: Configure', { props: { length: next } });
             }}
           >
-            {LENGTHS.map((v) => (
+            {lengths.map((v) => (
               <option key={v} value={v}>{v} {t.order.meters}</option>
             ))}
           </select>
         </div>
 
-        {!row.onRequest && (
+        {cabinetAvailable(row) && (
         <div className="config-block">
           <div className="config-row">
             <label>{t.order.accessories}</label>

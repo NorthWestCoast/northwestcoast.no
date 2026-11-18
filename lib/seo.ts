@@ -1,7 +1,7 @@
 import { ARTICLES, localizeArticle } from './articles';
 import { FAQ_ITEMS } from './faq-items';
 import { getDict, localePath, SITE_URL, type Lang } from './i18n';
-import { PRICE_TABLE } from './pricing';
+import type { PriceTable } from './pricing';
 import { SOCIAL_URLS } from './site';
 
 /**
@@ -62,9 +62,9 @@ export function websiteLd(lang: Lang) {
   };
 }
 
-export function productLd(lang: Lang) {
+export function productLd(lang: Lang, table: PriceTable) {
   const t = getDict(lang);
-  const priced = PRICE_TABLE.filter((r) => !r.onRequest);
+  const priced = table.filter((r) => !r.onRequest);
   const prices = priced.map((r) => r.price);
 
   return {
@@ -93,7 +93,7 @@ export function productLd(lang: Lang) {
       priceCurrency: 'NOK',
       lowPrice: Math.min(...prices),
       highPrice: Math.max(...prices),
-      offerCount: PRICE_TABLE.length,
+      offerCount: table.length,
       offers: priced.map((r) => ({
         '@type': 'Offer',
         name: r.productName,

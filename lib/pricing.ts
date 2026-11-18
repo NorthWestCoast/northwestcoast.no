@@ -1,15 +1,16 @@
 /**
- * Priser iht. offisiell tabell. Skap-navn/-nummer og -pris følger lengden.
+ * Prislogikk for konfigurator, kalkulator og /api/order.
  *
- * Denne modulen deles av konfiguratoren (klient) og /api/order (server).
- * Serveren regner alltid ut prisen på nytt fra denne tabellen – klienten
- * sender kun lengde, antall og om skap er valgt, aldri kronebeløp.
+ * KILDE: products-tabellen i Supabase er fasit, og NWC vedlikeholder den selv
+ * i /admin/priser. lib/catalog.ts leser den og gir sidene en PriceTable.
  *
- * MERK – prisene finnes også i products-tabellen i Supabase. Denne filen er
- * fasit for det kunden får se og betale, fordi /bestill er en statisk side
- * som ikke skal gjøre et databasekall for å vise en pris. products-tabellen
- * er speilet, og brukes til å knytte ordrelinjer til ekte produktrader.
- * /api/order logger en feil hvis de to har drevet fra hverandre.
+ * PRICE_TABLE under er bare RESERVEN: den brukes når databasen ikke svarer
+ * eller ikke er konfigurert (lokal utvikling, nedetid), slik at nettsiden
+ * aldri står uten prisliste. Den gjengir prislista som NWC har gjennomgått.
+ * Endringer gjøres i admin – ikke her – så det ikke finnes to sannheter.
+ *
+ * Serveren regner alltid ut prisen på nytt: klienten sender kun lengde,
+ * antall og om skap er valgt, aldri kronebeløp.
  */
 export type PriceRow = {
   length: number;
@@ -22,7 +23,11 @@ export type PriceRow = {
   cabinetPrice: number;
   /** Ingen fast pris ennå – går som prisforespørsel og teller ikke i summer. */
   onRequest?: boolean;
+  /** products.id for leideren. Finnes bare når raden kommer fra databasen. */
+  productId?: string;
 };
+
+export type PriceTable = PriceRow[];
 
 export const PRICE_TABLE: PriceRow[] = [
   // 2 m er i sortimentet, men pris og produktnummer er ikke fastsatt. Fyll inn
@@ -43,11 +48,13 @@ export const PRICE_TABLE: PriceRow[] = [
   { length: 15, steps: 46, productNumber: '400-043', productName: 'Argostep – 15ML', price: 30599, cabinetNumber: '400-068', cabinetName: 'ASC-LC11-16', cabinetPrice: 12000 },
 ];
 
-export const LENGTHS = PRICE_TABLE.map((r) => r.length); // 2..15
+const PRICED = (table: PriceTable) => table.filter((r) => !r.onRequest);
 
-const PRICED = PRICE_TABLE.filter((r) => !r.onRequest);
-export const MIN_PRICE = Math.min(...PRICED.map((r) => r.price));
-export const MAX_PRICE = Math.max(...PRICED.map((r) => r.price));
+export const lengthsOf = (table: PriceTable = PRICE_TABLE) => table.map((r) => r.length);
+export const minPrice = (table: PriceTable = PRICE_TABLE) =>
+  Math.min(...PRICED(table).map((r) => r.price));
+export const maxPrice = (table: PriceTable = PRICE_TABLE) =>
+  Math.max(...PRICED(table).map((r) => r.price));
 
 /** Én linje i bestillingen, slik klienten sender den. Aldri med pris. */
 export type OrderLine = {
@@ -58,21 +65,40 @@ export type OrderLine = {
 
 export const fmt = (n: number) => n.toLocaleString('nb-NO');
 
-export function rowFor(length: number): PriceRow {
-  return PRICE_TABLE.find((r) => r.length === length) ?? PRICED[0];
+export function rowFor(length: number, table: PriceTable = PRICE_TABLE): PriceRow {
+  return table.find((r) => r.length === length) ?? PRICED(table)[0] ?? table[0];
 }
+
+/** Kan denne raden bestilles med oppbevaringsskap? */
+export const cabinetAvailable = (row: PriceRow) => !row.onRequest && Boolean(row.cabinetName);
 
 /** Enhetspris (leider + evt. skap) for en gitt lengde. */
-export function unitPrice(length: number, cabinet: boolean): number {
-  const row = rowFor(length);
+export function unitPrice(length: number, cabinet: boolean, table: PriceTable = PRICE_TABLE): number {
+  const row = rowFor(length, table);
   if (row.onRequest) return 0;
-  return row.price + (cabinet ? row.cabinetPrice : 0);
+  return row.price + (cabinet && cabinetAvailable(row) ? row.cabinetPrice : 0);
 }
 
-export function lineTotal(line: OrderLine): number {
-  return unitPrice(line.length, line.cabinet) * line.qty;
+export function lineTotal(line: OrderLine, table: PriceTable = PRICE_TABLE): number {
+  return unitPrice(line.length, line.cabinet, table) * line.qty;
 }
 
-export function orderTotal(lines: OrderLine[]): number {
-  return lines.reduce((sum, line) => sum + lineTotal(line), 0);
+export function orderTotal(lines: OrderLine[], table: PriceTable = PRICE_TABLE): number {
+  return lines.reduce((sum, line) => sum + lineTotal(line, table), 0);
+}
+
+/**
+ * Binder alle hjelperne til én tabell. Klientkomponentene får tabellen som
+ * prop fra serveren (lest fra databasen) og bruker denne i stedet for å
+ * importere den statiske lista.
+ */
+export function makePricing(table: PriceTable) {
+  return {
+    table,
+    lengths: lengthsOf(table),
+    rowFor: (length: number) => rowFor(length, table),
+    unitPrice: (length: number, cabinet: boolean) => unitPrice(length, cabinet, table),
+    lineTotal: (line: OrderLine) => lineTotal(line, table),
+    orderTotal: (lines: OrderLine[]) => orderTotal(lines, table),
+  };
 }

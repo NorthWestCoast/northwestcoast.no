@@ -1,4 +1,5 @@
-import { PRICE_TABLE, fmt, MIN_PRICE, MAX_PRICE } from '@/lib/pricing';
+import { getPriceTable } from '@/lib/catalog';
+import { fmt, maxPrice, minPrice } from '@/lib/pricing';
 import { ORG, SITE_URL } from '@/lib/site';
 import { localePath } from '@/lib/i18n';
 
@@ -6,10 +7,12 @@ import { localePath } from '@/lib/i18n';
  * llms.txt: en kort, lesbar oppsummering for AI-assistenter (llmstxt.org).
  * Alt her er hentet fra nettstedet – ikke legg til påstander som ikke står der.
  */
-export const dynamic = 'force-static';
+// Hentes fra prislista i databasen; bygges på nytt når admin lagrer nye priser.
+export const revalidate = 3600;
 
-export function GET() {
-  const sizes = PRICE_TABLE.map((r) =>
+export async function GET() {
+  const table = await getPriceTable();
+  const sizes = table.map((r) =>
     r.onRequest
       ? `- ${r.length} m: price on request`
       : `- ${r.length} m (${r.steps} steps, product no. ${r.productNumber}): NOK ${fmt(r.price)} excl. VAT`,
@@ -28,7 +31,7 @@ export function GET() {
 - Storage: weatherproof storage cabinet available, which extends service life
 - Suitable for: fishing vessels under 15 m, service vessels under 15 m, smaller cargo ships, passenger vessels
 - Prices are indicative and exclude VAT; the final quote is confirmed after contact
-- Price range for priced sizes: NOK ${fmt(MIN_PRICE)}–${fmt(MAX_PRICE)} excl. VAT
+- Price range for priced sizes: NOK ${fmt(minPrice(table))}–${fmt(maxPrice(table))} excl. VAT
 
 ## Sizes and indicative prices
 

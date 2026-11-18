@@ -126,6 +126,7 @@ export const en: Dict = {
   },
 
   gallery: {
+    pageSub: 'From product to practice – see the ladder from every angle and in daily use along the Norwegian coast.',
     label: 'Product gallery',
     title: 'Argostep in pictures',
     sub: 'From product to practice – see Argostep from every angle and in daily use along the Norwegian coast.',
@@ -230,6 +231,7 @@ export const en: Dict = {
   },
 
   faq: {
+    contactLabel: 'Contact',
     label: 'Questions & Answers',
     title: 'Frequently asked questions',
     sub: 'Haven’t found your answer? Contact us directly – we’re happy to help.',
@@ -399,7 +401,7 @@ export const en: Dict = {
     vesselCompany: 'Vessel/Company',
     notesPlaceholderBase: 'Preferred delivery time, installation, special requirements…',
     onRequest: 'Price on request',
-    onRequestNote: 'The price for this length is agreed on request. It is not included in the total.',
+    onRequestNote: 'Lengths marked “price on request” are agreed on request and are not included in the total.',
     label: 'Ordering',
     title: 'Order your Argostep',
     sub: 'Configure the ladder for your vessel. Choose a length between 2 and 15 metres plus accessories – and see it in 3D as you go.',

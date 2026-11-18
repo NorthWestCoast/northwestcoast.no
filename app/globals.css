@@ -4733,3 +4733,20 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   .answers { padding: 2.5rem 1.5rem; }
   .answers-grid { grid-template-columns: 1fr; gap: 1.75rem; }
 }
+
+/* Prisredigering i admin */
+.adm-price-table input[type='number'],
+.adm-price-table input:not([type]) { width: 8.5rem; }
+.adm-price-table input[type='checkbox'] { width: auto; height: 1.1rem; accent-color: var(--green); }
+.adm-price-table td { vertical-align: middle; }
+.adm-price-table .adm-badge { margin-left: 0.4rem; }
+.adm-form label.adm-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.84rem;
+  color: var(--text-dim);
+}
+.adm-form label.adm-check input { width: auto; accent-color: var(--green); }

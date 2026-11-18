@@ -2,6 +2,7 @@ import JsonLd from '@/components/json-ld';
 import { breadcrumbLd, calculatorLd } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Nav from '@/components/nav';
+import { getPriceTable } from '@/lib/catalog';
 import Footer from '@/components/footer';
 import LadderCalculator from '@/components/ladder-calculator';
 import { DEFAULT_LANG, getDict, isLang, pageMetadata } from '@/lib/i18n';
@@ -22,6 +23,7 @@ export default async function KalkulatorPage({
 }) {
   const { lang } = await params;
   const l = isLang(lang) ? lang : DEFAULT_LANG;
+  const rows = await getPriceTable();
   const t = getDict(l);
 
   return (
@@ -37,7 +39,7 @@ export default async function KalkulatorPage({
       </div>
 
       <section className="calc-section">
-        <LadderCalculator />
+        <LadderCalculator rows={rows} />
       </section>
 
       <Footer />

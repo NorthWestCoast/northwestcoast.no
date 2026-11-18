@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > lib/supabase/database.types.ts",
-    "db:push": "supabase db push"
+    "db:push": "supabase db push",
+    "test:prices": "node tests/price-plan.test.mts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

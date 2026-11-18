@@ -9,7 +9,7 @@ import {
   DEFAULT_WATERLINE_MARGIN_M,
   calculate,
 } from '@/lib/ladder-rules';
-import { LENGTHS, fmt, rowFor, unitPrice } from '@/lib/pricing';
+import { cabinetAvailable, fmt, makePricing, type PriceTable } from '@/lib/pricing';
 
 type VesselType = 'fishing' | 'service' | 'cargo' | 'passenger' | 'other';
 
@@ -21,7 +21,8 @@ const toNumber = (value: string) => {
 
 const metres = (n: number) => n.toFixed(2).replace(/\.00$/, '').replace('.', ',');
 
-export default function LadderCalculator() {
+export default function LadderCalculator({ rows }: { rows: PriceTable }) {
+  const { lengths, rowFor, unitPrice } = useMemo(() => makePricing(rows), [rows]);
   // Tekstene hentes fra ordboken; byttes til språkvelger når i18n er på plass.
   const t = no;
 
@@ -84,7 +85,7 @@ export default function LadderCalculator() {
     [freeboard, mountHeight, margin],
   );
 
-  const result = useMemo(() => calculate(input), [input]);
+  const result = useMemo(() => calculate(input, rows), [input, rows]);
 
   const hasMeasurements = freeboard.trim() !== '' && input.freeboard > 0;
   const chosen = override !== null ? rowFor(override) : result.recommended;
@@ -113,7 +114,7 @@ export default function LadderCalculator() {
           imo,
           company_website: data.company_website, // honeypot
           notes: data.notes,
-          items: [{ length: chosen.length, qty, cabinet: cabinet && !chosen.onRequest }],
+          items: [{ length: chosen.length, qty, cabinet: cabinet && cabinetAvailable(chosen) }],
           calculation: {
             freeboard: input.freeboard,
             mountHeight: input.mountHeight,
@@ -343,7 +344,7 @@ export default function LadderCalculator() {
                       value={chosen.length}
                       onChange={(e) => setOverride(Number(e.target.value))}
                     >
-                      {LENGTHS.map((v) => (
+                      {lengths.map((v) => (
                         <option key={v} value={v}>
                           {v} {t.order.meters}
                         </option>
@@ -352,7 +353,7 @@ export default function LadderCalculator() {
                     <p className="calc-help">{t.calculator.chooseLengthHelp}</p>
                   </div>
 
-                  {!chosen.onRequest && (
+                  {cabinetAvailable(chosen) && (
                   <button
                     type="button"
                     className={`config-extra${cabinet ? ' active' : ''}`}

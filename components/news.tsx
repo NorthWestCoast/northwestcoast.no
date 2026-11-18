@@ -46,7 +46,7 @@ export default function News() {
             <span className="news-tag">{featured.tag}</span>
             <div className="news-date"><Calendar size={14} strokeWidth={1.6} /> {featured.date}</div>
             <h3>{featured.title}</h3>
-            <p>{featured.excerpt}</p>
+            <p>{featured.teaser}</p>
             <Link href={localePath(lang, `/nyheter/${featured.slug}`)} className="news-link">
               {t.news.readFull}
             </Link>

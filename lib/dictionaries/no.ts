@@ -123,6 +123,7 @@ export const no = {
   },
 
   gallery: {
+    pageSub: 'Fra produkt til praksis – se leideren fra alle vinkler og i daglig bruk langs norskekysten.',
     label: 'Produktgalleri',
     title: 'Argostep i bilder',
     sub: 'Fra produkt til praksis – se Argostep fra alle vinkler og i daglig bruk langs norskekysten.',
@@ -224,6 +225,7 @@ export const no = {
   },
 
   faq: {
+    contactLabel: 'Kontakt',
     label: 'Spørsmål & Svar',
     title: 'Ofte stilte spørsmål',
     sub: 'Ikke funnet svaret? Kontakt oss direkte – vi hjelper gjerne.',
@@ -393,7 +395,7 @@ export const no = {
     vesselCompany: 'Fartøy/Rederi',
     notesPlaceholderBase: 'Ønsket leveringstid, montering, spesialtilpasning…',
     onRequest: 'Pris på forespørsel',
-    onRequestNote: 'Prisen på denne lengden avtales ved forespørsel. Den er ikke med i totalsummen.',
+    onRequestNote: 'Lengder merket «pris på forespørsel» avtales på forespørsel og er ikke med i totalsummen.',
     label: 'Bestilling',
     title: 'Bestill din Argostep',
     sub: 'Sett sammen leideren for ditt fartøy. Velg lengde mellom 2 og 15 meter og tilbehør – se den i 3D mens du konfigurerer.',

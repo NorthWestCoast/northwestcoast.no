@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clean, clientIp, isBot, isEmail, langOf, rateLimit, tr } from '@/lib/api-guard';
+import { fetchPriceTable } from '@/lib/catalog';
 import {
-  LENGTHS,
-  PRICE_TABLE,
+  cabinetAvailable,
   lineTotal,
   orderTotal,
   rowFor,
   type OrderLine,
+  type PriceTable,
 } from '@/lib/pricing';
 import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
 import { ORDER_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
@@ -27,7 +28,7 @@ const genericError = (lang: 'no' | 'en') =>
   );
 
 /** Plukker ut gyldige ordrelinjer. Priser kommer aldri fra klienten. */
-function parseLines(raw: unknown): OrderLine[] {
+function parseLines(raw: unknown, table: PriceTable): OrderLine[] {
   if (!Array.isArray(raw)) return [];
 
   return raw
@@ -40,19 +41,19 @@ function parseLines(raw: unknown): OrderLine[] {
         cabinet: line.cabinet === true,
       };
     })
-    .filter((line) => LENGTHS.includes(line.length));
+    .filter((line) => table.some((row) => row.length === line.length));
 }
 
-function toView(lines: OrderLine[]): OrderLineView[] {
+function toView(lines: OrderLine[], table: PriceTable): OrderLineView[] {
   return lines.map((line) => {
-    const row = rowFor(line.length);
+    const row = rowFor(line.length, table);
     return {
       productName: row.productName,
       productNumber: row.productNumber,
       steps: row.steps,
       qty: line.qty,
       cabinetName: line.cabinet ? row.cabinetName : null,
-      lineTotal: lineTotal(line),
+      lineTotal: lineTotal(line, table),
       onRequest: row.onRequest === true,
     };
   });
@@ -104,12 +105,48 @@ export async function POST(req: NextRequest) {
   const phone = clean(body.phone, 40);
   const vessel = clean(body.vessel, 160);
   const imo = clean(body.imo, 20);
-  const lines = parseLines(body.items);
+
+  if (!name || !email) {
+    return NextResponse.json({ error: tr(lang, 'Navn og e-post er påkrevd.', 'Name and email are required.') }, { status: 400 });
+  }
+  if (!isEmail(email)) {
+    return NextResponse.json({ error: tr(lang, 'E-postadressen ser ikke gyldig ut.', 'The email address does not look valid.') }, { status: 400 });
+  }
+
+  // Databasen er fasit, ikke e-posten. Så lenge raden ligger inne er
+  // bestillingen trygg, og en e-post som feiler kan sendes på nytt.
+  if (!hasServiceRole()) {
+    console.error('[order] Supabase er ikke konfigurert – kan ikke ta imot bestilling.');
+    return NextResponse.json({ error: genericError(lang) }, { status: 500 });
+  }
+
+  const supabase = createServiceSupabase();
+
+  // Prisen regnes ut av prislista i databasen akkurat nå – ikke fra en
+  // mellomlagret kopi og aldri fra klienten. Kan vi ikke lese den, avviser vi
+  // heller bestillingen enn å regne med en annen pris enn kunden så.
+  let table: PriceTable;
+  try {
+    table = await fetchPriceTable(supabase);
+  } catch (error) {
+    console.error('[order] Kunne ikke lese prislista:', error);
+    return NextResponse.json({ error: genericError(lang) }, { status: 500 });
+  }
+
+  const lines = parseLines(body.items, table).map((line) => ({
+    ...line,
+    // Skap kan bare bestilles der raden har et tilgjengelig skap.
+    cabinet: line.cabinet && cabinetAvailable(rowFor(line.length, table)),
+  }));
+
+  if (lines.length === 0) {
+    return NextResponse.json({ error: tr(lang, 'Bestillingen er tom.', 'The order is empty.') }, { status: 400 });
+  }
 
   // Kommentar + IMO + kalkulatoroppsett samles i ett notat, så alt følger ordren.
   const requestLines = lines
-    .filter((line) => rowFor(line.length).onRequest)
-    .map((line) => `${line.qty} × ${rowFor(line.length).productName} – pris på forespørsel`);
+    .filter((line) => rowFor(line.length, table).onRequest)
+    .map((line) => `${line.qty} × ${rowFor(line.length, table).productName} – pris på forespørsel`);
   const notes = [
     clean(body.notes, 2000),
     imo ? `IMO: ${imo}` : '',
@@ -119,30 +156,11 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join('\n\n');
 
-  if (!name || !email) {
-    return NextResponse.json({ error: tr(lang, 'Navn og e-post er påkrevd.', 'Name and email are required.') }, { status: 400 });
-  }
-  if (!isEmail(email)) {
-    return NextResponse.json({ error: tr(lang, 'E-postadressen ser ikke gyldig ut.', 'The email address does not look valid.') }, { status: 400 });
-  }
-  if (lines.length === 0) {
-    return NextResponse.json({ error: tr(lang, 'Bestillingen er tom.', 'The order is empty.') }, { status: 400 });
-  }
-
-  const total = orderTotal(lines);
+  const total = orderTotal(lines, table);
   const units = lines.reduce((sum, line) => sum + line.qty, 0);
-  const view = toView(lines);
+  const view = toView(lines, table);
 
   // ── 1. Lagre bestillingen. Dette er leveransen. ──────────────────────────
-  //
-  // Databasen er fasit, ikke e-posten. Så lenge raden ligger inne er
-  // bestillingen trygg, og en e-post som feiler kan sendes på nytt.
-  if (!hasServiceRole()) {
-    console.error('[order] Supabase er ikke konfigurert – kan ikke ta imot bestilling.');
-    return NextResponse.json({ error: genericError(lang) }, { status: 500 });
-  }
-
-  const supabase = createServiceSupabase();
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -163,42 +181,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: genericError(lang) }, { status: 500 });
   }
 
-  // Produkt-ID-ene slås opp fra katalogen, slik at ordrelinjene peker på
-  // ekte produkter og ikke bare en tekststreng.
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, product_number, price_nok');
-
-  const productIdByNumber = new Map(
-    (products ?? []).map((p) => [p.product_number, p.id]),
-  );
-
-  // Prisene finnes nå to steder: lib/pricing.ts (som konfiguratoren viser
-  // kunden) og products-tabellen. lib/pricing.ts vinner her – kunden skal få
-  // prisen hun faktisk så – men et avvik betyr at katalogen har drevet fra
-  // koden, og det må oppdages med én gang, ikke ved neste avstemming.
-  for (const product of products ?? []) {
-    const row = PRICE_TABLE.find((r) => r.productNumber === product.product_number);
-    if (row && row.price !== product.price_nok) {
-      console.error(
-        `[order] PRISAVVIK ${product.product_number}: lib/pricing.ts=${row.price} ` +
-          `products.price_nok=${product.price_nok}. Katalogen må avstemmes.`,
-      );
-    }
-  }
-
+  // Linjer med pris på forespørsel lagres ikke som ordrelinjer (summen ville
+  // blitt 0 kr). De står i notatet og i e-posten, og følges opp manuelt.
   const lineRows = lines.flatMap((line) => {
-    const row = rowFor(line.length);
-    const productId = productIdByNumber.get(row.productNumber);
-    if (!productId) return [];
+    const row = rowFor(line.length, table);
+    if (row.onRequest || !row.productId) return [];
     return [{
       order_id: order.id,
-      product_id: productId,
+      product_id: row.productId,
       qty: line.qty,
       with_cabinet: line.cabinet,
       unit_price_nok: row.price,
       cabinet_price_nok: line.cabinet ? row.cabinetPrice : 0,
-      line_total_nok: lineTotal(line),
+      line_total_nok: lineTotal(line, table),
     }];
   });
 

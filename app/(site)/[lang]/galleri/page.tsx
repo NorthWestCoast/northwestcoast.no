@@ -35,7 +35,7 @@ export default async function GalleriPage({
       <div className="subpage-header">
         <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>{t.gallery.label}</div>
         <h1>{t.gallery.title}</h1>
-        <p>{t.gallery.sub}</p>
+        <p>{t.gallery.pageSub}</p>
       </div>
 
       <Wave top="var(--navy)" bottom="var(--sand-light)" dualBottomFill="var(--sand-light)" />

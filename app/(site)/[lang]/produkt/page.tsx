@@ -1,5 +1,6 @@
 import JsonLd from '@/components/json-ld';
 import { breadcrumbLd, productLd } from '@/lib/seo';
+import { getPriceTable } from '@/lib/catalog';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ export default async function ProduktPage({
   const { lang: raw } = await params;
   const lang = isLang(raw) ? raw : DEFAULT_LANG;
   const t = getDict(lang);
+  const table = await getPriceTable();
 
   const specs = [
     t.product.specs.lengths,
@@ -46,7 +48,7 @@ export default async function ProduktPage({
 
   return (
     <>
-      <JsonLd data={[productLd(lang), breadcrumbLd(lang, [{ name: t.product.title, path: '/produkt' }])]} />
+      <JsonLd data={[productLd(lang, table), breadcrumbLd(lang, [{ name: t.product.title, path: '/produkt' }])]} />
 
       <Nav />
 

@@ -215,14 +215,46 @@ export type Database = {
           length_m: number | null;
           steps: number | null;
           price_nok: number;
+          price_on_request: boolean;
           cabinet_product_id: string | null;
           active: boolean;
           created_at: string;
           updated_at: string;
         };
         Insert: never;
-        Update: never;
+        // Admin kan rette nummer, trinn, pris, forespørselsflagg og aktiv.
+        // Navn, lengde og skapkobling endres bevisst ikke herfra.
+        Update: {
+          product_number?: string;
+          steps?: number | null;
+          price_nok?: number;
+          price_on_request?: boolean;
+          active?: boolean;
+        };
         Relationships: [];
+      };
+      product_price_history: {
+        Row: {
+          id: string;
+          product_id: string;
+          old_price_nok: number | null;
+          new_price_nok: number | null;
+          old_on_request: boolean | null;
+          new_on_request: boolean | null;
+          changed_by: string | null;
+          changed_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'product_price_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       orders: {
         Row: {

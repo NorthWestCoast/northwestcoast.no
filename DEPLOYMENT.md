@@ -186,3 +186,22 @@ Rekkefølgen som får data inn i systemet:
 5. `/admin/selskap/<id>` → inviter kundens kontaktperson.
 6. `/admin/service` → registrer servicerapport. Neste frist beregnes fra
    leiderens serviceintervall om du ikke setter den selv.
+
+## 7. Priser
+
+Prislista på nettsiden, i bestillingsskjemaet og i kalkulatoren leses fra
+`products`-tabellen og vedlikeholdes av ansatte i **/admin/priser**. Serveren
+regner ut ordresummen fra samme tabell, aldri fra det klienten sender.
+
+- Endringer vises umiddelbart (`revalidateTag('catalog')` i server action).
+  Uten revalidering mellomlagres prislista i maks én time.
+- `lib/pricing.ts` er bare RESERVE hvis databasen ikke svarer – ikke endre
+  priser der. En feil under lesing logges som `[catalog] Bruker reserveprisliste`.
+- Hver prisendring logges i `product_price_history` (trigger), synlig nederst
+  på /admin/priser.
+- 2 m-leideren ligger inne som «pris på forespørsel» med plassholdernummeret
+  `ARG-2ML`. Bytt til offisielt nummer, antall trinn og pris i admin – siden
+  nekter å lagre fast pris før nummeret er byttet.
+- Skapnumrene fra den gamle prislista var inkonsistente (samme 400-06x-nummer
+  på ulike modeller). Skapene er derfor identifisert med modellnavn til de
+  offisielle numrene er avklart.

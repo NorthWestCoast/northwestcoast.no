@@ -1,4 +1,4 @@
-import { PRICE_TABLE, type PriceRow } from './pricing';
+import { PRICE_TABLE, type PriceRow, type PriceTable } from './pricing';
 
 /**
  * Dimensjoneringsregler for leiderkalkulatoren.
@@ -25,8 +25,10 @@ export const DEFAULT_WATERLINE_MARGIN_M = 0.5;
  */
 export const APPROVED_VESSEL_LOA_LIMIT_M = 15;
 
-export const MIN_LENGTH = PRICE_TABLE[0].length;
-export const MAX_LENGTH = PRICE_TABLE[PRICE_TABLE.length - 1].length;
+export const maxLength = (table: PriceTable = PRICE_TABLE) =>
+  Math.max(...table.map((r) => r.length));
+export const minLength = (table: PriceTable = PRICE_TABLE) =>
+  Math.min(...table.map((r) => r.length));
 
 export type CalcInput = {
   /** Fribord: loddrett høyde fra vannlinjen til innstigningsdekket, i meter. */
@@ -57,19 +59,19 @@ export function requiredLength({ freeboard, mountHeight, margin }: CalcInput): n
   return round(Math.max(0, sum));
 }
 
-export function rowForRequired(required: number): PriceRow | null {
-  return PRICE_TABLE.find((row) => row.length >= required) ?? null;
+export function rowForRequired(required: number, table: PriceTable = PRICE_TABLE): PriceRow | null {
+  return [...table].sort((a, b) => a.length - b.length).find((row) => row.length >= required) ?? null;
 }
 
-export function calculate(input: CalcInput): CalcResult {
+export function calculate(input: CalcInput, table: PriceTable = PRICE_TABLE): CalcResult {
   const required = requiredLength(input);
-  const recommended = rowForRequired(required);
+  const recommended = rowForRequired(required, table);
 
   return {
     required,
     recommended,
     slack: recommended ? round(recommended.length - required) : 0,
-    tooLong: required > MAX_LENGTH,
-    atMinimum: required > 0 && recommended?.length === MIN_LENGTH,
+    tooLong: required > maxLength(table),
+    atMinimum: required > 0 && recommended?.length === minLength(table),
   };
 }

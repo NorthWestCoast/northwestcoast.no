@@ -104,7 +104,7 @@ export default function FaqPageContent() {
 
       <section className="faq-contact">
         <div className="faq-contact-inner">
-          <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>{t.contact.label}</div>
+          <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>{t.faq.contactLabel}</div>
           <h2 className="stitle" style={{ textAlign: 'center', color: '#fff' }}>
             {t.faq.contactHeading}
           </h2>
