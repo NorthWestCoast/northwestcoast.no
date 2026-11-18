@@ -1,11 +1,3 @@
--- ============================================================================
--- Bestillinger, leveranser og innkommende skjemaer.
---
--- Kjernepoenget i fase 0: raden skrives FØR e-posten sendes. Tidligere var
--- e-posten selve databasen – feilet Resend, var bestillingen borte. Nå er
--- e-post et varsel som kan sendes på nytt.
--- ============================================================================
-
 create type public.order_status as enum
   ('new', 'quoted', 'confirmed', 'in_production', 'delivered', 'cancelled');
 
@@ -29,7 +21,6 @@ create table public.orders (
   contact_phone text,
   vessel_name   text,
   notes         text,
-  -- Snapshot av totalen slik den ble regnet ut på serveren da bestillingen kom.
   total_nok     integer not null check (total_nok >= 0),
   status        public.order_status not null default 'new',
   source        text not null default 'web',
@@ -50,8 +41,6 @@ create table public.order_lines (
   product_id         uuid not null references public.products(id),
   qty                integer not null check (qty > 0),
   with_cabinet       boolean not null default false,
-  -- Prisene fryses på ordretidspunktet. Prislista endrer seg; historiske
-  -- ordrer skal ikke endre seg med den.
   unit_price_nok     integer not null check (unit_price_nok >= 0),
   cabinet_price_nok  integer not null default 0 check (cabinet_price_nok >= 0),
   line_total_nok     integer not null check (line_total_nok >= 0)
@@ -71,8 +60,6 @@ create table public.deliveries (
 );
 
 create index deliveries_order_idx on public.deliveries (order_id);
-
--- ── Innkommende skjemaer ────────────────────────────────────────────────────
 
 create table public.contact_requests (
   id           uuid primary key default gen_random_uuid(),
@@ -96,10 +83,6 @@ create table public.newsletter_subscribers (
   unsubscribed_at timestamptz,
   created_at     timestamptz not null default now()
 );
-
--- ── E-postlogg ──────────────────────────────────────────────────────────────
--- Hver utsending logges. Gir oss (a) feilsøking, (b) grunnlag for retry, og
--- (c) mulighet til å bytte leverandør uten å miste historikken.
 
 create type public.email_status as enum ('queued', 'sent', 'failed');
 

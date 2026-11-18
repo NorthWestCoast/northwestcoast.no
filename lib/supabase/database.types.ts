@@ -1,466 +1,1151 @@
 /**
- * Databasetyper.
+ * GENERERT FRA DATABASEN – ikke rediger for hånd.
  *
- * Regenerer med:
+ * Regenerer etter hver skjemaendring (migrasjon):
  *   npm run db:types
- * (krever Supabase CLI og SUPABASE_PROJECT_ID i miljøet)
+ * (krever Supabase CLI og SUPABASE_PROJECT_ID i miljøet), eller via Supabase
+ * MCP-verktøyet generate_typescript_types.
  *
- * Denne filen dekker tabellene fase 0 faktisk bruker. Når dashboardet i fase 2
- * begynner å lese fartøy, leidere og service, bytt den ut med full generert
- * output i stedet for å utvide den for hånd.
+ * Sist generert 2026-11-18 mot prosjektet «northwestcoast», etter migrasjon
+ * 20261118223552_harden_price_history_and_order_number_grants.
  */
-
 export type Json =
   | string
   | number
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
-
-export type CompanyRole = 'owner' | 'admin' | 'member';
-export type EmailStatus = 'queued' | 'sent' | 'failed';
-export type LadderLifecycleStatus =
-  | 'in_production'
-  | 'delivered'
-  | 'installed'
-  | 'retired';
-export type LadderPhotoKind = 'ladder' | 'attachment_point' | 'overview' | 'other';
-export type OrderStatus =
-  | 'new'
-  | 'quoted'
-  | 'confirmed'
-  | 'in_production'
-  | 'delivered'
-  | 'cancelled';
-export type ProductKind = 'ladder' | 'cabinet' | 'spare_part';
-export type ServiceResult = 'ok' | 'ok_with_remarks' | 'failed';
-export type VesselRole = 'master' | 'crew' | 'viewer';
-/** Beregnet i viewet ladder_status, ikke en enum i databasen. */
-export type ServiceState = 'ok' | 'due_soon' | 'overdue' | 'unknown';
-
-type Timestamps = { created_at: string };
+  | Json[]
 
 export type Database = {
-  // Leses av supabase-js for å velge riktig PostgREST-oppførsel.
-  __InternalSupabase: { PostgrestVersion: '14.5' };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
+  }
   public: {
     Tables: {
       companies: {
         Row: {
-          id: string;
-          name: string;
-          org_number: string | null;
-          address: string | null;
-          postal_code: string | null;
-          city: string | null;
-          country: string;
-          created_at: string;
-          updated_at: string;
-        };
+          address: string | null
+          city: string | null
+          country: string
+          created_at: string
+          id: string
+          name: string
+          org_number: string | null
+          postal_code: string | null
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          name: string;
-          org_number?: string | null;
-          address?: string | null;
-          postal_code?: string | null;
-          city?: string | null;
-          country?: string;
-        };
-        Update: Partial<Database['public']['Tables']['companies']['Insert']>;
-        Relationships: [];
-      };
-      vessels: {
-        Row: {
-          id: string;
-          company_id: string;
-          name: string;
-          imo: string | null;
-          call_sign: string | null;
-          mmsi: string | null;
-          vessel_type: string | null;
-          home_port: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          company_id: string;
-          name: string;
-          imo?: string | null;
-          call_sign?: string | null;
-          mmsi?: string | null;
-          vessel_type?: string | null;
-          home_port?: string | null;
-        };
-        Update: Partial<Database['public']['Tables']['vessels']['Insert']>;
-        Relationships: [];
-      };
-      ladders: {
-        Row: {
-          id: string;
-          serial_number: string;
-          public_code: string | null;
-          product_id: string;
-          produced_at: string | null;
-          vessel_id: string | null;
-          installed_at: string | null;
-          status: LadderLifecycleStatus;
-          service_interval_months: number;
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          serial_number: string;
-          public_code?: string | null;
-          product_id: string;
-          produced_at?: string | null;
-          vessel_id?: string | null;
-          installed_at?: string | null;
-          status?: LadderLifecycleStatus;
-          service_interval_months?: number;
-          notes?: string | null;
-        };
-        Update: Partial<Database['public']['Tables']['ladders']['Insert']>;
-        Relationships: [];
-      };
-      deliveries: {
-        Row: {
-          id: string;
-          order_id: string;
-          shipped_at: string | null;
-          delivered_at: string | null;
-          carrier: string | null;
-          tracking_reference: string | null;
-          notes: string | null;
-          created_at: string;
-        };
-        Insert: never;
-        Update: never;
-        Relationships: [];
-      };
-      service_reports: {
-        Row: {
-          id: string;
-          ladder_id: string;
-          performed_at: string;
-          performed_by: string;
-          technician_user_id: string | null;
-          findings: string | null;
-          parts_replaced: Json;
-          result: ServiceResult;
-          next_service_due: string | null;
-          report_path: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          ladder_id: string;
-          performed_at: string;
-          performed_by: string;
-          technician_user_id?: string | null;
-          findings?: string | null;
-          parts_replaced?: Json;
-          result: ServiceResult;
-          next_service_due?: string | null;
-          report_path?: string | null;
-        };
-        Update: Partial<Database['public']['Tables']['service_reports']['Insert']>;
-        Relationships: [];
-      };
-      company_members: {
-        Row: {
-          company_id: string;
-          user_id: string;
-          role: CompanyRole;
-          created_at: string;
-        };
-        Insert: { company_id: string; user_id: string; role?: CompanyRole };
-        Update: Partial<Database['public']['Tables']['company_members']['Insert']>;
-        Relationships: [];
-      };
+          address?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          name: string
+          org_number?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          name?: string
+          org_number?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_invitations: {
         Row: {
-          id: string;
-          company_id: string;
-          email: string;
-          role: CompanyRole;
-          invited_by: string | null;
-          expires_at: string;
-          accepted_at: string | null;
-          created_at: string;
-        };
+          accepted_at: string | null
+          company_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["company_role"]
+        }
         Insert: {
-          id?: string;
-          company_id: string;
-          email: string;
-          role?: CompanyRole;
-          invited_by?: string | null;
-        };
-        // accepted_at settes ved innløsning, og er derfor skrivbar selv om
-        // den ikke gir mening å oppgi når invitasjonen opprettes.
-        Update: Partial<
-          Database['public']['Tables']['company_invitations']['Insert']
-        > & { accepted_at?: string | null };
-        Relationships: [];
-      };
-      products: {
-        Row: {
-          id: string;
-          product_number: string;
-          name: string;
-          kind: ProductKind;
-          length_m: number | null;
-          steps: number | null;
-          price_nok: number;
-          price_on_request: boolean;
-          cabinet_product_id: string | null;
-          active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: never;
-        // Admin kan rette nummer, trinn, pris, forespørselsflagg og aktiv.
-        // Navn, lengde og skapkobling endres bevisst ikke herfra.
+          accepted_at?: string | null
+          company_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["company_role"]
+        }
         Update: {
-          product_number?: string;
-          steps?: number | null;
-          price_nok?: number;
-          price_on_request?: boolean;
-          active?: boolean;
-        };
-        Relationships: [];
-      };
-      product_price_history: {
-        Row: {
-          id: string;
-          product_id: string;
-          old_price_nok: number | null;
-          new_price_nok: number | null;
-          old_on_request: boolean | null;
-          new_on_request: boolean | null;
-          changed_by: string | null;
-          changed_at: string;
-        };
-        Insert: never;
-        Update: never;
+          accepted_at?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["company_role"]
+        }
         Relationships: [
           {
-            foreignKeyName: 'product_price_history_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
+            foreignKeyName: "company_invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
-        ];
-      };
-      orders: {
+        ]
+      }
+      company_members: {
         Row: {
-          id: string;
-          order_number: string;
-          company_id: string | null;
-          contact_name: string;
-          contact_email: string;
-          contact_phone: string | null;
-          vessel_name: string | null;
-          notes: string | null;
-          total_nok: number;
-          status: OrderStatus;
-          source: string;
-          created_at: string;
-          updated_at: string;
-        };
+          company_id: string
+          created_at: string
+          role: Database["public"]["Enums"]["company_role"]
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          order_number?: string;
-          company_id?: string | null;
-          contact_name: string;
-          contact_email: string;
-          contact_phone?: string | null;
-          vessel_name?: string | null;
-          notes?: string | null;
-          total_nok: number;
-          status?: OrderStatus;
-          source?: string;
-        };
-        Update: Partial<Database['public']['Tables']['orders']['Insert']>;
-        Relationships: [];
-      };
-      order_lines: {
-        Row: {
-          id: string;
-          order_id: string;
-          product_id: string;
-          qty: number;
-          with_cabinet: boolean;
-          unit_price_nok: number;
-          cabinet_price_nok: number;
-          line_total_nok: number;
-        };
-        Insert: {
-          id?: string;
-          order_id: string;
-          product_id: string;
-          qty: number;
-          with_cabinet?: boolean;
-          unit_price_nok: number;
-          cabinet_price_nok?: number;
-          line_total_nok: number;
-        };
-        Update: Partial<Database['public']['Tables']['order_lines']['Insert']>;
-        Relationships: [];
-      };
+          company_id: string
+          created_at?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_requests: {
-        Row: Timestamps & {
-          id: string;
-          name: string;
-          email: string;
-          phone: string | null;
-          company_name: string | null;
-          product: string | null;
-          message: string | null;
-          source: string;
-          handled_at: string | null;
-        };
+        Row: {
+          company_name: string | null
+          created_at: string
+          email: string
+          handled_at: string | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          product: string | null
+          source: string
+        }
         Insert: {
-          id?: string;
-          name: string;
-          email: string;
-          phone?: string | null;
-          company_name?: string | null;
-          product?: string | null;
-          message?: string | null;
-          source?: string;
-        };
-        Update: Partial<Database['public']['Tables']['contact_requests']['Insert']>;
-        Relationships: [];
-      };
-      newsletter_subscribers: {
-        Row: Timestamps & {
-          id: string;
-          email: string;
-          source: string;
-          unsubscribed_at: string | null;
-        };
-        Insert: { id?: string; email: string; source?: string };
-        Update: Partial<Database['public']['Tables']['newsletter_subscribers']['Insert']>;
-        Relationships: [];
-      };
+          company_name?: string | null
+          created_at?: string
+          email: string
+          handled_at?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          product?: string | null
+          source?: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          email?: string
+          handled_at?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          product?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
+      deliveries: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          shipped_at: string | null
+          tracking_reference: string | null
+        }
+        Insert: {
+          carrier?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          shipped_at?: string | null
+          tracking_reference?: string | null
+        }
+        Update: {
+          carrier?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          shipped_at?: string | null
+          tracking_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_log: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          id: string
+          provider: string
+          provider_message_id: string | null
+          related_id: string | null
+          related_type: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["email_status"]
+          template: string
+          to_email: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider: string
+          provider_message_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_status"]
+          template: string
+          to_email: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider?: string
+          provider_message_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_status"]
+          template?: string
+          to_email?: string
+        }
+        Relationships: []
+      }
+      ladder_state_photos: {
+        Row: {
+          caption: string | null
+          captured_at: string
+          id: string
+          kind: Database["public"]["Enums"]["ladder_photo_kind"]
+          share_id: string
+          storage_path: string
+          uploaded_at: string
+        }
+        Insert: {
+          caption?: string | null
+          captured_at: string
+          id?: string
+          kind?: Database["public"]["Enums"]["ladder_photo_kind"]
+          share_id: string
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          caption?: string | null
+          captured_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["ladder_photo_kind"]
+          share_id?: string
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladder_state_photos_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "ladder_state_shares"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ladder_state_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          ladder_id: string
+          last_viewed_at: string | null
+          note: string | null
+          revoked_at: string | null
+          token_hash: string
+          vessel_id: string | null
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          ladder_id: string
+          last_viewed_at?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          vessel_id?: string | null
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          ladder_id?: string
+          last_viewed_at?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          vessel_id?: string | null
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladder_state_shares_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladder_status"
+            referencedColumns: ["ladder_id"]
+          },
+          {
+            foreignKeyName: "ladder_state_shares_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ladder_state_shares_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "vessels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ladders: {
+        Row: {
+          created_at: string
+          id: string
+          installed_at: string | null
+          notes: string | null
+          produced_at: string | null
+          product_id: string
+          public_code: string | null
+          serial_number: string
+          service_interval_months: number
+          status: Database["public"]["Enums"]["ladder_lifecycle_status"]
+          updated_at: string
+          vessel_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installed_at?: string | null
+          notes?: string | null
+          produced_at?: string | null
+          product_id: string
+          public_code?: string | null
+          serial_number: string
+          service_interval_months?: number
+          status?: Database["public"]["Enums"]["ladder_lifecycle_status"]
+          updated_at?: string
+          vessel_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installed_at?: string | null
+          notes?: string | null
+          produced_at?: string | null
+          product_id?: string
+          public_code?: string | null
+          serial_number?: string
+          service_interval_months?: number
+          status?: Database["public"]["Enums"]["ladder_lifecycle_status"]
+          updated_at?: string
+          vessel_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ladders_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "vessels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          email_sent: boolean
+          id: string
+          ladder_length: number | null
+          message: string | null
+          name: string | null
+          phone: string | null
+          product_interest: string | null
+          source: string
+          status: string
+          vessel_type: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          email_sent?: boolean
+          id?: string
+          ladder_length?: number | null
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          product_interest?: string | null
+          source?: string
+          status?: string
+          vessel_type?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          email_sent?: boolean
+          id?: string
+          ladder_length?: number | null
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          product_interest?: string | null
+          source?: string
+          status?: string
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
       maintenance_logs: {
-        Row: Timestamps & {
-          id: string;
-          ladder_id: string | null;
-          vessel_id: string | null;
-          serial_number_raw: string | null;
-          vessel_name_raw: string | null;
-          imo_raw: string | null;
-          reported_by_user_id: string | null;
-          reporter_name: string | null;
-          reporter_email: string | null;
-          performed_at: string;
-          notes: string | null;
-          source: string;
-          notified_at: string | null;
-        };
+        Row: {
+          created_at: string
+          id: string
+          imo_raw: string | null
+          ladder_id: string | null
+          notes: string | null
+          notified_at: string | null
+          performed_at: string
+          reported_by_user_id: string | null
+          reporter_email: string | null
+          reporter_name: string | null
+          serial_number_raw: string | null
+          source: string
+          vessel_id: string | null
+          vessel_name_raw: string | null
+        }
         Insert: {
-          id?: string;
-          ladder_id?: string | null;
-          vessel_id?: string | null;
-          serial_number_raw?: string | null;
-          vessel_name_raw?: string | null;
-          imo_raw?: string | null;
-          reported_by_user_id?: string | null;
-          reporter_name?: string | null;
-          reporter_email?: string | null;
-          performed_at?: string;
-          notes?: string | null;
-          source?: string;
-          notified_at?: string | null;
-        };
-        Update: Partial<Database['public']['Tables']['maintenance_logs']['Insert']>;
-        Relationships: [];
-      };
+          created_at?: string
+          id?: string
+          imo_raw?: string | null
+          ladder_id?: string | null
+          notes?: string | null
+          notified_at?: string | null
+          performed_at?: string
+          reported_by_user_id?: string | null
+          reporter_email?: string | null
+          reporter_name?: string | null
+          serial_number_raw?: string | null
+          source?: string
+          vessel_id?: string | null
+          vessel_name_raw?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imo_raw?: string | null
+          ladder_id?: string | null
+          notes?: string | null
+          notified_at?: string | null
+          performed_at?: string
+          reported_by_user_id?: string | null
+          reporter_email?: string | null
+          reporter_name?: string | null
+          serial_number_raw?: string | null
+          source?: string
+          vessel_id?: string | null
+          vessel_name_raw?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_logs_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladder_status"
+            referencedColumns: ["ladder_id"]
+          },
+          {
+            foreignKeyName: "maintenance_logs_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_logs_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "vessels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_photos: {
         Row: {
-          id: string;
-          maintenance_log_id: string;
-          storage_path: string;
-          captured_at: string | null;
-          uploaded_at: string;
-          caption: string | null;
-        };
+          caption: string | null
+          captured_at: string | null
+          id: string
+          maintenance_log_id: string
+          storage_path: string
+          uploaded_at: string
+        }
         Insert: {
-          id?: string;
-          maintenance_log_id: string;
-          storage_path: string;
-          captured_at?: string | null;
-          caption?: string | null;
-        };
-        Update: Partial<Database['public']['Tables']['maintenance_photos']['Insert']>;
-        Relationships: [];
-      };
-      email_log: {
-        Row: Timestamps & {
-          id: string;
-          to_email: string;
-          template: string;
-          provider: string;
-          provider_message_id: string | null;
-          status: EmailStatus;
-          error: string | null;
-          attempts: number;
-          related_type: string | null;
-          related_id: string | null;
-          sent_at: string | null;
-        };
+          caption?: string | null
+          captured_at?: string | null
+          id?: string
+          maintenance_log_id: string
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          caption?: string | null
+          captured_at?: string | null
+          id?: string
+          maintenance_log_id?: string
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_photos_maintenance_log_id_fkey"
+            columns: ["maintenance_log_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string
+          unsubscribed_at: string | null
+        }
         Insert: {
-          id?: string;
-          to_email: string;
-          template: string;
-          provider: string;
-          provider_message_id?: string | null;
-          status?: EmailStatus;
-          error?: string | null;
-          attempts?: number;
-          related_type?: string | null;
-          related_id?: string | null;
-          sent_at?: string | null;
-        };
-        Update: Partial<Database['public']['Tables']['email_log']['Insert']>;
-        Relationships: [];
-      };
-    };
+          created_at?: string
+          email: string
+          id?: string
+          source?: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string
+          unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
+      order_lines: {
+        Row: {
+          cabinet_price_nok: number
+          id: string
+          line_total_nok: number
+          order_id: string
+          product_id: string
+          qty: number
+          unit_price_nok: number
+          with_cabinet: boolean
+        }
+        Insert: {
+          cabinet_price_nok?: number
+          id?: string
+          line_total_nok: number
+          order_id: string
+          product_id: string
+          qty: number
+          unit_price_nok: number
+          with_cabinet?: boolean
+        }
+        Update: {
+          cabinet_price_nok?: number
+          id?: string
+          line_total_nok?: number
+          order_id?: string
+          product_id?: string
+          qty?: number
+          unit_price_nok?: number
+          with_cabinet?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          company_id: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          order_number: string
+          source: string
+          status: Database["public"]["Enums"]["order_status"]
+          total_nok: number
+          updated_at: string
+          vessel_name: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          source?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          total_nok: number
+          updated_at?: string
+          vessel_name?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          source?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          total_nok?: number
+          updated_at?: string
+          vessel_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_price_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_on_request: boolean | null
+          new_price_nok: number | null
+          old_on_request: boolean | null
+          old_price_nok: number | null
+          product_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_on_request?: boolean | null
+          new_price_nok?: number | null
+          old_on_request?: boolean | null
+          old_price_nok?: number | null
+          product_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_on_request?: boolean | null
+          new_price_nok?: number | null
+          old_on_request?: boolean | null
+          old_price_nok?: number | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean
+          cabinet_product_id: string | null
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["product_kind"]
+          length_m: number | null
+          name: string
+          price_nok: number
+          price_on_request: boolean
+          product_number: string
+          steps: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cabinet_product_id?: string | null
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["product_kind"]
+          length_m?: number | null
+          name: string
+          price_nok: number
+          price_on_request?: boolean
+          product_number: string
+          steps?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cabinet_product_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["product_kind"]
+          length_m?: number | null
+          name?: string
+          price_nok?: number
+          price_on_request?: boolean
+          product_number?: string
+          steps?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_cabinet_product_id_fkey"
+            columns: ["cabinet_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_reports: {
+        Row: {
+          created_at: string
+          findings: string | null
+          id: string
+          ladder_id: string
+          next_service_due: string | null
+          parts_replaced: Json
+          performed_at: string
+          performed_by: string
+          report_path: string | null
+          result: Database["public"]["Enums"]["service_result"]
+          technician_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          findings?: string | null
+          id?: string
+          ladder_id: string
+          next_service_due?: string | null
+          parts_replaced?: Json
+          performed_at: string
+          performed_by: string
+          report_path?: string | null
+          result: Database["public"]["Enums"]["service_result"]
+          technician_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          findings?: string | null
+          id?: string
+          ladder_id?: string
+          next_service_due?: string | null
+          parts_replaced?: Json
+          performed_at?: string
+          performed_by?: string
+          report_path?: string | null
+          result?: Database["public"]["Enums"]["service_result"]
+          technician_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_reports_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladder_status"
+            referencedColumns: ["ladder_id"]
+          },
+          {
+            foreignKeyName: "service_reports_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vessel_members: {
+        Row: {
+          created_at: string
+          role: Database["public"]["Enums"]["vessel_role"]
+          user_id: string
+          vessel_id: string
+        }
+        Insert: {
+          created_at?: string
+          role?: Database["public"]["Enums"]["vessel_role"]
+          user_id: string
+          vessel_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: Database["public"]["Enums"]["vessel_role"]
+          user_id?: string
+          vessel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vessel_members_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "vessels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vessels: {
+        Row: {
+          call_sign: string | null
+          company_id: string
+          created_at: string
+          home_port: string | null
+          id: string
+          imo: string | null
+          mmsi: string | null
+          name: string
+          updated_at: string
+          vessel_type: string | null
+        }
+        Insert: {
+          call_sign?: string | null
+          company_id: string
+          created_at?: string
+          home_port?: string | null
+          id?: string
+          imo?: string | null
+          mmsi?: string | null
+          name: string
+          updated_at?: string
+          vessel_type?: string | null
+        }
+        Update: {
+          call_sign?: string | null
+          company_id?: string
+          created_at?: string
+          home_port?: string | null
+          id?: string
+          imo?: string | null
+          mmsi?: string | null
+          name?: string
+          updated_at?: string
+          vessel_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vessels_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
     Views: {
       ladder_status: {
         Row: {
-          ladder_id: string | null;
-          serial_number: string | null;
-          public_code: string | null;
-          status: LadderLifecycleStatus | null;
-          produced_at: string | null;
-          installed_at: string | null;
-          vessel_id: string | null;
-          company_id: string | null;
-          vessel_name: string | null;
-          imo: string | null;
-          product_number: string | null;
-          product_name: string | null;
-          length_m: number | null;
-          steps: number | null;
-          last_service_at: string | null;
-          last_service_result: ServiceResult | null;
-          next_service_due: string | null;
-          last_maintenance_at: string | null;
-          days_until_service: number | null;
-          service_state: ServiceState | null;
-        };
-        Relationships: [];
-      };
-    };
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
-  };
-};
+          company_id: string | null
+          days_until_service: number | null
+          imo: string | null
+          installed_at: string | null
+          ladder_id: string | null
+          last_maintenance_at: string | null
+          last_service_at: string | null
+          last_service_result:
+            | Database["public"]["Enums"]["service_result"]
+            | null
+          length_m: number | null
+          next_service_due: string | null
+          produced_at: string | null
+          product_name: string | null
+          product_number: string | null
+          public_code: string | null
+          serial_number: string | null
+          service_state: string | null
+          status: Database["public"]["Enums"]["ladder_lifecycle_status"] | null
+          steps: number | null
+          vessel_id: string | null
+          vessel_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladders_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "vessels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vessels_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Functions: {
+      is_valid_imo: { Args: { value: string }; Returns: boolean }
+      is_valid_org_number: { Args: { value: string }; Returns: boolean }
+      next_order_number: { Args: never; Returns: string }
+      purge_expired_shares: { Args: { retain_days?: number }; Returns: number }
+    }
+    Enums: {
+      company_role: "owner" | "admin" | "member"
+      email_status: "queued" | "sent" | "failed"
+      ladder_lifecycle_status:
+        | "in_production"
+        | "delivered"
+        | "installed"
+        | "retired"
+      ladder_photo_kind: "ladder" | "attachment_point" | "overview" | "other"
+      order_status:
+        | "new"
+        | "quoted"
+        | "confirmed"
+        | "in_production"
+        | "delivered"
+        | "cancelled"
+      product_kind: "ladder" | "cabinet" | "spare_part"
+      service_result: "ok" | "ok_with_remarks" | "failed"
+      vessel_role: "master" | "crew" | "viewer"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      company_role: ["owner", "admin", "member"],
+      email_status: ["queued", "sent", "failed"],
+      ladder_lifecycle_status: [
+        "in_production",
+        "delivered",
+        "installed",
+        "retired",
+      ],
+      ladder_photo_kind: ["ladder", "attachment_point", "overview", "other"],
+      order_status: [
+        "new",
+        "quoted",
+        "confirmed",
+        "in_production",
+        "delivered",
+        "cancelled",
+      ],
+      product_kind: ["ladder", "cabinet", "spare_part"],
+      service_result: ["ok", "ok_with_remarks", "failed"],
+      vessel_role: ["master", "crew", "viewer"],
+    },
+  },
+} as const

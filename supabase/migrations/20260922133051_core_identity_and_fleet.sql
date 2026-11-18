@@ -1,19 +1,5 @@
--- ============================================================================
--- Kjerneskjema: selskap, medlemmer, invitasjoner, fartøy.
---
--- Designnotater:
---  * org.nr og IMO lagres normalisert (kun siffer). Validering skjer i
---    databasen, ikke bare i skjemaet – feil IMO betyr feil fartøy på
---    los-siden, og det er en sikkerhetssak, ikke en skjønnhetsfeil.
---  * IMO er NULLABLE med vilje: fiskefartøy under 15 m har ofte ikke IMO.
---  * Invitasjoner ligger i egen tabell fordi personen ikke finnes i
---    auth.users før hun logger inn første gang.
--- ============================================================================
-
 create extension if not exists pgcrypto;
 create extension if not exists citext;
-
--- ── Hjelpefunksjoner ────────────────────────────────────────────────────────
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -25,7 +11,6 @@ begin
 end;
 $$;
 
--- Norsk organisasjonsnummer: 9 siffer med MOD11-kontrollsiffer.
 create or replace function public.is_valid_org_number(value text)
 returns boolean
 language sql
@@ -50,8 +35,6 @@ as $$
   end;
 $$;
 
--- IMO-nummer: 7 siffer der siste er kontrollsiffer (vekt 7,6,5,4,3,2).
--- Fanger opp tastefeil før de havner på en los-delingsside.
 create or replace function public.is_valid_imo(value text)
 returns boolean
 language sql
@@ -72,8 +55,6 @@ as $$
   end;
 $$;
 
--- ── Selskap (rederi) ────────────────────────────────────────────────────────
-
 create table public.companies (
   id          uuid primary key default gen_random_uuid(),
   name        text not null check (length(btrim(name)) > 0),
@@ -92,8 +73,6 @@ create trigger companies_set_updated_at
 
 comment on column public.companies.org_number is
   'Normalisert til 9 siffer uten mellomrom. Valideres med MOD11.';
-
--- ── Medlemmer og invitasjoner ───────────────────────────────────────────────
 
 create type public.company_role as enum ('owner', 'admin', 'member');
 
@@ -123,8 +102,6 @@ create index company_invitations_email_idx
   on public.company_invitations (email)
   where accepted_at is null;
 
--- ── Fartøy ──────────────────────────────────────────────────────────────────
-
 create table public.vessels (
   id          uuid primary key default gen_random_uuid(),
   company_id  uuid not null references public.companies(id) on delete cascade,
@@ -146,7 +123,7 @@ create index vessels_company_idx on public.vessels (company_id);
 create unique index vessels_imo_key on public.vessels (imo) where imo is not null;
 
 comment on column public.vessels.imo is
-  'Nullable med vilje – fartøy under 15 m har ofte ikke IMO-nummer.';
+  'Nullable med vilje - fartoy under 15 m har ofte ikke IMO-nummer.';
 
 create type public.vessel_role as enum ('master', 'crew', 'viewer');
 

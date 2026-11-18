@@ -1,17 +1,8 @@
--- ============================================================================
--- ladder_status: én definisjon av "når er neste service".
---
--- Dashboardet, påminnelsesjobben (fase 5) og vedlikeholds-PDF-en må alle si
--- det samme. Legges logikken i applikasjonskoden, drifter de fra hverandre.
---
--- security_invoker = true er ikke valgfritt: uten den kjører viewet som
--- eier og omgår RLS fullstendig – da lekker hele flåten til enhver innlogget
--- bruker. Krever PG15+; prosjektet kjører PG17.
--- ============================================================================
+-- Enumen beskriver livslopet (produsert -> levert -> installert -> utrangert),
+-- ikke servicestatus. Viewet 'ladder_status' er det dashboardet leser.
+-- To ulike begreper, to ulike navn.
+alter type public.ladder_status rename to ladder_lifecycle_status;
 
--- Merk navnene: enumen public.ladder_lifecycle_status beskriver livslopet
--- (produsert -> levert -> installert -> utrangert). Dette viewet beskriver
--- servicetilstand. To ulike begreper - de kan ikke dele navn i Postgres.
 create view public.ladder_status
 with (security_invoker = true)
 as
@@ -42,8 +33,6 @@ from (
     p.steps,
     sr.performed_at  as last_service_at,
     sr.result        as last_service_result,
-    -- Fra siste servicerapport hvis den finnes, ellers beregnet fra
-    -- installasjonsdato og intervallet på leideren.
     coalesce(
       sr.next_service_due,
       (l.installed_at + make_interval(months => l.service_interval_months))::date
@@ -69,4 +58,4 @@ from (
 ) base;
 
 comment on view public.ladder_status is
-  'Beregnet status per leider. Kilden til "neste service" for dashboard, PDF og påminnelser.';
+  'Beregnet status per leider. Kilden til neste service for dashboard, PDF og paminnelser.';
