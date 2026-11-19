@@ -8,6 +8,7 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { uuid } from '@/lib/portal/forms';
 import { logKind } from '@/lib/portal/labels';
 import { BUCKETS } from '@/lib/portal/storage';
+import { idag } from '@/lib/format';
 
 // Henting av bilder fra Storage og PDF-rendering tar noen sekunder.
 export const maxDuration = 60;
@@ -41,7 +42,7 @@ export async function GET(
 
   const { data: ladder } = await supabase
     .from('ladder_status')
-    .select('ladder_id, serial_number, product_name, product_number, length_m, steps, produced_at, installed_at, next_service_due, vessel_id, vessel_name, imo, company_name')
+    .select('ladder_id, serial_number, product_name, product_number, length_m, steps, produced_at, installed_at, next_service_due, vessel_id, vessel_name, imo, company_name, certificate_number, certificate_valid_until')
     .eq('ladder_id', id)
     .maybeSingle();
 
@@ -57,7 +58,7 @@ export async function GET(
       .order('performed_at', { ascending: false }),
     supabase
       .from('maintenance_logs')
-      .select('id, performed_at, reporter_name, notes, kind, title')
+      .select('id, performed_at, reporter_name, notes, kind, title, source')
       .eq('ladder_id', id)
       .order('performed_at', { ascending: false }),
   ]);
@@ -129,6 +130,14 @@ export async function GET(
       produced_at: ladder.produced_at,
       installed_at: ladder.installed_at,
       next_service_due: ladder.next_service_due,
+      // Viewet gir sertifikatet som gjelder nå (ikke erstattet eller trukket tilbake).
+      certificate: ladder.certificate_number && ladder.certificate_valid_until
+        ? {
+            number: ladder.certificate_number,
+            validUntil: ladder.certificate_valid_until,
+            expired: ladder.certificate_valid_until < idag(),
+          }
+        : null,
     },
     vessel: ladder.vessel_name
       ? { name: ladder.vessel_name, imo: ladder.imo, company: ladder.company_name }
@@ -136,7 +145,10 @@ export async function GET(
     services: services ?? [],
     maintenance: (logs ?? []).map((l) => ({
       performed_at: l.performed_at,
-      reporter_name: l.reporter_name,
+      // Rapporter NorthWest Coast har lagt inn selv, er ikke mannskapets egenrapportering.
+      reporter_name: l.source === 'admin'
+        ? [l.reporter_name, 'NorthWest Coast'].filter(Boolean).join(', ')
+        : l.reporter_name,
       // Typen (inspeksjon, test, reparasjon …) og tittelen står først i notatet,
       // så PDF-oppsettet kan være uendret.
       notes: [l.title ? `${logKind(l.kind)}: ${l.title}` : logKind(l.kind), l.notes].filter(Boolean).join('\n'),

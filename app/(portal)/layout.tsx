@@ -1,9 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, DM_Sans, DM_Mono } from 'next/font/google';
 import '../globals.css'; // Global styles
 import './portal.css';
 import Analytics from '@/components/analytics';
-import { SITE_URL } from '@/lib/site';
+import { no } from '@/lib/dictionaries/no';
+import { SITE_URL, THEME_COLOR } from '@/lib/site';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -28,40 +29,37 @@ const dmMono = DM_Mono({
   display: 'swap',
 });
 
+// Fargen på adresselinja i mobilnettlesere, lik den offentlige delen.
+export const viewport: Viewport = { themeColor: THEME_COLOR };
+
+/**
+ * Standardverdier for sidene i denne delen: innlogging, personvern og de
+ * innloggede områdene (som selv setter noindex). Favikon, apple-touch-icon og
+ * manifest kommer fra filene i app/ og gjelder begge rot-layoutene.
+ *
+ * Ingen canonical her: en standard-canonical til «/» ville blitt arvet av
+ * sider som ikke setter sin egen, og pekt dem til forsiden.
+ */
 export const metadata: Metadata = {
   // metadataBase gjør at OG-bilder og kanoniske URL-er blir absolutte.
   // Uten den blir delte lenker på LinkedIn/Facebook/WhatsApp uten bilde.
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'NorthWest Coast – Argostep Maritime Ladder',
+    default: 'NorthWest Coast – Argostep leider til båt',
     template: '%s | NorthWest Coast',
   },
-  description:
-    'Argostep – den lette, modulære maritime leideren godkjent av Sjøfartsdirektoratet. ISO 799-1:2019 sertifisert. Norsk produksjon fra Sunnmøre.',
-  keywords: [
-    'maritim leider',
-    'Argostep',
-    'NorthWest Coast',
-    'sjøleider',
-    'Sjøfartsdirektoratet',
-    'ISO 799',
-    'fiskebåt',
-    'ombordstigning',
-  ],
-  alternates: { canonical: '/' },
+  description: no.meta.home.description,
+  applicationName: 'NorthWest Coast',
   openGraph: {
-    title: 'NorthWest Coast – Argostep Maritime Ladder',
-    description: 'Modulær maritim leider. ISO 799-1:2019 sertifisert. Norsk produksjon.',
-    url: '/',
+    title: 'NorthWest Coast – Argostep leider til båt',
+    description: no.meta.home.ogDescription,
     siteName: 'NorthWest Coast',
     locale: 'nb_NO',
     type: 'website',
+    images: [{ url: '/og/no', width: 1200, height: 630 }],
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'NorthWest Coast – Argostep Maritime Ladder',
-    description: 'Modulær maritim leider. ISO 799-1:2019 sertifisert. Norsk produksjon.',
-  },
+  // Bare korttypen: tittel, beskrivelse og bilde fylles fra openGraph.
+  twitter: { card: 'summary_large_image' },
   robots: { index: true, follow: true },
 };
 

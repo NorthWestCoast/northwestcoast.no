@@ -4,6 +4,7 @@ import { requireUser } from '@/lib/portal/context';
 import { Badge, Card, Empty, KV, PageHeader, Progress, Td } from '@/components/portal/ui';
 import { jobStatus, orderStatus } from '@/lib/portal/labels';
 import { dato, nok } from '@/lib/format';
+import { fmtLength } from '@/lib/pricing';
 
 export const metadata: Metadata = { title: 'Mine bestillinger' };
 
@@ -14,17 +15,23 @@ export const metadata: Metadata = { title: 'Mine bestillinger' };
 export default async function BestillingerPage() {
   const { supabase } = await requireUser('/minside/bestillinger');
 
-  const { data: orders } = await supabase
-    .from('orders')
-    .select('id, order_number, created_at, status, total_nok, expected_delivery, vessel_name, order_lines(id, qty, with_cabinet, on_request, line_total_nok, products(name, product_number)), production_jobs(id, job_number, status, product_name, serial_number, ladder_id, production_job_steps(done_at)), deliveries(id, shipped_at, delivered_at, carrier, tracking_reference)')
-    .order('created_at', { ascending: false })
-    .limit(50);
+  const [{ data: orders }, { data: cabinetProducts }] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('id, order_number, created_at, status, total_nok, expected_delivery, vessel_name, order_lines(id, qty, with_cabinet, on_request, line_total_nok, custom_length_m, cabinet_product_id, products(name, product_number, kind, cabinet_product_id)), production_jobs(id, job_number, kind, status, product_name, serial_number, ladder_id, production_job_steps(done_at)), deliveries(id, shipped_at, delivered_at, carrier, tracking_reference)')
+      .order('created_at', { ascending: false })
+      .limit(50),
+    // Skapet på en linje er lagret som en id uten relasjon; navnet slås opp her.
+    supabase.from('products').select('id, name').eq('kind', 'cabinet'),
+  ]);
+
+  const cabinetName = new Map((cabinetProducts ?? []).map((product) => [product.id, product.name]));
 
   return (
     <>
       <PageHeader
         title="Mine bestillinger"
-        description="Følg bestillingen fra den er mottatt til leideren er levert."
+        description="Følg bestillingen fra den er mottatt til den er levert."
         actions={<Link href="/minside/bestill" className="pt-btn">Ny bestilling</Link>}
       />
 
@@ -43,7 +50,12 @@ export default async function BestillingerPage() {
                 <KV
                   items={[
                     { label: 'Bestilt', value: dato(order.created_at) },
-                    { label: 'Sum eks. mva.', value: `${nok(order.total_nok)}${onRequest ? ' + tilbud' : ''}` },
+                    {
+                      label: 'Sum eks. mva.',
+                      value: !onRequest
+                        ? nok(order.total_nok)
+                        : order.total_nok > 0 ? `${nok(order.total_nok)} + tilbud` : 'Pris på forespørsel',
+                    },
                     { label: 'Forventet levering', value: order.expected_delivery ? dato(order.expected_delivery) : 'Ikke fastsatt' },
                     { label: 'Fartøy', value: order.vessel_name },
                   ]}
@@ -60,18 +72,40 @@ export default async function BestillingerPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {order.order_lines.map((line) => (
-                    <tr key={line.id}>
-                      <Td label="Produkt" className="pt-table-strong">
-                        {line.products ? `${line.products.name} (${line.products.product_number})` : 'Produkt som er tatt ut av katalogen'}
-                      </Td>
-                      <Td label="Antall">{line.qty}</Td>
-                      <Td label="Skap">{line.with_cabinet ? 'Med skap' : 'Uten skap'}</Td>
-                      <Td label="Linjesum" className="pt-num">
-                        {line.on_request ? 'Pris på forespørsel' : nok(line.line_total_nok)}
-                      </Td>
-                    </tr>
-                  ))}
+                  {order.order_lines.map((line) => {
+                    const kind = line.products?.kind ?? 'ladder';
+                    const custom = line.custom_length_m !== null;
+                    // Eldre linjer har ikke skapet lagret; da gjelder produktets skap.
+                    const cabinet = cabinetName.get(line.cabinet_product_id ?? line.products?.cabinet_product_id ?? '');
+                    return (
+                      <tr key={line.id}>
+                        <Td label="Produkt" className="pt-table-strong">
+                          <div>
+                            {custom
+                              ? `Argostep – ${fmtLength(Number(line.custom_length_m))} m (spesiallengde)`
+                              : line.products
+                                ? kind === 'cabinet'
+                                  ? line.products.name
+                                  : `${line.products.name} (${line.products.product_number})`
+                                : 'Produkt som er tatt ut av katalogen'}
+                            {custom && <div className="pt-list-sub">Halvmeter, lages på bestilling</div>}
+                            {kind === 'cabinet' && <div className="pt-list-sub">Skap uten leider</div>}
+                          </div>
+                        </Td>
+                        <Td label="Antall">{line.qty}</Td>
+                        <Td label="Skap">
+                          {kind !== 'ladder'
+                            ? '–'
+                            : line.with_cabinet
+                              ? cabinet ? `Med ${cabinet.replace(/^Oppbevaringsskap/, 'skap')}` : 'Med skap'
+                              : 'Uten skap'}
+                        </Td>
+                        <Td label="Linjesum" className="pt-num">
+                          {line.on_request ? 'Pris på forespørsel' : nok(line.line_total_nok)}
+                        </Td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -87,12 +121,12 @@ export default async function BestillingerPage() {
                           <strong>Produksjon: {job.product_name}</strong>
                           <div className="pt-list-sub">
                             {job.job_number}
-                            {' · '}
                             {job.serial_number ? (
                               job.ladder_id
-                                ? <>produksjonsnr. <Link href={`/minside/leider/${job.ladder_id}`}>{job.serial_number}</Link></>
-                                : `produksjonsnr. ${job.serial_number}`
-                            ) : 'produksjonsnummer ikke tildelt ennå'}
+                                ? <> · produksjonsnr. <Link href={`/minside/leider/${job.ladder_id}`}>{job.serial_number}</Link></>
+                                : ` · produksjonsnr. ${job.serial_number}`
+                              // Et skap har ikke alltid eget nummer; da er det ingenting å vente på.
+                            ) : job.kind === 'cabinet' ? '' : ' · produksjonsnummer ikke tildelt ennå'}
                             {total > 0 ? ` · ${done} av ${total} steg` : ''}
                           </div>
                           {total > 0 && <div style={{ marginTop: '0.4rem' }}><Progress done={done} total={total} /></div>}

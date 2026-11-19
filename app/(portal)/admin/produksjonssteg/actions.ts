@@ -7,6 +7,9 @@ import { type ActionResult, checked, err, fail, int, ok, optional, text, uuid } 
 /**
  * Malen for stegene i en produksjonsjobb. Stegene kopieres til jobben når den
  * opprettes, så endringer her gjelder bare nye jobber.
+ *
+ * En leider får alle aktive steg. En jobb som bare er et oppbevaringsskap får
+ * de aktive stegene der for_cabinet er satt («Gjelder også skap»).
  */
 
 function fields(formData: FormData) {
@@ -14,17 +17,20 @@ function fields(formData: FormData) {
     position: int(formData.get('position'), 1, 999),
     title: text(formData.get('title'), 160),
     description: optional(formData.get('description'), 500),
+    for_cabinet: checked(formData.get('for_cabinet')),
   };
 }
 
 export async function addStep(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireStaff();
 
-  const { position, title, description } = fields(formData);
+  const { position, title, description, for_cabinet } = fields(formData);
   if (title.length < 2) return err('Skriv en tittel på steget.');
   if (position === null) return err('Rekkefølgen må være et tall fra 1 til 999.');
 
-  const { error } = await supabase.from('production_step_templates').insert({ position, title, description });
+  const { error } = await supabase
+    .from('production_step_templates')
+    .insert({ position, title, description, for_cabinet });
   if (error) return fail(error);
 
   revalidatePath('/admin/produksjonssteg');
@@ -35,14 +41,14 @@ export async function updateStep(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireStaff();
 
   const id = uuid(formData.get('step_id'));
-  const { position, title, description } = fields(formData);
+  const { position, title, description, for_cabinet } = fields(formData);
   if (!id) return err('Fant ikke steget.');
   if (title.length < 2) return err('Skriv en tittel på steget.');
   if (position === null) return err('Rekkefølgen må være et tall fra 1 til 999.');
 
   const { error } = await supabase
     .from('production_step_templates')
-    .update({ position, title, description, active: checked(formData.get('active')) })
+    .update({ position, title, description, for_cabinet, active: checked(formData.get('active')) })
     .eq('id', id);
   if (error) return fail(error);
 
@@ -63,6 +69,24 @@ export async function setStepActive(formData: FormData): Promise<ActionResult> {
 
   revalidatePath('/admin/produksjonssteg');
   return ok(active ? 'Steget er aktivt igjen.' : 'Steget er deaktivert.');
+}
+
+/** Avkrysningen «Gjelder også skap» i lista over steg. */
+export async function setStepForCabinet(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+
+  const id = uuid(formData.get('step_id'));
+  if (!id) return err('Fant ikke steget.');
+  const forCabinet = checked(formData.get('for_cabinet'));
+
+  const { error } = await supabase
+    .from('production_step_templates')
+    .update({ for_cabinet: forCabinet })
+    .eq('id', id);
+  if (error) return fail(error);
+
+  revalidatePath('/admin/produksjonssteg');
+  return ok(forCabinet ? 'Steget gjelder nå også skap.' : 'Steget gjelder ikke lenger skap.');
 }
 
 export async function deleteStep(formData: FormData): Promise<ActionResult> {

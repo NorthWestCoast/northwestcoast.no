@@ -1,5 +1,21 @@
+/**
+ * Det lokale testmiljøet (supabase/local) serverer lagringen over http på
+ * localhost. next/image får bare hente derfra utenfor produksjon, og bare når
+ * Supabase-adressen faktisk peker dit.
+ */
+function localStoragePatterns() {
+  if (process.env.NODE_ENV === 'production') return [];
+  const match = /^http:\/\/(localhost|127\.0\.0\.1):(\d+)$/.exec(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
+  if (!match) return [];
+  return [{ protocol: 'http', hostname: match[1], port: match[2], pathname: '/storage/v1/object/public/**' }];
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // En ekstra utviklingsserver (f.eks. mot det lokale testmiljøet på en annen
+  // port) må ha sin egen byggemappe, ellers skriver de to over hverandre.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+
   // CSS caching fix
   experimental: {
     optimizePackageImports: ['lucide-react'],
@@ -13,14 +29,16 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Forsidebilder til nyheter lastes opp i admin og ligger i den offentlige
-    // bøtta i Supabase Storage. Bare den stien slippes gjennom next/image.
+    // Forsidebilder til nyheter og bildene i galleriet lastes opp i admin og
+    // ligger i den offentlige bøtta i Supabase Storage. Bare den stien slippes
+    // gjennom next/image.
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      ...localStoragePatterns(),
     ],
   },
 
@@ -74,7 +92,7 @@ const nextConfig = {
   // (sitemap, robots, llms.txt, /api, /og) vinner før språkreglene kjører.
   async rewrites() {
     // Innloggede områder og tekniske stier hører ikke til språkskallet.
-    const skip = 'no|en|api|og|minside|admin|produksjon|logg-inn|auth|los|personvern|_next';
+    const skip = 'no|en|api|og|minside|admin|produksjon|logg-inn|auth|los|sertifikat|personvern|_next';
     return {
       beforeFiles: [],
       afterFiles: [

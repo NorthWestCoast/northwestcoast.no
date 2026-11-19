@@ -1,4 +1,4 @@
-import { fmt } from '@/lib/pricing';
+import { fmt, fmtLength } from '@/lib/pricing';
 import { CONTACT_EMAIL, SUPPORT_PHONE } from './index';
 
 /**
@@ -12,48 +12,105 @@ import { CONTACT_EMAIL, SUPPORT_PHONE } from './index';
 export type OrderLineView = {
   productName: string;
   productNumber: string;
+  /** Leider, skap bestilt alene eller reservedel. Uten verdi: leider. */
+  kind?: 'ladder' | 'cabinet' | 'spare_part';
+  /** Ønsket lengde i meter når linja er en spesiallengde (halvmeter). */
+  customLength?: number | null;
   steps: number | null;
   qty: number;
+  /** Skapet som følger leideren på linja. */
   cabinetName: string | null;
   lineTotal: number;
   /** Pris avtales på forespørsel – vises uten sum. */
   onRequest?: boolean;
 };
 
-function orderSummary(lines: OrderLineView[]): string {
-  return lines
-    .map((line) =>
-      line.onRequest
-        ? `${line.qty} × ${line.productName} – pris på forespørsel`
-        : [
-        `${line.qty} × ${line.productName} (${line.productNumber}${
-          line.steps ? `, ${line.steps} trinn` : ''
-        })`,
-        line.cabinetName ? `  + Oppbevaringsskap ${line.cabinetName}` : null,
-        `  Sum: ${fmt(line.lineTotal)} kr`,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-    )
-    .join('\n\n');
+type MailLang = 'no' | 'en';
+
+const TEXT = {
+  no: {
+    steps: 'trinn',
+    cabinet: 'Oppbevaringsskap',
+    onRequest: 'pris på forespørsel',
+    withoutLadder: 'uten leider',
+    sum: (amount: number) => `Sum: ${fmt(amount)} kr`,
+  },
+  en: {
+    steps: 'steps',
+    cabinet: 'Storage cabinet',
+    onRequest: 'price on request',
+    withoutLadder: 'without ladder',
+    sum: (amount: number) => `Sum: NOK ${fmt(amount)}`,
+  },
+} as const;
+
+/** Produktnavnet slik det står i databasen, eller på engelsk i kvitteringen. */
+function lineName(line: OrderLineView, lang: MailLang): string {
+  if (lang === 'no') return line.productName;
+  if (typeof line.customLength === 'number') {
+    return `Argostep – ${fmtLength(line.customLength, 'en')} m (custom length)`;
+  }
+  return line.productName.replace(/^Oppbevaringsskap\s+/i, 'Storage cabinet ');
 }
 
-function orderSummaryEn(lines: OrderLineView[]): string {
-  return lines
-    .map((line) =>
-      line.onRequest
-        ? `${line.qty} × ${line.productName} – price on request`
-        : [
-            `${line.qty} × ${line.productName} (${line.productNumber}${
-              line.steps ? `, ${line.steps} steps` : ''
-            })`,
-            line.cabinetName ? `  + Storage cabinet ${line.cabinetName}` : null,
-            `  Sum: NOK ${fmt(line.lineTotal)}`,
-          ]
-            .filter(Boolean)
-            .join('\n'),
-    )
-    .join('\n\n');
+/**
+ * Én linje i bestillingen som tekst. Tre slag:
+ *  - leider (med eller uten skap, standardlengde eller spesiallengde)
+ *  - skap bestilt alene
+ *  - reservedel
+ */
+function lineSummary(line: OrderLineView, lang: MailLang): string {
+  const t = TEXT[lang];
+  const name = lineName(line, lang);
+  const kind = line.kind ?? 'ladder';
+
+  // Skapet heter det samme som produktnummeret sitt; ikke gjenta det. Leidere
+  // på forespørsel har ikke et endelig produktnummer å vise.
+  const detail =
+    kind === 'cabinet'
+      ? t.withoutLadder
+      : line.onRequest || typeof line.customLength === 'number'
+        ? ''
+        : [line.productNumber, line.steps ? `${line.steps} ${t.steps}` : ''].filter(Boolean).join(', ');
+
+  const head = `${line.qty} × ${name}${detail ? ` (${detail})` : ''}`;
+
+  if (line.onRequest) {
+    return [
+      `${head} – ${t.onRequest}`,
+      line.cabinetName ? `  + ${t.cabinet} ${line.cabinetName} (${t.onRequest})` : null,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  return [
+    head,
+    line.cabinetName ? `  + ${t.cabinet} ${line.cabinetName}` : null,
+    `  ${t.sum(line.lineTotal)}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+const orderSummary = (lines: OrderLineView[], lang: MailLang = 'no') =>
+  lines.map((line) => lineSummary(line, lang)).join('\n\n');
+
+/** «2 leidere, 1 skap» – hva bestillingen består av, til emnefelt og overskrift. */
+function unitsText(lines: OrderLineView[]): string {
+  const count = (kind: NonNullable<OrderLineView['kind']>) =>
+    lines.reduce((sum, line) => sum + ((line.kind ?? 'ladder') === kind ? line.qty : 0), 0);
+  const ladders = count('ladder');
+  const cabinets = count('cabinet');
+  const parts = count('spare_part');
+
+  return [
+    ladders ? `${ladders} ${ladders === 1 ? 'leider' : 'leidere'}` : '',
+    cabinets ? `${cabinets} skap` : '',
+    parts ? `${parts} ${parts === 1 ? 'reservedel' : 'reservedeler'}` : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
 }
 
 export function orderInternal(args: {
@@ -65,12 +122,16 @@ export function orderInternal(args: {
   notes?: string;
   lines: OrderLineView[];
   total: number;
-  units: number;
 }) {
+  const what = unitsText(args.lines);
+  const onRequest = args.lines.some((line) => line.onRequest);
+  // Uten fast pris på noe er «0 kr» misvisende i emnefeltet.
+  const amount = onRequest
+    ? args.total > 0 ? `${fmt(args.total)} kr + forespørsel` : 'pris på forespørsel'
+    : `${fmt(args.total)} kr`;
+
   return {
-    subject: `Bestilling ${args.orderNumber}: ${args.units} leider(e) – ${fmt(
-      args.total,
-    )} kr – ${args.vessel || args.name}`,
+    subject: `Bestilling ${args.orderNumber}: ${what} – ${amount} – ${args.vessel || args.name}`,
     text: [
       `Ny bestillingsforespørsel fra nettsiden`,
       ``,
@@ -80,11 +141,12 @@ export function orderInternal(args: {
       `Telefon:   ${args.phone || '–'}`,
       `Fartøy/Rederi: ${args.vessel || '–'}`,
       ``,
-      `--- Bestilling (${args.units} leider(e)) ---`,
+      `--- Bestilling (${what}) ---`,
       ``,
       orderSummary(args.lines),
       ``,
       `TOTALSUM: ${fmt(args.total)} kr eks. mva.`,
+      ...(onRequest ? [`Linjer med pris på forespørsel er ikke med i summen.`] : []),
       ``,
       `--- Kommentar ---`,
       args.notes || '–',
@@ -99,6 +161,8 @@ export function orderReceipt(args: {
   total: number;
   lang?: 'no' | 'en';
 }) {
+  const onRequest = args.lines.some((line) => line.onRequest);
+
   if (args.lang === 'en') {
     return {
       subject: `We have received your order (${args.orderNumber}) – NorthWest Coast`,
@@ -108,9 +172,10 @@ export function orderReceipt(args: {
         `Thank you for your request. We have registered it as ${args.orderNumber} and`,
         `will be in touch with confirmation and delivery time.`,
         ``,
-        orderSummaryEn(args.lines),
+        orderSummary(args.lines, 'en'),
         ``,
         `Total: NOK ${fmt(args.total)} excl. VAT.`,
+        ...(onRequest ? [`Lines marked "price on request" are not included in the total. We will send you a quote.`] : []),
         ``,
         `Prices are indicative. The final quote is confirmed by us.`,
         ``,
@@ -134,6 +199,7 @@ export function orderReceipt(args: {
       orderSummary(args.lines),
       ``,
       `Totalsum: ${fmt(args.total)} kr eks. mva.`,
+      ...(onRequest ? [`Linjer med pris på forespørsel er ikke med i summen. Du får tilbud fra oss.`] : []),
       ``,
       `Prisene er veiledende. Endelig tilbud bekreftes av oss.`,
       ``,

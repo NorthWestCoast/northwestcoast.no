@@ -1,6 +1,7 @@
 import JsonLd from '@/components/json-ld';
 import { faqLd, productLd } from '@/lib/seo';
 import { getPriceTable } from '@/lib/catalog';
+import { getGalleryImages } from '@/lib/gallery';
 import { DEFAULT_LANG, isLang } from '@/lib/i18n';
 import Nav from '@/components/nav';
 import Hero from '@/components/hero';
@@ -22,7 +23,7 @@ import Lightbox from '@/components/lightbox';
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang: raw } = await params;
   const lang = isLang(raw) ? raw : DEFAULT_LANG;
-  const table = await getPriceTable();
+  const [table, gallery] = await Promise.all([getPriceTable(), getGalleryImages(lang)]);
 
   return (
     <>
@@ -57,7 +58,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         dualBottomFill="var(--sand-light)"
       />
 
-      <MediaGallery />
+      <MediaGallery images={gallery} />
 
       {/* Navy wave */}
       <Wave

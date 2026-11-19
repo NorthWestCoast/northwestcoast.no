@@ -4485,9 +4485,18 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   max-width: 1180px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 2rem;
   align-items: start;
+}
+
+/* To kolonner: fartøy og mål til venstre, tegning og resultat til høyre.
+   Under 960 px legges panelene i én kolonne med tegningen foran målene. */
+.calc-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
 }
 
 .calc-panel {
@@ -4499,8 +4508,6 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
 
 .calc-panel-result {
   border-color: rgba(46, 204, 113, 0.28);
-  position: sticky;
-  top: 6rem;
 }
 
 .calc-heading {
@@ -4656,7 +4663,8 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   gap: 1rem;
   margin-top: 1.25rem;
 }
-.calc-qty-row label { color: var(--white); font-size: 0.85rem; font-weight: 600; }
+.calc-qty-row label,
+.calc-qty-label { color: var(--white); font-size: 0.85rem; font-weight: 600; }
 
 .calc-order {
   margin-top: 1.75rem;
@@ -4676,16 +4684,256 @@ a.ms-card:hover { border-color: rgba(46, 204, 113, 0.55); background: rgba(46, 2
   line-height: 1.5;
 }
 
+/* Opplysninger hentet fra fartøyregisteret */
+.calc-fetched {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 2px solid var(--green);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.calc-fetched:empty { display: none; }
+
+/* Fartøysøk (components/vessel-search.tsx, variant="site") */
+.calc-combo-box { position: relative; }
+.calc-combo-pop {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.calc-combo-pop[hidden],
+.calc-combo-list[hidden] { display: none; }
+.calc-combo-list {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 19rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.calc-combo-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.1rem 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+.calc-combo-option:last-child { border-bottom: 0; }
+.calc-combo-option[aria-selected='true'] {
+  background: var(--navy-light);
+  box-shadow: inset 2px 0 0 var(--green);
+}
+.calc-combo-name { color: var(--white); font-size: 0.9rem; font-weight: 600; overflow-wrap: anywhere; }
+.calc-combo-size { color: var(--text-dim); font-size: 0.8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.calc-combo-meta { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.76rem; line-height: 1.4; overflow-wrap: anywhere; }
+.calc-combo-option[aria-selected='true'] .calc-combo-meta { color: var(--text-dim); }
+.calc-combo-msg { margin: 0; padding: 0.7rem 0.85rem; color: var(--text-dim); font-size: 0.82rem; line-height: 1.5; }
+.calc-combo-hint { margin: 0; color: var(--text-muted); font-size: 0.76rem; line-height: 1.45; }
+
+/* Tillegget under vannlinjen: utregnet verdi, regnestykke og overstyring */
+.calc-margin {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.calc-margin-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.calc-margin-label { color: var(--white); font-size: 0.85rem; font-weight: 600; }
+.calc-margin-value {
+  color: var(--green);
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.calc-margin-formula {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.calc-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.calc-check input { flex: none; width: 1rem; height: 1rem; accent-color: var(--green); cursor: pointer; }
+.calc-breakdown-sub { display: block; color: var(--text-muted); font-size: 0.72rem; margin-top: 0.1rem; }
+
+/* Halvmeter på forespørsel */
+.calc-alt {
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.28);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.calc-alt strong { display: block; color: var(--white); font-size: 0.85rem; margin-bottom: 0.2rem; }
+.calc-alt p { margin: 0; color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
+.calc-alt-btn,
+.heel-play {
+  flex: none;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: var(--r-md);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.calc-alt-btn:hover,
+.heel-play:hover { border-color: var(--green); color: var(--green); }
+.calc-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--green);
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.calc-total-request { font-size: 1.05rem; font-weight: 700; text-align: right; }
+.calc-alt-btn:focus-visible,
+.calc-link:focus-visible,
+.calc-check input:focus-visible,
+.heel-play:focus-visible,
+.heel-slider input:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+/* Tegningen av fartøyet (components/heel-diagram.tsx) */
+.calc-figure-intro {
+  margin: -0.5rem 0 1rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.heel { display: flex; flex-direction: column; gap: 0.85rem; }
+.heel-example { margin: 0; color: var(--text-dim); font-size: 0.8rem; line-height: 1.6; }
+.heel-tag {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--r-sm);
+  color: var(--white);
+  font-family: var(--font-dm-mono), monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.heel-fig {
+  container-type: inline-size;
+  background: var(--navy);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.heel-svg { display: block; width: 100%; height: auto; }
+.heel-svg text { font-family: inherit; font-variant-numeric: tabular-nums; }
+/* Smal utgave er standard. Den brede vises når det er plass til hele navn. */
+.heel-svg-narrow { max-width: 380px; margin: 0 auto; }
+.heel-svg-wide { display: none; }
+@container (min-width: 440px) {
+  .heel-svg-wide { display: block; }
+  .heel-svg-narrow { display: none; }
+}
+.heel-hull { fill: var(--navy-light); stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.25; stroke-linejoin: round; }
+.heel-rail { stroke: rgba(255, 255, 255, 0.85); stroke-width: 2.5; }
+.heel-house { fill: var(--navy-light); stroke: rgba(255, 255, 255, 0.7); stroke-width: 1; }
+.heel-detail { fill: none; stroke: rgba(255, 255, 255, 0.5); stroke-width: 1; }
+.heel-water { fill: var(--navy-light); opacity: 0.55; }
+.heel-waterline { stroke: rgba(255, 255, 255, 0.6); stroke-width: 1; }
+.heel-ref { stroke: rgba(255, 255, 255, 0.4); stroke-width: 1; stroke-dasharray: 3 3; }
+.heel-arc { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 1; }
+.heel-angle-text { fill: var(--text-dim); }
+.heel-dim { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 1; }
+.heel-dim-ladder { stroke: var(--green); }
+.heel-guide { fill: none; stroke: rgba(255, 255, 255, 0.3); stroke-width: 1; stroke-dasharray: 2 3; }
+.heel-ladder { fill: none; stroke: var(--green); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.heel-ladder-end { fill: var(--green); }
+.heel-text { fill: rgba(255, 255, 255, 0.9); }
+.heel-text-ladder { fill: var(--green); font-weight: 600; }
+.heel-reach-ring { fill: none; stroke: var(--green); stroke-width: 1.25; }
+.heel-reach-text { fill: var(--green); }
+.heel-status { margin: 0; min-height: 2.6em; color: var(--text-dim); font-size: 0.85rem; line-height: 1.3; }
+.heel-status-warn { color: #f0a0a0; }
+.heel-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+.heel-play { min-width: 8.5rem; }
+.heel-slider {
+  flex: 1 1 16rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+.heel-slider label { color: var(--white); font-size: 0.82rem; font-weight: 600; }
+.heel-slider input { width: 100%; height: 1.75rem; accent-color: var(--green); cursor: pointer; }
+.heel-slider output {
+  min-width: 2.2rem;
+  color: var(--white);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.heel-key { margin: 0; color: var(--text-muted); font-size: 0.74rem; line-height: 1.5; }
+
 @media (max-width: 960px) {
   .calc-section { padding: 2.5rem 1.5rem; }
-  .calc-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  .calc-grid { display: flex; flex-direction: column; gap: 1.5rem; }
+  /* Kolonnene løses opp, så tegningen kan stå mellom fartøyet og målene. */
+  .calc-col { display: contents; }
+  .calc-panel-vessel { order: 1; }
+  .calc-panel-figure { order: 2; }
+  .calc-panel-measure { order: 3; }
+  .calc-panel-result { order: 4; }
   .calc-panel { padding: 1.5rem; }
-  .calc-panel-result { position: static; }
 }
 
 @media (max-width: 580px) {
   .calc-section { padding: 2rem 1.2rem; }
   .calc-fields { grid-template-columns: 1fr; }
+  .calc-alt { flex-direction: column; align-items: flex-start; }
+}
+
+/* På de smaleste skjermene får tegningen hele bredden av panelet. */
+@media (max-width: 420px) {
+  .calc-panel-figure { padding: 1.25rem 1rem; }
+  .calc-panel-figure .heel-fig { margin: 0 -0.5rem; }
 }
 
 .calc-help-error { color: #f0a0a0; }
@@ -5391,3 +5639,121 @@ a.supplier-card:focus-visible { border-color: var(--green-dark); }
   .supplier-grid { grid-template-columns: 1fr; }
   .supplier-card { min-height: 0; }
 }
+
+/* ── BESTILL: ANNEN LENGDE OG SKAP UTEN LEIDER (order-configurator) ── */
+.config-select:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.config-other {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+.config-other-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.config-other-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.config-solo {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.config-solo-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+}
+.config-solo-head > div { flex: 1 1 12rem; min-width: 0; }
+.config-solo-head strong {
+  display: block;
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.config-solo-head span {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.config-solo-toggle {
+  flex: none;
+  padding: 0.15rem 0;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.config-solo-toggle:hover { color: var(--white); }
+
+.config-solo-list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+}
+.config-solo-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.config-solo-list li:last-child { border-bottom: none; padding-bottom: 0; }
+.config-solo-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.config-solo-info strong { color: var(--white); font-size: 0.9rem; font-weight: 600; }
+.config-solo-info span { color: var(--text-muted); font-size: 0.75rem; }
+.config-solo-price {
+  flex: none;
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.config-solo-add {
+  flex: none;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--r-md);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+.config-solo-add:hover { border-color: var(--green); color: var(--green); }
+
+/* Smale skjermer: navnet på egen linje, så antall, pris og knapp får plass. */
+@media (max-width: 480px) {
+  .config-panel { padding: 1.25rem; }
+  .config-panel .config-extra { flex-wrap: wrap; }
+  .config-cart-item,
+  .config-solo-list li { flex-wrap: wrap; }
+  .config-cart-info,
+  .config-solo-info { flex: 1 1 100%; }
+  .config-cart-price { margin-left: auto; }
+}
+
+/* ── Galleri: bildetekster fra admin ── */
+/* Tekstene som skrives i admin kan være lengre enn de faste. Da brytes de
+   over flere linjer med luft mot høyre kant, i stedet for å gå helt ut. */
+.mg-card .g-label { max-width: calc(100% - 1.6rem); overflow-wrap: anywhere; }

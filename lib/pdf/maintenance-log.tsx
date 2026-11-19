@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer';
+import { CERTIFICATE_NAME } from '@/lib/portal/labels';
 import { ORG } from '@/lib/site';
 
 /**
@@ -54,6 +55,8 @@ export type MaintenanceLogData = {
     produced_at: string | null;
     installed_at: string | null;
     next_service_due: string | null;
+    /** Servicesertifikatet som gjelder nå, hvis det er utstedt et. */
+    certificate: { number: string; validUntil: string; expired: boolean } | null;
   };
   vessel: { name: string; imo: string | null; company: string | null } | null;
   services: PdfServiceReport[];
@@ -294,6 +297,15 @@ export default function MaintenanceLogDocument({ data }: { data: MaintenanceLogD
               <Text style={s.kvKey}>Sertifisering</Text>
               <Text style={s.kvVal}>ISO 799-1:2019</Text>
             </View>
+            {ladder.certificate && (
+              <View style={s.kv}>
+                <Text style={s.kvKey}>{CERTIFICATE_NAME}</Text>
+                <Text style={s.kvVal}>
+                  {ladder.certificate.number}, {ladder.certificate.expired ? 'utløpt' : 'gyldig til'}{' '}
+                  {dato(ladder.certificate.validUntil)}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 

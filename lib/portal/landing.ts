@@ -12,13 +12,27 @@ export function safeNext(value: string | null): string {
   return value;
 }
 
+/** Første side for medierollen. Oversikten i Admin er bare for administratorer. */
+export const MEDIA_HOME = '/admin/nyheter';
+
+/**
+ * Området en ansattrolle hører hjemme i: administratorer i /admin, produksjon
+ * i /produksjon, media på nyhetene. Null for alle uten ansattrolle.
+ */
+export function staffHome(role: unknown): string | null {
+  if (role === 'admin') return '/admin';
+  if (role === 'production') return '/produksjon';
+  if (role === 'media') return MEDIA_HOME;
+  return null;
+}
+
 /**
  * Hvor en nettopp innlogget bruker skal lande.
  *
  * portal_bootstrap() oppretter profilen og løser inn ventende invitasjoner.
  * Svaret brukes bare til å sende ansatte til riktig område når de ikke var
- * på vei et bestemt sted: administratorer til /admin, produksjon til
- * /produksjon. Rollen styrer bare hvor man lander; tilgangen avgjøres av RLS.
+ * på vei et bestemt sted (se staffHome). Rollen styrer bare hvor man lander;
+ * tilgangen avgjøres av RLS.
  */
 export async function landingPath(supabase: SupabaseClient<Database>, next: string): Promise<string> {
   if (next !== DEFAULT_NEXT) return next;
@@ -26,8 +40,7 @@ export async function landingPath(supabase: SupabaseClient<Database>, next: stri
   try {
     const { data } = await supabase.rpc('portal_bootstrap');
     const role = data && typeof data === 'object' && !Array.isArray(data) ? data.staff_role : null;
-    if (role === 'admin') return '/admin';
-    if (role === 'production') return '/produksjon';
+    return staffHome(role) ?? next;
   } catch (error) {
     // Innloggingen er uansett i orden; da lander man bare på Min side.
     console.error('[auth] portal_bootstrap feilet etter innlogging:', error);

@@ -3,11 +3,12 @@ import { Alert, Badge, Card, Disclosure, Empty, PageHeader, Td } from '@/compone
 import { ActionButton, PortalForm } from '@/components/portal/forms';
 import { Input, Select } from '@/components/admin/fields';
 import InlineSelect from '@/components/admin/inline-select';
-import { STAFF_ROLES } from '@/lib/portal/labels';
+import { staffRoleLabel } from '@/lib/portal/labels';
 import { dato } from '@/lib/format';
 import { addStaff, removeStaff, setStaffRole } from './actions';
+import { MEDIA_ACCESS, STAFF_ROLE_OPTIONS, STAFF_ROLE_VALUES } from './roles';
 
-/** Hvem i NorthWest Coast som har tilgang til Admin og Produksjon. */
+/** Hvem som har en rolle hos NorthWest Coast: ansatte, og eksterne som hjelper til med innholdet. */
 export default async function AnsattePage() {
   const { supabase, ctx } = await requireStaff();
 
@@ -29,12 +30,13 @@ export default async function AnsattePage() {
     <>
       <PageHeader
         title="Ansatte og roller"
-        description="Rollen følger e-postadressen. Legg til en kollega her, så får hun tilgang neste gang hun logger inn."
+        description="Rollen følger e-postadressen. Legg til en kollega eller en ekstern person her, så får hun tilgang neste gang hun logger inn."
       />
 
       <Alert tone="info" title="Slik virker rollene">
         Tilgangen gjelder fra neste gang personen logger inn med e-postadressen som står her.
         Administratorer ser hele Admin og Produksjon. Produksjon ser bare /produksjon.
+        {' '}{MEDIA_ACCESS}
       </Alert>
 
       <Card title={`Ansatte (${staff?.length ?? 0})`} flush>
@@ -53,7 +55,7 @@ export default async function AnsattePage() {
                     </Td>
                     <Td label="Navn">{member.full_name ?? '–'}</Td>
                     <Td label="Rolle">
-                      <Badge tone={member.role === 'admin' ? 'info' : 'neutral'}>{STAFF_ROLES[member.role]}</Badge>
+                      <Badge tone={member.role === 'admin' ? 'info' : 'neutral'}>{staffRoleLabel(member.role).label}</Badge>
                     </Td>
                     <Td label="Innlogging">
                       {loggedIn.has(email) ? <Badge tone="ok">Har logget inn</Badge> : <Badge>Ikke logget inn ennå</Badge>}
@@ -65,7 +67,7 @@ export default async function AnsattePage() {
                         fields={{ email: member.email }}
                         name="role"
                         label={`Rolle for ${member.email}`}
-                        options={STAFF_ROLES}
+                        options={STAFF_ROLE_OPTIONS}
                         defaultValue={member.role}
                       />
                     </Td>
@@ -91,14 +93,14 @@ export default async function AnsattePage() {
           <Empty title="Ingen ansatte på lista" />
         )}
 
-        <Disclosure summary="Legg til ansatt">
+        <Disclosure summary="Legg til ansatt eller ekstern person">
           <PortalForm action={addStaff} submitLabel="Legg til">
             <div className="pt-form-row pt-form-row-3">
               <Input name="email" label="E-post" type="email" required maxLength={160} />
               <Input name="full_name" label="Navn" maxLength={120} />
-              <Select name="role" label="Rolle" defaultValue="production">
-                {Object.entries(STAFF_ROLES).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+              <Select name="role" label="Rolle" defaultValue="production" hint={MEDIA_ACCESS}>
+                {STAFF_ROLE_VALUES.map((role) => (
+                  <option key={role} value={role}>{STAFF_ROLE_OPTIONS[role]}</option>
                 ))}
               </Select>
             </div>

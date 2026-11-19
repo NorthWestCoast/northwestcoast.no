@@ -23,7 +23,7 @@ export default async function ProduksjonPage() {
   const { data, error } = await supabase
     .from('production_jobs')
     .select(
-      'id, job_number, status, due_date, product_name, length_m, steps, with_cabinet, customer_label, vessel_name, serial_number, shipped_at, production_job_steps(done_at)',
+      'id, job_number, kind, status, due_date, product_name, product_number, length_m, steps, with_cabinet, customer_label, vessel_name, serial_number, shipped_at, production_job_steps(done_at)',
     )
     .in('status', COLUMNS.map((column) => column.status))
     // Nærmeste frist først. Jobber uten frist kommer sist, eldste først.
@@ -46,7 +46,7 @@ export default async function ProduksjonPage() {
     <>
       <PageHeader
         title="Produksjon"
-        description="Åpne en jobb for å se spesifikasjonen, kvittere ut steg og registrere produksjonsnummeret."
+        description="Leidere og oppbevaringsskap som skal produseres. Åpne en jobb for å se spesifikasjonen, kvittere ut steg og registrere produksjonsnummeret."
         actions={
           ctx.staffRole === 'admin' && <Link href="/produksjon/ny" className="pt-btn">Ny jobb</Link>
         }

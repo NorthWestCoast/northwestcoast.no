@@ -8,12 +8,14 @@ import {
   checked,
   err,
   fail,
+  int,
   isoDate,
   ok,
   optional,
   text,
   uuid,
 } from '@/lib/portal/forms';
+import { CUSTOM_PRODUCT_NUMBER, fmtLength, isCustomLength } from '@/lib/pricing';
 
 /**
  * Handlinger i produksjonsområdet.
@@ -50,7 +52,10 @@ export async function setStep(formData: FormData): Promise<ActionResult> {
     : 'Steget er kvittert ut.');
 }
 
-/** Registrerer (eller retter) produksjonsnummeret. Leideren opprettes i databasen. */
+/**
+ * Registrerer (eller retter) produksjonsnummeret. For en leider opprettes
+ * leideren i databasen; et skap får bare nummeret på jobben.
+ */
 export async function assignSerial(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireProduction();
 
@@ -87,7 +92,10 @@ export async function shipJob(formData: FormData): Promise<ActionResult> {
   return ok('Jobben er markert som sendt.');
 }
 
-/** Marker jobben som levert. Leideren får status levert hos kunden. */
+/**
+ * Marker jobben som levert. Leideren får status levert hos kunden, og et skap
+ * (bestilt alene eller sammen med leideren) opprettes som egen enhet.
+ */
 export async function deliverJob(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireProduction();
 
@@ -115,7 +123,10 @@ export async function cancelJob(formData: FormData): Promise<ActionResult> {
   return ok('Jobben er kansellert.');
 }
 
-/** Retter frist og spesielle krav på en jobb. Bare administratorer. */
+/**
+ * Retter frist og spesielle krav på en jobb, og antall trinn der det ikke
+ * følger av produktet (spesiallengder). Bare administratorer.
+ */
 export async function updateJob(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireAdmin('/produksjon');
 
@@ -126,11 +137,23 @@ export async function updateJob(formData: FormData): Promise<ActionResult> {
   const due = isoDate(rawDue);
   if (rawDue && !due) return err('Fristen er ikke en gyldig dato.');
 
-  const { data, error } = await supabase
-    .from('production_jobs')
-    .update({ due_date: due, spec_notes: optional(formData.get('spec_notes'), 2000) })
-    .eq('id', job)
-    .select('id');
+  const patch: { due_date: string | null; spec_notes: string | null; steps?: number | null } = {
+    due_date: due,
+    spec_notes: optional(formData.get('spec_notes'), 2000),
+  };
+  // Feltet finnes bare i skjemaet for leidere uten fastsatt antall trinn.
+  if (formData.has('steps')) {
+    const rawSteps = text(formData.get('steps'), 6);
+    const steps = int(rawSteps, 1, 200);
+    if (rawSteps && steps === null) return err('Antall trinn må være et helt tall mellom 1 og 200.');
+    patch.steps = steps;
+  }
+
+  let query = supabase.from('production_jobs').update(patch).eq('id', job);
+  // Et skap har ikke trinn, uansett hva som måtte bli sendt inn.
+  if ('steps' in patch) query = query.eq('kind', 'ladder');
+
+  const { data, error } = await query.select('id');
   if (error) return fail(error);
   // RLS filtrerer bort rader man ikke kan endre, uten å gi feil.
   if (!data?.length) return err('Fant ikke jobben, eller du har ikke tilgang til å endre den.');
@@ -143,6 +166,10 @@ export async function updateJob(formData: FormData): Promise<ActionResult> {
  * Oppretter en jobb som ikke kommer fra en bestilling (lager, garanti,
  * avtale på telefon). Spesifikasjonen kopieres fra produktet her og nå, og
  * stegene legges til av en trigger i databasen.
+ *
+ * Jobben får slaget sitt fra produktet: en leider, eller et oppbevaringsskap
+ * som produseres alene (uten lengde og trinn, og bare med stegene som gjelder
+ * skap). En spesiallengde får lengden fra skjemaet, og ingen trinn.
  */
 export async function createJob(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireAdmin('/produksjon/ny');
@@ -156,38 +183,68 @@ export async function createJob(formData: FormData): Promise<ActionResult> {
   const due = isoDate(rawDue);
   if (rawDue && !due) return err('Fristen er ikke en gyldig dato.');
 
-  const { data: product, error: productError } = await supabase
+  // Hele lista hentes: skapet til en spesiallengde finnes via standardleiderne.
+  const { data: catalog, error: productError } = await supabase
     .from('products')
-    .select('id, name, product_number, length_m, steps, cabinet_product_id')
-    .eq('id', productId)
-    .eq('kind', 'ladder')
-    .eq('active', true)
-    .maybeSingle();
+    .select('id, kind, name, product_number, length_m, steps, cabinet_product_id')
+    .in('kind', ['ladder', 'cabinet'])
+    .eq('active', true);
   if (productError) return fail(productError);
+
+  const product = (catalog ?? []).find((row) => row.id === productId);
   if (!product) return err('Produktet finnes ikke lenger. Last siden på nytt.');
 
-  // Skap bare der produktet faktisk har et tilhørende, aktivt skap.
-  let cabinetName: string | null = null;
-  if (checked(formData.get('with_cabinet')) && product.cabinet_product_id) {
-    const { data: cabinet } = await supabase
-      .from('products')
-      .select('name')
-      .eq('id', product.cabinet_product_id)
-      .eq('active', true)
-      .maybeSingle();
-    cabinetName = cabinet?.name ?? null;
+  const isCabinet = product.kind === 'cabinet';
+  const isCustom = !isCabinet && product.product_number === CUSTOM_PRODUCT_NUMBER;
+  const ladders = (catalog ?? []).filter(
+    (row) => row.kind === 'ladder' && row.length_m !== null && row.product_number !== CUSTOM_PRODUCT_NUMBER,
+  );
+  const activeCabinet = (id: string | null) =>
+    (catalog ?? []).find((row) => row.kind === 'cabinet' && row.id === id) ?? null;
+
+  let name = product.name;
+  let length = isCabinet ? null : product.length_m;
+  let steps = isCabinet ? null : product.steps;
+
+  if (isCustom) {
+    const custom = Number(text(formData.get('custom_length'), 8).replace(',', '.'));
+    if (!isCustomLength(custom)) {
+      return err('Skriv inn lengden i hele eller halve meter, mellom 1,5 og 30.');
+    }
+    if (ladders.some((row) => Number(row.length_m) === custom)) {
+      return err(`${fmtLength(custom)} m er en standardlengde. Velg den i produktlista.`);
+    }
+    // Samme navn som databasen gir spesiallengder fra bestillinger.
+    name = `Argostep – ${fmtLength(custom)} m (spesiallengde)`;
+    length = custom;
+    steps = null;
+  }
+
+  // Skap bare der leideren faktisk har et tilhørende, aktivt skap. En
+  // spesiallengde får skapet til nærmeste standardlengde over.
+  let cabinet: { id: string; name: string } | null = null;
+  if (!isCabinet && checked(formData.get('with_cabinet'))) {
+    cabinet = isCustom
+      ? ladders
+          .filter((row) => Number(row.length_m) >= (length as number))
+          .sort((a, b) => Number(a.length_m) - Number(b.length_m))
+          .map((row) => activeCabinet(row.cabinet_product_id))
+          .find((row) => row !== null) ?? null
+      : activeCabinet(product.cabinet_product_id);
   }
 
   const { data: job, error } = await supabase
     .from('production_jobs')
     .insert({
       product_id: product.id,
-      product_name: product.name,
+      kind: isCabinet ? 'cabinet' : 'ladder',
+      product_name: name,
       product_number: product.product_number,
-      length_m: product.length_m,
-      steps: product.steps,
-      with_cabinet: cabinetName !== null,
-      cabinet_name: cabinetName,
+      length_m: length,
+      steps,
+      with_cabinet: cabinet !== null,
+      cabinet_name: cabinet?.name ?? null,
+      cabinet_product_id: cabinet?.id ?? null,
       customer_label: customer,
       vessel_name: optional(formData.get('vessel_name'), 160),
       spec_notes: optional(formData.get('spec_notes'), 2000),

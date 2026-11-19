@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { managedCompanies, requireUser } from '@/lib/portal/context';
 import { Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
 import { PortalForm } from '@/components/portal/forms';
+import VesselFields from '@/components/portal/vessel-fields';
 import { createVessel } from './actions';
 
 /** Fartøyene brukeren har tilgang til, og skjema for å legge til et nytt. */
@@ -11,7 +12,7 @@ export default async function FartoyPage() {
   const [{ data: vessels }, { data: ladders }] = await Promise.all([
     supabase
       .from('vessels')
-      .select('id, name, imo, call_sign, vessel_type, home_port, company_id, companies(name)')
+      .select('id, name, imo, call_sign, registration_mark, vessel_type, home_port, company_id, companies(name)')
       .order('name')
       .limit(500),
     supabase.from('ladder_status').select('ladder_id, vessel_id, service_state').not('vessel_id', 'is', null).limit(1000),
@@ -33,7 +34,7 @@ export default async function FartoyPage() {
     <>
       <PageHeader
         title="Fartøy"
-        description="Leidere monteres på et fartøy. Mannskap du gir tilgang til et fartøy, ser alle leiderne om bord."
+        description="Mannskap du gir tilgang til et fartøy, ser alle leiderne om bord. Utstyr som står på en kai eller et anlegg på land, legger du under Prosjekter."
       />
 
       <Card flush>
@@ -56,7 +57,10 @@ export default async function FartoyPage() {
                 return (
                   <tr key={vessel.id}>
                     <Td label="Fartøy" className="pt-table-strong">
-                      <Link href={`/minside/fartoy/${vessel.id}`}>{vessel.name}</Link>
+                      <div>
+                        <Link href={`/minside/fartoy/${vessel.id}`}>{vessel.name}</Link>
+                        {vessel.registration_mark && <div className="pt-hint">{vessel.registration_mark}</div>}
+                      </div>
                     </Td>
                     <Td label="IMO">{vessel.imo ?? '–'}</Td>
                     <Td label="Kallesignal">{vessel.call_sign ?? '–'}</Td>
@@ -97,30 +101,7 @@ export default async function FartoyPage() {
                   </select>
                 </div>
               )}
-              <div className="pt-form-row">
-                <div className="pt-field">
-                  <label htmlFor="vessel-name">Navn</label>
-                  <input id="vessel-name" name="name" required minLength={2} maxLength={160} placeholder="F.eks. MS Nordlys" />
-                </div>
-                <div className="pt-field">
-                  <label htmlFor="vessel-imo">IMO-nummer (valgfritt)</label>
-                  <input id="vessel-imo" name="imo" inputMode="numeric" maxLength={11} placeholder="7 siffer" />
-                </div>
-              </div>
-              <div className="pt-form-row pt-form-row-3">
-                <div className="pt-field">
-                  <label htmlFor="vessel-call">Kallesignal</label>
-                  <input id="vessel-call" name="call_sign" maxLength={20} autoCapitalize="characters" />
-                </div>
-                <div className="pt-field">
-                  <label htmlFor="vessel-type">Type</label>
-                  <input id="vessel-type" name="vessel_type" maxLength={80} placeholder="F.eks. Fiskefartøy" />
-                </div>
-                <div className="pt-field">
-                  <label htmlFor="vessel-port">Hjemmehavn</label>
-                  <input id="vessel-port" name="home_port" maxLength={80} />
-                </div>
-              </div>
+              <VesselFields scope="vessel" />
             </PortalForm>
           </Disclosure>
         </Card>

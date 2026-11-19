@@ -10,7 +10,9 @@
     "db:types": "bash supabase/verify/run.sh --types",
     "db:push": "supabase db push",
     "db:verify": "bash supabase/verify/run.sh",
-    "test:prices": "node tests/price-plan.test.mts"
+    "test:prices": "node tests/price-plan.test.mts",
+    "test:ladder": "node tests/ladder-rules.test.mts",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

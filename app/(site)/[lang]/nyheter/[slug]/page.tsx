@@ -55,6 +55,8 @@ export async function generateMetadata({
     openGraph: {
       title: article.title,
       description: article.excerpt,
+      url: `${SITE_URL}${localePath(lang, path)}`,
+      siteName: 'NorthWest Coast',
       images: [article.image],
       locale: getDict(lang).ogLocale,
       type: 'article',

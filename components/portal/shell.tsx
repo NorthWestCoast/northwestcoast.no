@@ -1,15 +1,31 @@
 import Link from 'next/link';
 import PortalNav, { type NavGroup } from './nav';
 import { signOut } from '@/lib/portal/actions';
-import type { PortalContext } from '@/lib/portal/context';
+import type { PortalContext, StaffRole } from '@/lib/portal/context';
+import { MEDIA_HOME } from '@/lib/portal/landing';
+import { staffRoleLabel } from '@/lib/portal/labels';
+
+type Area = { label: string; home: string };
 
 const AREAS = {
   minside: { label: 'Min side', home: '/minside' },
   admin: { label: 'Admin', home: '/admin' },
   produksjon: { label: 'Produksjon', home: '/produksjon' },
-} as const;
+} as const satisfies Record<string, Area>;
 
 export type PortalArea = keyof typeof AREAS;
+
+/**
+ * Områdene en rolle har tilgang til, slik de skal hete og hvor de starter.
+ * Medierollen ser bare nyheter og galleri i admin-området, så for dem heter
+ * det «Media» og starter på nyhetene. Produksjon er ikke med for dem.
+ */
+function areasFor(role: StaffRole): Partial<Record<PortalArea, Area>> {
+  if (role === 'admin') return AREAS;
+  if (role === 'production') return { minside: AREAS.minside, produksjon: AREAS.produksjon };
+  if (role === 'media') return { minside: AREAS.minside, admin: { label: 'Media', home: MEDIA_HOME } };
+  return { minside: AREAS.minside };
+}
 
 /**
  * Felles ramme for Min side, Admin og Produksjon: sidemeny på store skjermer,
@@ -26,23 +42,21 @@ export default function PortalShell({
   groups: NavGroup[];
   children: React.ReactNode;
 }) {
-  const others = (Object.keys(AREAS) as PortalArea[]).filter((key) => {
-    if (key === area) return false;
-    if (key === 'admin') return ctx.staffRole === 'admin';
-    if (key === 'produksjon') return ctx.staffRole !== null;
-    return true;
-  });
+  const areas = areasFor(ctx.staffRole);
+  const current = areas[area] ?? AREAS[area];
+  const others = (Object.keys(AREAS) as PortalArea[])
+    .filter((key) => key !== area)
+    .flatMap((key) => areas[key] ?? []);
 
-  const role =
-    ctx.staffRole === 'admin' ? 'Administrator, NorthWest Coast'
-    : ctx.staffRole === 'production' ? 'Produksjon, NorthWest Coast'
+  const role = ctx.staffRole
+    ? `${staffRoleLabel(ctx.staffRole).label}, NorthWest Coast`
     : ctx.companies.map((c) => c.name).join(', ') || 'Ingen selskap ennå';
 
   return (
     <div className="pt">
       <PortalNav
-        area={AREAS[area].label}
-        brandHref={AREAS[area].home}
+        area={current.label}
+        brandHref={current.home}
         groups={groups}
         unread={ctx.unread}
         notificationsHref="/minside/varsler"
@@ -51,8 +65,8 @@ export default function PortalShell({
             <div className="pt-side-user">{ctx.displayName}</div>
             <div className="pt-side-role">{role}</div>
             <div className="pt-side-links">
-              {others.map((key) => (
-                <Link key={key} href={AREAS[key].home}>{AREAS[key].label}</Link>
+              {others.map((other) => (
+                <Link key={other.home} href={other.home}>{other.label}</Link>
               ))}
               <Link href="/">Nettsiden</Link>
               <form action={signOut}>

@@ -97,6 +97,100 @@ export type Database = {
           },
         ]
       }
+      cabinets: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          installed_at: string | null
+          job_id: string | null
+          ladder_id: string | null
+          location_note: string | null
+          notes: string | null
+          product_id: string
+          project_id: string | null
+          serial_number: string | null
+          status: string
+          updated_at: string
+          vessel_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          installed_at?: string | null
+          job_id?: string | null
+          ladder_id?: string | null
+          location_note?: string | null
+          notes?: string | null
+          product_id: string
+          project_id?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          vessel_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          installed_at?: string | null
+          job_id?: string | null
+          ladder_id?: string | null
+          location_note?: string | null
+          notes?: string | null
+          product_id?: string
+          project_id?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          vessel_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabinets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinets_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinets_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinets_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "vessels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -306,6 +400,57 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_images: {
+        Row: {
+          alt_en: string | null
+          alt_no: string
+          caption_en: string | null
+          caption_no: string | null
+          contain: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string
+          published: boolean
+          sort_order: number
+          storage_path: string | null
+          tag: string
+          updated_at: string
+        }
+        Insert: {
+          alt_en?: string | null
+          alt_no: string
+          caption_en?: string | null
+          caption_no?: string | null
+          contain?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url: string
+          published?: boolean
+          sort_order?: number
+          storage_path?: string | null
+          tag?: string
+          updated_at?: string
+        }
+        Update: {
+          alt_en?: string | null
+          alt_no?: string
+          caption_en?: string | null
+          caption_no?: string | null
+          contain?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string
+          published?: boolean
+          sort_order?: number
+          storage_path?: string | null
+          tag?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ladder_access_requests: {
         Row: {
           created_at: string
@@ -358,6 +503,100 @@ export type Database = {
             columns: ["ladder_id"]
             isOneToOne: false
             referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ladder_certificates: {
+        Row: {
+          certificate_number: string
+          company_name: string | null
+          created_at: string
+          id: string
+          issued_by: string | null
+          issued_by_name: string
+          issued_on: string
+          ladder_id: string
+          length_m: number | null
+          product_name: string
+          project_name: string | null
+          remarks: string | null
+          replaced_by: string | null
+          result: Database["public"]["Enums"]["service_result"] | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          serial_number: string
+          service_report_id: string | null
+          valid_until: string
+          verify_token: string
+          vessel_name: string | null
+        }
+        Insert: {
+          certificate_number: string
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_by_name: string
+          issued_on?: string
+          ladder_id: string
+          length_m?: number | null
+          product_name: string
+          project_name?: string | null
+          remarks?: string | null
+          replaced_by?: string | null
+          result?: Database["public"]["Enums"]["service_result"] | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          serial_number: string
+          service_report_id?: string | null
+          valid_until: string
+          verify_token?: string
+          vessel_name?: string | null
+        }
+        Update: {
+          certificate_number?: string
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_by_name?: string
+          issued_on?: string
+          ladder_id?: string
+          length_m?: number | null
+          product_name?: string
+          project_name?: string | null
+          remarks?: string | null
+          replaced_by?: string | null
+          result?: Database["public"]["Enums"]["service_result"] | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          serial_number?: string
+          service_report_id?: string | null
+          valid_until?: string
+          verify_token?: string
+          vessel_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladder_certificates_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ladder_certificates_replaced_by_fkey"
+            columns: ["replaced_by"]
+            isOneToOne: false
+            referencedRelation: "ladder_certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ladder_certificates_service_report_id_fkey"
+            columns: ["service_report_id"]
+            isOneToOne: false
+            referencedRelation: "service_reports"
             referencedColumns: ["id"]
           },
         ]
@@ -568,11 +807,13 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
+          custom_length_m: number | null
           id: string
           installed_at: string | null
           notes: string | null
           produced_at: string | null
           product_id: string
+          project_id: string | null
           public_code: string | null
           serial_number: string
           service_interval_months: number
@@ -583,11 +824,13 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string
+          custom_length_m?: number | null
           id?: string
           installed_at?: string | null
           notes?: string | null
           produced_at?: string | null
           product_id: string
+          project_id?: string | null
           public_code?: string | null
           serial_number: string
           service_interval_months?: number
@@ -598,11 +841,13 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string
+          custom_length_m?: number | null
           id?: string
           installed_at?: string | null
           notes?: string | null
           produced_at?: string | null
           product_id?: string
+          project_id?: string | null
           public_code?: string | null
           serial_number?: string
           service_interval_months?: number
@@ -623,6 +868,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ladders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -849,6 +1101,8 @@ export type Database = {
       order_lines: {
         Row: {
           cabinet_price_nok: number
+          cabinet_product_id: string | null
+          custom_length_m: number | null
           id: string
           line_total_nok: number
           on_request: boolean
@@ -860,6 +1114,8 @@ export type Database = {
         }
         Insert: {
           cabinet_price_nok?: number
+          cabinet_product_id?: string | null
+          custom_length_m?: number | null
           id?: string
           line_total_nok: number
           on_request?: boolean
@@ -871,6 +1127,8 @@ export type Database = {
         }
         Update: {
           cabinet_price_nok?: number
+          cabinet_product_id?: string | null
+          custom_length_m?: number | null
           id?: string
           line_total_nok?: number
           on_request?: boolean
@@ -1116,6 +1374,7 @@ export type Database = {
       production_jobs: {
         Row: {
           cabinet_name: string | null
+          cabinet_product_id: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
@@ -1124,6 +1383,7 @@ export type Database = {
           due_date: string | null
           id: string
           job_number: string
+          kind: Database["public"]["Enums"]["product_kind"]
           ladder_id: string | null
           length_m: number | null
           order_id: string | null
@@ -1144,6 +1404,7 @@ export type Database = {
         }
         Insert: {
           cabinet_name?: string | null
+          cabinet_product_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -1152,6 +1413,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           job_number?: string
+          kind?: Database["public"]["Enums"]["product_kind"]
           ladder_id?: string | null
           length_m?: number | null
           order_id?: string | null
@@ -1172,6 +1434,7 @@ export type Database = {
         }
         Update: {
           cabinet_name?: string | null
+          cabinet_product_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -1180,6 +1443,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           job_number?: string
+          kind?: Database["public"]["Enums"]["product_kind"]
           ladder_id?: string | null
           length_m?: number | null
           order_id?: string | null
@@ -1234,6 +1498,7 @@ export type Database = {
           active: boolean
           created_at: string
           description: string | null
+          for_cabinet: boolean
           id: string
           position: number
           title: string
@@ -1242,6 +1507,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           description?: string | null
+          for_cabinet?: boolean
           id?: string
           position: number
           title: string
@@ -1250,6 +1516,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           description?: string | null
+          for_cabinet?: boolean
           id?: string
           position?: number
           title?: string
@@ -1353,6 +1620,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: string
+          location: string | null
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          location?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          location?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_agreements: {
         Row: {
@@ -1469,6 +1783,38 @@ export type Database = {
           },
           {
             foreignKeyName: "service_bookings_service_report_id_fkey"
+            columns: ["service_report_id"]
+            isOneToOne: false
+            referencedRelation: "service_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_report_photos: {
+        Row: {
+          caption: string | null
+          id: string
+          service_report_id: string
+          storage_path: string
+          uploaded_at: string
+        }
+        Insert: {
+          caption?: string | null
+          id?: string
+          service_report_id: string
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          caption?: string | null
+          id?: string
+          service_report_id?: string
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_report_photos_service_report_id_fkey"
             columns: ["service_report_id"]
             isOneToOne: false
             referencedRelation: "service_reports"
@@ -1688,38 +2034,53 @@ export type Database = {
       }
       vessels: {
         Row: {
+          beam_m: number | null
+          build_year: number | null
           call_sign: string | null
           company_id: string
           created_at: string
           home_port: string | null
           id: string
           imo: string | null
+          length_m: number | null
           mmsi: string | null
           name: string
+          registration_mark: string | null
+          registry_id: string | null
           updated_at: string
           vessel_type: string | null
         }
         Insert: {
+          beam_m?: number | null
+          build_year?: number | null
           call_sign?: string | null
           company_id: string
           created_at?: string
           home_port?: string | null
           id?: string
           imo?: string | null
+          length_m?: number | null
           mmsi?: string | null
           name: string
+          registration_mark?: string | null
+          registry_id?: string | null
           updated_at?: string
           vessel_type?: string | null
         }
         Update: {
+          beam_m?: number | null
+          build_year?: number | null
           call_sign?: string | null
           company_id?: string
           created_at?: string
           home_port?: string | null
           id?: string
           imo?: string | null
+          length_m?: number | null
           mmsi?: string | null
           name?: string
+          registration_mark?: string | null
+          registry_id?: string | null
           updated_at?: string
           vessel_type?: string | null
         }
@@ -1738,6 +2099,8 @@ export type Database = {
       ladder_status: {
         Row: {
           booked_service_date: string | null
+          certificate_number: string | null
+          certificate_valid_until: string | null
           company_id: string | null
           company_name: string | null
           days_until_service: number | null
@@ -1754,6 +2117,8 @@ export type Database = {
           produced_at: string | null
           product_name: string | null
           product_number: string | null
+          project_id: string | null
+          project_name: string | null
           public_code: string | null
           serial_number: string | null
           service_interval_months: number | null
@@ -1776,12 +2141,15 @@ export type Database = {
       create_ticket: { Args: { p_subject: string; p_body: string; p_category?: string; p_ladder?: string; p_company?: string }; Returns: string }
       decide_ladder_access: { Args: { p_request: string; p_approve: boolean; p_role?: string; p_note?: string }; Returns: undefined }
       finish_maintenance_report: { Args: { p_log: string; p_paths?: string[] }; Returns: Json }
+      get_certificate: { Args: { p_token: string }; Returns: Json }
       get_ladder_share: { Args: { p_token: string }; Returns: Json }
-      install_ladder: { Args: { p_ladder: string; p_vessel: string; p_installed_at?: string }; Returns: undefined }
+      install_ladder: { Args: { p_ladder: string; p_vessel: string; p_installed_at?: string; p_project?: string }; Returns: undefined }
       is_valid_imo: { Args: { value: string }; Returns: boolean }
       is_valid_org_number: { Args: { value: string }; Returns: boolean }
+      issue_ladder_certificate: { Args: { p_ladder: string; p_service_report?: string; p_valid_until?: string; p_remarks?: string }; Returns: string }
       mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number }
       next_order_number: { Args: never; Returns: string }
+      place_cabinet: { Args: { p_cabinet: string; p_vessel: string; p_project: string; p_installed_at?: string; p_location?: string }; Returns: undefined }
       place_order: { Args: { payload: Json }; Returns: Json }
       portal_bootstrap: { Args: never; Returns: Json }
       purge_expired_shares: { Args: { retain_days?: number }; Returns: number }
@@ -1803,7 +2171,7 @@ export type Database = {
       order_status: "new" | "quoted" | "confirmed" | "in_production" | "delivered" | "cancelled"
       product_kind: "ladder" | "cabinet" | "spare_part"
       service_result: "ok" | "ok_with_remarks" | "failed"
-      staff_role: "admin" | "production"
+      staff_role: "admin" | "production" | "media"
       vessel_role: "master" | "crew" | "viewer"
     }
     CompositeTypes: {

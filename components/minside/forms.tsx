@@ -1,4 +1,5 @@
 import { PortalForm } from '@/components/portal/forms';
+import CompanyLookup from '@/components/portal/company-lookup';
 import type { ActionResult } from '@/lib/portal/forms';
 
 type Action = (formData: FormData) => Promise<ActionResult>;
@@ -37,6 +38,7 @@ export function LadderAccessForm({ action, idPrefix = 'tilgang' }: { action: Act
 export function CompanyForm({ action, idPrefix = 'selskap' }: { action: Action; idPrefix?: string }) {
   return (
     <PortalForm action={action} submitLabel="Registrer selskapet" pendingLabel="Registrerer…">
+      <CompanyLookup id={`${idPrefix}-brreg`} />
       <div className="pt-form-row">
         <div className="pt-field">
           <label htmlFor={`${idPrefix}-name`}>Navn på selskapet</label>

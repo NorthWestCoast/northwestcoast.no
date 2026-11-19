@@ -16,7 +16,7 @@ const MAX_BYTES = 8 * 1024 * 1024;
  * Ett bilde til en nyhet eller et produkt.
  *
  * Bildet lastes opp fra nettleseren til den offentlige bøtta `public-media`
- * (lagringspolicyen slipper bare administratorer til). Adressen legges i et
+ * (lagringspolicyen slipper bare administratorer og media til). Adressen legges i et
  * skjult felt, så skjemaet rundt lagrer den sammen med resten. En adresse
  * kan også limes inn direkte.
  */

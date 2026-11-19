@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { MEDIA_HOME, staffHome } from './landing';
 
 /**
  * Hvem er innlogget, og hva har de tilgang til.
@@ -12,7 +13,12 @@ import { createServerSupabase } from '@/lib/supabase/server';
  * Rollen her styrer bare hva som vises. Det som faktisk beskytter dataene er
  * RLS og funksjonene i databasen, som gjør den samme vurderingen selv.
  */
-export type StaffRole = 'admin' | 'production' | null;
+export type StaffRole = 'admin' | 'production' | 'media' | null;
+
+const STAFF_ROLES = ['admin', 'production', 'media'] as const;
+
+const isStaffRole = (value: unknown): value is NonNullable<StaffRole> =>
+  STAFF_ROLES.some((role) => role === value);
 
 export type PortalCompany = { id: string; name: string; role: 'owner' | 'admin' | 'member' };
 
@@ -53,7 +59,7 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
   const ctx = data as Record<string, unknown>;
   const fullName = typeof ctx.full_name === 'string' && ctx.full_name.trim() ? ctx.full_name : null;
   const email = typeof ctx.email === 'string' ? ctx.email : user.email ?? '';
-  const staffRole = ctx.staff_role === 'admin' || ctx.staff_role === 'production' ? ctx.staff_role : null;
+  const staffRole = isStaffRole(ctx.staff_role) ? ctx.staff_role : null;
 
   return {
     userId: user.id,
@@ -75,17 +81,27 @@ export async function requireUser(next = '/minside') {
   return { supabase, ctx };
 }
 
+/** Dit en bruker sendes når rollen ikke gir tilgang til siden hun ba om. */
+const homeFor = (role: StaffRole) => staffHome(role) ?? '/minside';
+
 /** Krever administrator hos NorthWest Coast. */
 export async function requireAdmin(next = '/admin') {
   const { supabase, ctx } = await requireUser(next);
-  if (ctx.staffRole !== 'admin') redirect(ctx.staffRole === 'production' ? '/produksjon' : '/minside');
+  if (ctx.staffRole !== 'admin') redirect(homeFor(ctx.staffRole));
   return { supabase, ctx };
 }
 
-/** Krever produksjon eller administrator. */
+/** Krever media eller administrator: nyheter og galleri, ingenting annet. */
+export async function requireMedia(next = MEDIA_HOME) {
+  const { supabase, ctx } = await requireUser(next);
+  if (ctx.staffRole !== 'admin' && ctx.staffRole !== 'media') redirect(homeFor(ctx.staffRole));
+  return { supabase, ctx };
+}
+
+/** Krever produksjon eller administrator. Media har en ansattrolle, men ikke denne. */
 export async function requireProduction(next = '/produksjon') {
   const { supabase, ctx } = await requireUser(next);
-  if (!ctx.staffRole) redirect('/minside');
+  if (ctx.staffRole !== 'admin' && ctx.staffRole !== 'production') redirect(homeFor(ctx.staffRole));
   return { supabase, ctx };
 }
 

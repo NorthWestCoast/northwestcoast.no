@@ -15,8 +15,8 @@ function refresh(orderId: string) {
 }
 
 /**
- * Bekrefter bestillingen. Databasen lager én produksjonsjobb per leider og
- * varsler produksjon og kunden.
+ * Bekrefter bestillingen. Databasen lager én produksjonsjobb per leider og én
+ * per skap som er bestilt alene, og varsler produksjon og kunden.
  */
 export async function confirmOrder(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireStaff();
@@ -37,7 +37,7 @@ export async function confirmOrder(formData: FormData): Promise<ActionResult> {
   refresh(orderId);
   revalidatePath('/produksjon');
 
-  if (!jobs) return ok('Bestillingen er bekreftet. Den har ingen leidere, så ingen produksjonsjobb ble opprettet.');
+  if (!jobs) return ok('Bestillingen er bekreftet. Den har verken leidere eller skap, så ingen produksjonsjobb ble opprettet.');
   return ok(
     jobs === 1
       ? 'Bestillingen er bekreftet, og 1 produksjonsjobb er opprettet.'
@@ -47,8 +47,9 @@ export async function confirmOrder(formData: FormData): Promise<ActionResult> {
 
 /**
  * Knytter bestillingen til et selskap, så selskapet ser den på Min side.
- * Leidere som allerede er opprettet fra bestillingens produksjonsjobber
- * følger med, så sant de ikke står på et fartøy (da følger de fartøyet).
+ * Leidere og skap som allerede er opprettet fra bestillingens
+ * produksjonsjobber følger med, så sant de ikke er plassert på et fartøy eller
+ * i et prosjekt (da følger de det).
  */
 export async function linkOrderCompany(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireStaff();
@@ -79,6 +80,18 @@ export async function linkOrderCompany(formData: FormData): Promise<ActionResult
     if (ladderError) return fail(ladderError, 'Bestillingen er knyttet til selskapet, men leiderne ble ikke flyttet.');
   }
 
+  // Leverte skap fra bestillingen: de som ikke er plassert ennå, får samme eier.
+  const jobIds = (jobs ?? []).map((job) => job.id);
+  if (jobIds.length > 0) {
+    const { error: cabinetError } = await supabase
+      .from('cabinets')
+      .update({ company_id: company.id })
+      .in('job_id', jobIds)
+      .is('vessel_id', null)
+      .is('project_id', null);
+    if (cabinetError) return fail(cabinetError, 'Bestillingen er knyttet til selskapet, men skapene ble ikke flyttet.');
+  }
+
   // Produksjon ser kundenavnet på jobben; hold det likt med bestillingen.
   if (jobs?.length) {
     await supabase.from('production_jobs').update({ customer_label: company.name }).eq('order_id', orderId);
@@ -86,6 +99,7 @@ export async function linkOrderCompany(formData: FormData): Promise<ActionResult
 
   refresh(orderId);
   revalidatePath(`/admin/selskap/${company.id}`);
+  revalidatePath('/admin/skap');
   return ok(
     ladderIds.length > 0
       ? `Bestillingen og ${ladderIds.length} leider(e) er knyttet til ${company.name}.`
@@ -137,7 +151,7 @@ export async function setExpectedDelivery(formData: FormData): Promise<ActionRes
 
 /**
  * Registrerer en leveranse for hånd. Brukes for bestillinger uten
- * produksjonsjobb (reservedeler, skap); leidere får leveransen sin når
+ * produksjonsjobb (reservedeler); leidere og skap får leveransen sin når
  * produksjon sender jobben.
  */
 export async function registerDelivery(formData: FormData): Promise<ActionResult> {

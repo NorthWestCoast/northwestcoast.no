@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Badge, Progress } from '@/components/portal/ui';
 import { dato } from '@/lib/format';
+import { CUSTOM_PRODUCT_NUMBER } from '@/lib/pricing';
 
 /**
  * Felles visning av en produksjonsjobb. Alt som står her kommer fra
@@ -9,6 +10,9 @@ import { dato } from '@/lib/format';
  */
 
 type Spec = {
+  /** Leider, eller et oppbevaringsskap som er bestilt alene. */
+  kind: string;
+  product_number: string;
   length_m: number | null;
   steps: number | null;
   with_cabinet: boolean;
@@ -17,15 +21,34 @@ type Spec = {
 export const meter = (value: number | null) =>
   value === null ? '–' : `${Number(value).toLocaleString('nb-NO', { maximumFractionDigits: 1 })} m`;
 
-/** «6 m · 19 trinn · med oppbevaringsskap». */
+/** Jobben er et skap alene: ingen lengde, ingen trinn, nummer er valgfritt. */
+export const isCabinetJob = (job: { kind: string }) => job.kind === 'cabinet';
+
+/** Leider i spesiallengde (halvmeter): lengden er kundens ønske, trinn er ikke fastsatt. */
+export const isCustomJob = (job: { kind: string; product_number: string }) =>
+  !isCabinetJob(job) && job.product_number === CUSTOM_PRODUCT_NUMBER;
+
+/**
+ * «6 m · 19 trinn · med oppbevaringsskap». Et skap alene har verken lengde
+ * eller trinn. En leider uten fastsatt antall trinn sier det rett ut, så
+ * ingen kapper etter gjetning.
+ */
 export function specLine(job: Spec): string {
+  if (isCabinetJob(job)) return 'Oppbevaringsskap uten leider';
   return [
     job.length_m !== null ? meter(job.length_m) : null,
-    job.steps ? `${job.steps} trinn` : null,
+    job.steps ? `${job.steps} trinn` : 'antall trinn avklares',
     job.with_cabinet ? 'med oppbevaringsskap' : 'uten oppbevaringsskap',
   ]
     .filter(Boolean)
     .join(' · ');
+}
+
+/** Merke som skiller skap og spesiallengder fra vanlige leiderjobber. */
+export function JobKindBadge({ job }: { job: { kind: string; product_number: string } }) {
+  if (isCabinetJob(job)) return <Badge>Skap</Badge>;
+  if (isCustomJob(job)) return <Badge tone="warn">Spesiallengde</Badge>;
+  return null;
 }
 
 /** Dato i norsk tid for et tidspunkt (sendt, levert). */
@@ -76,7 +99,9 @@ export function JobCard({ job, today }: { job: BoardJob; today: string }) {
           <span>{job.due_date ? `Frist ${dato(job.due_date)}` : 'Ingen frist'}</span>
         )}
       </div>
-      <div className="pt-job-title">{job.product_name}</div>
+      <div className="pt-job-title">
+        {job.product_name} <JobKindBadge job={job} />
+      </div>
       <div className="pt-job-spec">
         <div>{specLine(job)}</div>
         <div>{[job.customer_label, job.vessel_name].filter(Boolean).join(' · ') || 'Kunde ikke oppgitt'}</div>

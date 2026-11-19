@@ -27,12 +27,13 @@ export default async function MinSideLayout({ children }: { children: React.Reac
         { href: '/minside', label: 'Oversikt', icon: 'dashboard', exact: true },
         { href: '/minside/leidere', label: 'Leidere', icon: 'ladder' },
         { href: '/minside/fartoy', label: 'Fartøy', icon: 'vessel' },
+        { href: '/minside/prosjekter', label: 'Prosjekter', icon: 'project' },
       ],
     },
     {
       title: 'Bestilling',
       items: [
-        { href: '/minside/bestill', label: 'Bestill leider og deler', icon: 'shop' },
+        { href: '/minside/bestill', label: 'Bestill leider, skap og deler', icon: 'shop' },
         { href: '/minside/bestillinger', label: 'Mine bestillinger', icon: 'orders' },
         { href: '/minside/service', label: 'Service', icon: 'service' },
       ],

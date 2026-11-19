@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { requireStaff } from '@/lib/supabase/staff';
+import { requireMedia } from '@/lib/portal/context';
 import { type ActionResult, err, fail, isoDate, ok, optional, text, uuid } from '@/lib/portal/forms';
 import { POSTS_TAG } from '@/lib/portal/tags';
 import { dato, idag } from '@/lib/format';
@@ -44,7 +44,7 @@ function publishedAt(date: string | null, existing: string | null, publishing: b
 
 /** Oppretter eller oppdaterer et innlegg (med `post_id`: oppdaterer). */
 export async function savePost(formData: FormData): Promise<ActionResult> {
-  const { supabase, ctx } = await requireStaff();
+  const { supabase, ctx } = await requireMedia();
 
   const postId = uuid(formData.get('post_id'));
   const titleNo = text(formData.get('title_no'), 200);
@@ -116,7 +116,7 @@ export async function savePost(formData: FormData): Promise<ActionResult> {
 }
 
 export async function deletePost(formData: FormData): Promise<ActionResult> {
-  const { supabase } = await requireStaff();
+  const { supabase } = await requireMedia();
 
   const postId = uuid(formData.get('post_id'));
   if (!postId) return err('Fant ikke innlegget.');

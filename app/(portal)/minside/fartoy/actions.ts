@@ -4,57 +4,16 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { managedCompanies, requireUser } from '@/lib/portal/context';
 import {
-  type ActionResult, digits, err, fail, ok, optional, text, uuid,
+  type ActionResult, err, fail, ok, optional, text, uuid,
 } from '@/lib/portal/forms';
 import { createInvitation } from '@/lib/portal/invite';
-import { isValidImo } from '@/lib/imo';
+import { readVessel, vesselError } from '@/components/portal/vessel-values';
 
-type DbError = { code?: string; message: string };
+/** Vises når IMO-nummeret alt står på et annet fartøy. */
+const IMO_TAKEN = 'Ta kontakt med NorthWest Coast hvis det er ditt.';
 
 function refresh() {
   revalidatePath('/minside', 'layout');
-}
-
-type VesselValues = {
-  name: string;
-  imo: string | null;
-  call_sign: string | null;
-  vessel_type: string | null;
-  home_port: string | null;
-};
-
-/** Leser og kontrollerer feltene som er felles for nytt og endret fartøy. */
-function readVessel(formData: FormData): { error: string } | { error: null; values: VesselValues } {
-  const name = text(formData.get('name'), 160);
-  if (name.length < 2) return { error: 'Skriv inn navnet på fartøyet.' };
-
-  // Bare siffer («IMO 9074729» og «9074729» er det samme).
-  const imo = digits(formData.get('imo'));
-  if (imo && !isValidImo(imo)) {
-    return { error: 'IMO-nummeret er ikke gyldig. Det skal ha 7 siffer, og kontrollsifferet må stemme.' };
-  }
-
-  return {
-    error: null,
-    values: {
-      name,
-      imo: imo || null,
-      call_sign: optional(formData.get('call_sign'), 20)?.toUpperCase() ?? null,
-      vessel_type: optional(formData.get('vessel_type'), 80),
-      home_port: optional(formData.get('home_port'), 80),
-    },
-  };
-}
-
-/** Databasen har siste ord om IMO-nummeret (kontrollsiffer og unikhet). */
-function vesselError(error: DbError, fallback: string): ActionResult {
-  if (error.code === '23514') {
-    return err('IMO-nummeret er ikke gyldig. Det skal ha 7 siffer, og kontrollsifferet må stemme.');
-  }
-  if (error.code === '23505') {
-    return err('Et fartøy med dette IMO-nummeret er allerede registrert. Ta kontakt med NorthWest Coast hvis det er ditt.');
-  }
-  return fail(error, fallback);
 }
 
 export async function createVessel(formData: FormData): Promise<ActionResult> {
@@ -74,7 +33,9 @@ export async function createVessel(formData: FormData): Promise<ActionResult> {
     .insert({ company_id: companyId, ...parsed.values })
     .select('id')
     .single();
-  if (error || !vessel) return error ? vesselError(error, 'Fartøyet kunne ikke lagres.') : err('Fartøyet kunne ikke lagres.');
+  if (error || !vessel) {
+    return error ? vesselError(error, 'Fartøyet kunne ikke lagres.', IMO_TAKEN) : err('Fartøyet kunne ikke lagres.');
+  }
 
   refresh();
   redirect(`/minside/fartoy/${vessel.id}`);
@@ -94,7 +55,7 @@ export async function updateVessel(formData: FormData): Promise<ActionResult> {
     .update(parsed.values)
     .eq('id', vesselId)
     .select('id');
-  if (error) return vesselError(error, 'Endringene kunne ikke lagres.');
+  if (error) return vesselError(error, 'Endringene kunne ikke lagres.', IMO_TAKEN);
   // RLS filtrerer bort raden framfor å kaste feil når man mangler rettigheter.
   if (!data?.length) return err('Bare eiere og administratorer i selskapet kan endre fartøyet.');
 

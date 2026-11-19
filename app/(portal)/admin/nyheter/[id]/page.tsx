@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { requireStaff } from '@/lib/supabase/staff';
+import { requireMedia } from '@/lib/portal/context';
 import { uuid } from '@/lib/portal/forms';
 import { Alert, Badge, Card, PageHeader } from '@/components/portal/ui';
 import { ActionButton } from '@/components/portal/forms';
@@ -19,7 +19,7 @@ export default async function InnleggPage({
   const id = uuid(rawId);
   if (!id) notFound();
 
-  const { supabase } = await requireStaff();
+  const { supabase } = await requireMedia(`/admin/nyheter/${id}`);
 
   const { data: post } = await supabase
     .from('posts')

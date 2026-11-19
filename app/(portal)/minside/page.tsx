@@ -36,10 +36,11 @@ export default async function MinSidePage() {
     { data: bookingRows },
     { data: orderRows },
     { data: notifications },
+    { data: cabinetRows },
   ] = await Promise.all([
     supabase
       .from('ladder_status')
-      .select('ladder_id, serial_number, product_name, vessel_id, vessel_name, status, service_state, next_service_due, days_until_service, next_task_due, last_service_result')
+      .select('ladder_id, serial_number, product_name, vessel_id, vessel_name, project_id, project_name, status, service_state, next_service_due, days_until_service, next_task_due, last_service_result')
       .order('next_service_due', { ascending: true, nullsFirst: false })
       .limit(500),
     supabase
@@ -76,6 +77,15 @@ export default async function MinSidePage() {
       .select('id, title, body, link, created_at, read_at')
       .order('created_at', { ascending: false })
       .limit(5),
+    // Leverte oppbevaringsskap som ikke står noe sted ennå.
+    supabase
+      .from('cabinets')
+      .select('id, products(name)')
+      .eq('status', 'delivered')
+      .is('vessel_id', null)
+      .is('project_id', null)
+      .order('created_at')
+      .limit(12),
   ]);
 
   const ladders = (ladderRows ?? []).filter((l) => l.ladder_id && l.status !== 'retired');
@@ -84,6 +94,7 @@ export default async function MinSidePage() {
   const requests = requestRows ?? [];
   const bookings = bookingRows ?? [];
   const orders = orderRows ?? [];
+  const unplacedCabinets = cabinetRows ?? [];
 
   const overdue = ladders.filter((l) => l.service_state === 'overdue');
   const dueSoon = ladders.filter((l) => l.service_state === 'due_soon');
@@ -95,7 +106,9 @@ export default async function MinSidePage() {
     .map((ladder) => {
       const reasons: { label: string; tone: Tone }[] = [];
       if (ladder.last_service_result === 'failed') reasons.push({ label: 'Ikke godkjent ved service', tone: 'danger' });
-      if (ladder.status === 'delivered' && !ladder.vessel_id) reasons.push({ label: 'Ikke montert', tone: 'info' });
+      if (ladder.status === 'delivered' && !ladder.vessel_id && !ladder.project_id) {
+        reasons.push({ label: 'Ikke tatt i bruk', tone: 'info' });
+      }
       if (ladder.next_task_due && ladder.next_task_due < today) reasons.push({ label: 'Oppgave forfalt', tone: 'warn' });
       const service = ladder.service_state === 'overdue' || ladder.service_state === 'due_soon';
       return { ladder, reasons, service };
@@ -110,7 +123,7 @@ export default async function MinSidePage() {
         key: `service-${ladder.ladder_id}`,
         iso: ladder.next_service_due,
         title: <Link href={`/minside/leider/${ladder.ladder_id}?fane=plan`}>Servicefrist, leider {ladder.serial_number}</Link>,
-        text: [ladder.vessel_name, fristTekst(ladder.days_until_service)].filter(Boolean).join(' · '),
+        text: [ladder.vessel_name ?? ladder.project_name, fristTekst(ladder.days_until_service)].filter(Boolean).join(' · '),
         tone: ladder.service_state === 'due_soon' ? 'warn' : undefined,
       });
     }
@@ -225,14 +238,14 @@ export default async function MinSidePage() {
           )}
 
           <Card title="Trenger oppfølging" flush>
-            {attention.length > 0 ? (
+            {attention.length > 0 || unplacedCabinets.length > 0 ? (
               <ul className="pt-list">
                 {attention.slice(0, 12).map(({ ladder, reasons, service }) => (
                   <li key={ladder.ladder_id}>
                     <div className="pt-list-main">
                       <Link href={`/minside/leider/${ladder.ladder_id}`}>{ladder.serial_number}</Link>
                       <div className="pt-list-sub">
-                        {[ladder.product_name, ladder.vessel_name ?? ladderStatus(ladder.status).label].filter(Boolean).join(' · ')}
+                        {[ladder.product_name, ladder.vessel_name ?? ladder.project_name ?? ladderStatus(ladder.status).label].filter(Boolean).join(' · ')}
                       </div>
                     </div>
                     <div className="pt-list-side">
@@ -245,6 +258,15 @@ export default async function MinSidePage() {
                         <Badge key={reason.label} tone={reason.tone}>{reason.label}</Badge>
                       ))}
                     </div>
+                  </li>
+                ))}
+                {unplacedCabinets.map((cabinet) => (
+                  <li key={cabinet.id}>
+                    <div className="pt-list-main">
+                      <Link href="/minside/leidere#skap">{cabinet.products?.name ?? 'Oppbevaringsskap'}</Link>
+                      <div className="pt-list-sub">Levert, men står ikke på et fartøy eller i et prosjekt ennå</div>
+                    </div>
+                    <div className="pt-list-side"><Badge tone="info">Ikke plassert</Badge></div>
                   </li>
                 ))}
               </ul>

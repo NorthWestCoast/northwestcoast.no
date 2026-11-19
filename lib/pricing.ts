@@ -29,6 +29,31 @@ export type PriceRow = {
 
 export type PriceTable = PriceRow[];
 
+/**
+ * Et oppbevaringsskap som kan bestilles alene, uten leider. Leses alltid fra
+ * products-tabellen; reservelista har ingen skap, og da skjules valget.
+ */
+export type CabinetRow = {
+  /** products.id for skapet. */
+  productId: string;
+  /** Produktnummeret, f.eks. «ASC-LC3-5». Det er dette klienten sender. */
+  productNumber: string;
+  /** Fullt navn, f.eks. «Oppbevaringsskap ASC-LC3-5». */
+  name: string;
+  /** Modellen uten «Oppbevaringsskap »-prefikset. */
+  model: string;
+  price: number;
+  onRequest?: boolean;
+  /** Standardlengdene (i meter) skapet hører til, stigende. */
+  fitsLengths: number[];
+};
+
+/**
+ * Produktet i products-tabellen som alle spesiallengder (halvmetere) henger
+ * på. Lengden står på ordrelinja, ikke på produktet.
+ */
+export const CUSTOM_PRODUCT_NUMBER = 'ARG-SPES';
+
 export const PRICE_TABLE: PriceRow[] = [
   // 2 m er i sortimentet, men pris og produktnummer er ikke fastsatt. Fyll inn
   // her (og legg produktet i products-tabellen) når de finnes, og fjern onRequest.
@@ -74,8 +99,10 @@ export const cabinetAvailable = (row: PriceRow) => !row.onRequest && Boolean(row
 
 /** Enhetspris (leider + evt. skap) for en gitt lengde. */
 export function unitPrice(length: number, cabinet: boolean, table: PriceTable = PRICE_TABLE): number {
-  const row = rowFor(length, table);
-  if (row.onRequest) return 0;
+  // En lengde som ikke står i prislista (halvmeter) har ingen listepris.
+  // rowFor() ville gitt en annen rad, og dermed prisen for feil leider.
+  const row = table.find((r) => r.length === length);
+  if (!row || row.onRequest) return 0;
   return row.price + (cabinet && cabinetAvailable(row) ? row.cabinetPrice : 0);
 }
 
@@ -86,6 +113,74 @@ export function lineTotal(line: OrderLine, table: PriceTable = PRICE_TABLE): num
 export function orderTotal(lines: OrderLine[], table: PriceTable = PRICE_TABLE): number {
   return lines.reduce((sum, line) => sum + lineTotal(line, table), 0);
 }
+
+/* ── Spesiallengder (halvmetere) ────────────────────────────────────────────
+ * Standardlengdene er hele meter og står i prislista. Lengder imellom (4,5 m,
+ * 5,5 m …) kan bestilles, men er ikke egne produkter: de går på forespørsel,
+ * har ingen listepris og teller ikke i summer.
+ */
+
+/** Står lengden i prislista? */
+export const isStandardLength = (length: number, table: PriceTable = PRICE_TABLE) =>
+  table.some((r) => r.length === length);
+
+/**
+ * Lengde databasen godtar som spesiallengde: hel eller halv meter mellom
+ * 1,5 og 30 (samme regel som place_order).
+ */
+export const isCustomLength = (length: number) =>
+  Number.isFinite(length) && length >= 1.5 && length <= 30 && Number.isInteger(length * 2);
+
+/**
+ * Halvmeterne mellom korteste og lengste av lengdene, stigende. Lengder som
+ * allerede er standard tas ikke med.
+ */
+export function halfMetresBetween(standard: number[]): number[] {
+  if (standard.length === 0) return [];
+  const min = Math.min(...standard);
+  const max = Math.max(...standard);
+  const halves: number[] = [];
+  for (let value = Math.floor(min) + 0.5; value < max; value += 1) {
+    if (value > min && isCustomLength(value) && !standard.includes(value)) halves.push(value);
+  }
+  return halves;
+}
+
+/** Halvmeterne som kan bestilles mellom standardlengdene i prislista. */
+export const halfMetreLengths = (table: PriceTable = PRICE_TABLE) => halfMetresBetween(lengthsOf(table));
+
+/**
+ * Skapet som følger en spesiallengde: det som hører til nærmeste
+ * standardlengde over (samme regel som place_order). Null når ingen passer.
+ */
+export function cabinetRowForCustom(length: number, table: PriceTable = PRICE_TABLE): PriceRow | null {
+  return (
+    [...table]
+      .sort((a, b) => a.length - b.length)
+      .find((r) => r.length >= length && Boolean(r.cabinetName)) ?? null
+  );
+}
+
+/** «4,5» på norsk og «4.5» på engelsk. Hele meter vises uten desimal. */
+export const fmtLength = (length: number, lang: 'no' | 'en' = 'no') =>
+  length.toLocaleString(lang === 'en' ? 'en-GB' : 'nb-NO', { maximumFractionDigits: 1 });
+
+/** Lengdene et skap hører til som tekst: «3–5», «6» eller «3, 5». Uten enhet. */
+export function fitsRange(lengths: number[], lang: 'no' | 'en' = 'no'): string {
+  const sorted = [...new Set(lengths)].sort((a, b) => a - b);
+  if (sorted.length === 0) return '';
+  if (sorted.length === 1) return fmtLength(sorted[0], lang);
+  const [first, last] = [sorted[0], sorted[sorted.length - 1]];
+  // Sammenhengende hele meter skrives som et spenn.
+  const contiguous = sorted.every((value, index) => index === 0 || value - sorted[index - 1] === 1);
+  return contiguous
+    ? `${fmtLength(first, lang)}–${fmtLength(last, lang)}`
+    : sorted.map((value) => fmtLength(value, lang)).join(', ');
+}
+
+/** Sum for skap bestilt alene. Skap med pris på forespørsel teller ikke. */
+export const cabinetLineTotal = (cabinet: CabinetRow, qty: number) =>
+  cabinet.onRequest ? 0 : cabinet.price * qty;
 
 /**
  * Binder alle hjelperne til én tabell. Klientkomponentene får tabellen som
@@ -100,5 +195,8 @@ export function makePricing(table: PriceTable) {
     unitPrice: (length: number, cabinet: boolean) => unitPrice(length, cabinet, table),
     lineTotal: (line: OrderLine) => lineTotal(line, table),
     orderTotal: (lines: OrderLine[]) => orderTotal(lines, table),
+    halfLengths: halfMetreLengths(table),
+    isStandard: (length: number) => isStandardLength(length, table),
+    cabinetRowForCustom: (length: number) => cabinetRowForCustom(length, table),
   };
 }

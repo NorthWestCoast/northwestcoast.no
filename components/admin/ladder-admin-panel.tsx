@@ -3,16 +3,19 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { Card, Disclosure } from '@/components/portal/ui';
 import { PortalForm } from '@/components/portal/forms';
 import { LOG_KINDS, ladderStatus } from '@/lib/portal/labels';
-import { assignLadder, recordService } from '@/app/(portal)/admin/actions';
+import { idag } from '@/lib/format';
 import { addLadderTask, setLadderStatus, setServiceInterval } from '@/app/(portal)/admin/leidere/actions';
 import { Hidden, Input, Select, Textarea } from './fields';
-import ServiceFields from './service-fields';
+import LadderPlacement from './ladder-placement';
+import LadderServiceAdmin from './ladder-service-admin';
+import MaintenanceReportForm from './maintenance-report-form';
+import ServiceForm from './service-form';
 
 const STATUSES = ['in_production', 'delivered', 'installed', 'retired'] as const;
 
 /**
  * Admin-verktøy på leidersiden: registrer service, endre serviceintervall,
- * flytt til selskap/fartøy, sett status og legg til planlagt oppgave.
+ * knytt til kunde, fartøy og prosjekt, sett status og legg til planlagt oppgave.
  *
  * Vises bare for administratorer. Hver action sjekker rollen på nytt, og RLS
  * gjør det samme i databasen, så komponenten kan trygt stå på en kundeside.
@@ -22,15 +25,11 @@ export default async function LadderAdminPanel({ ladderId }: { ladderId: string 
   if (ctx?.staffRole !== 'admin') return null;
 
   const supabase = await createServerSupabase();
-  const [{ data: ladder }, { data: companies }, { data: vessels }] = await Promise.all([
-    supabase
-      .from('ladders')
-      .select('id, serial_number, status, service_interval_months, company_id, vessel_id, installed_at')
-      .eq('id', ladderId)
-      .maybeSingle(),
-    supabase.from('companies').select('id, name').order('name'),
-    supabase.from('vessels').select('id, name, companies(name)').order('name'),
-  ]);
+  const { data: ladder } = await supabase
+    .from('ladders')
+    .select('id, serial_number, status, service_interval_months')
+    .eq('id', ladderId)
+    .maybeSingle();
   if (!ladder) return null;
 
   const id = { ladder_id: ladder.id };
@@ -42,11 +41,34 @@ export default async function LadderAdminPanel({ ladderId }: { ladderId: string 
       description="Bare synlig for administratorer i NorthWest Coast."
       flush
     >
+      {/* Service: rapport, bilder og servicesertifikat i ett skjema. */}
       <Disclosure summary="Registrer service">
-        <PortalForm action={recordService} submitLabel="Lagre servicerapport">
-          <Hidden fields={id} />
-          <ServiceFields scope="adm-service" performedBy={ctx.displayName} />
-        </PortalForm>
+        <ServiceForm
+          ladders={[{ id: ladder.id, label: ladder.serial_number, intervalMonths: ladder.service_interval_months }]}
+          performedBy={ctx.displayName}
+          today={idag()}
+          scope="adm-service"
+        />
+      </Disclosure>
+
+      {/* Det som er registrert: legg til bilder, utsted eller trekk tilbake sertifikat. */}
+      <Disclosure summary="Utførte servicer">
+        <LadderServiceAdmin supabase={supabase} ladderId={ladder.id} />
+      </Disclosure>
+
+      <Disclosure summary="Loggfør vedlikehold">
+        <div className="pt-stack">
+          <p className="pt-hint">
+            Vedlikehold NorthWest Coast har utført, eller noe kunden har meldt inn. Kunden ser rapporten i
+            historikken til leideren.
+          </p>
+          <MaintenanceReportForm
+            ladderId={ladder.id}
+            performedBy={ctx.displayName}
+            today={idag()}
+            scope="adm-log"
+          />
+        </div>
       </Disclosure>
 
       <Disclosure summary="Endre serviceintervall">
@@ -67,35 +89,8 @@ export default async function LadderAdminPanel({ ladderId }: { ladderId: string 
         </PortalForm>
       </Disclosure>
 
-      <Disclosure summary="Flytt til selskap eller fartøy">
-        <PortalForm action={assignLadder} submitLabel="Flytt leideren" resetOnSuccess={false}>
-          <Hidden fields={id} />
-          <div className="pt-form-row">
-            <Select scope="adm-move" name="company_id" label="Selskap" defaultValue={ladder.company_id ?? ''}>
-              <option value="">Ikke valgt</option>
-              {companies?.map((company) => (
-                <option key={company.id} value={company.id}>{company.name}</option>
-              ))}
-            </Select>
-            <Select scope="adm-move" name="vessel_id" label="Fartøy" defaultValue={ladder.vessel_id ?? ''}>
-              <option value="">Ikke valgt</option>
-              {vessels?.map((vessel) => (
-                <option key={vessel.id} value={vessel.id}>
-                  {vessel.name}{vessel.companies ? ` (${vessel.companies.name})` : ''}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <Input
-            scope="adm-move"
-            name="installed_at"
-            label="Montert dato"
-            type="date"
-            defaultValue={ladder.installed_at ?? ''}
-            hint="Gjelder når et fartøy er valgt. Med dato regnes leideren som i bruk, og servicefristen løper fra datoen. Uten dato er den levert, men ikke montert."
-          />
-        </PortalForm>
-      </Disclosure>
+      {/* Kunde, fartøy og prosjekt: egen komponent med egne oppslag. */}
+      <LadderPlacement supabase={supabase} ladderId={ladder.id} />
 
       <Disclosure summary="Sett status">
         <PortalForm action={setLadderStatus} submitLabel="Lagre status" resetOnSuccess={false}>

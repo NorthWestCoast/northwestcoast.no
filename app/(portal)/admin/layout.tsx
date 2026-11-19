@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import PortalShell from '@/components/portal/shell';
 import type { NavGroup } from '@/components/portal/nav';
-import { requireAdmin } from '@/lib/portal/context';
+import { requireMedia } from '@/lib/portal/context';
 
 export const metadata: Metadata = {
   title: 'Admin',
@@ -11,10 +11,27 @@ export const metadata: Metadata = {
 // Alt her avhenger av sesjonen; ingenting kan prerendres.
 export const dynamic = 'force-dynamic';
 
+/** Det medierollen styrer. Samme punkter står under «Innhold» for administratorer. */
+const MEDIA_ITEMS: NavGroup['items'] = [
+  { href: '/admin/nyheter', label: 'Nyheter', icon: 'news' },
+  { href: '/admin/galleri', label: 'Galleri', icon: 'gallery' },
+];
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Kaster ut alle som ikke er administrator. RLS stopper dem uansett, men
-  // det er bedre å sende dem videre enn å vise en tom side.
-  const { supabase, ctx } = await requireAdmin();
+  // Slipper inn administratorer og media, og sender alle andre videre. Hver
+  // side kaller sin egen vokter i tillegg: layouten kjøres ikke på nytt når
+  // man går fra side til side, og RLS stopper uansett det rollen ikke får se.
+  const { supabase, ctx } = await requireMedia('/admin');
+
+  // Media får bare nyheter og galleri. Tellingene under gjelder bestillinger,
+  // saker og tilgang, som rollen ikke har innsyn i, så de hentes ikke.
+  if (ctx.staffRole !== 'admin') {
+    return (
+      <PortalShell area="admin" ctx={ctx} groups={[{ title: 'Innhold', items: MEDIA_ITEMS }]}>
+        {children}
+      </PortalShell>
+    );
+  }
 
   const head = { count: 'exact' as const, head: true };
   const [newOrders, openTickets, serviceRequests, accessRequests] = await Promise.all([
@@ -46,6 +63,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       title: 'Leidere',
       items: [
         { href: '/admin/leidere', label: 'Leidere', icon: 'ladder' },
+        { href: '/admin/skap', label: 'Oppbevaringsskap', icon: 'cabinet' },
+        { href: '/admin/prosjekter', label: 'Prosjekter', icon: 'project' },
         { href: '/produksjon', label: 'Produksjon', icon: 'production' },
         { href: '/admin/service', label: 'Service og avtaler', icon: 'service', count: serviceRequests.count ?? 0 },
         { href: '/admin/vedlikehold', label: 'Vedlikeholdsrapporter', icon: 'reports' },
@@ -57,10 +76,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     },
     {
       title: 'Innhold',
-      items: [
-        { href: '/admin/nyheter', label: 'Nyheter', icon: 'news' },
-        { href: '/admin/priser', label: 'Produkter og priser', icon: 'prices' },
-      ],
+      items: [...MEDIA_ITEMS, { href: '/admin/priser', label: 'Produkter og priser', icon: 'prices' }],
     },
     {
       title: 'Oppsett',

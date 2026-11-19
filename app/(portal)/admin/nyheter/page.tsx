@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireStaff } from '@/lib/supabase/staff';
+import { requireMedia } from '@/lib/portal/context';
 import { Alert, Badge, Card, Empty, PageHeader, Td } from '@/components/portal/ui';
 import { dato } from '@/lib/format';
 
@@ -9,7 +9,7 @@ export default async function NyheterPage({
   searchParams: Promise<{ slettet?: string }>;
 }) {
   const { slettet } = await searchParams;
-  const { supabase } = await requireStaff();
+  const { supabase } = await requireMedia();
 
   const { data: posts } = await supabase
     .from('posts')

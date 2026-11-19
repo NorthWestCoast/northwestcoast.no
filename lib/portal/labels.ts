@@ -41,7 +41,8 @@ const BOOKING: Record<string, Label> = {
 
 const LADDER: Record<string, Label> = {
   in_production: { label: 'I produksjon', tone: 'warn' },
-  delivered: { label: 'Levert, ikke montert', tone: 'info' },
+  // «Tatt i bruk» dekker både fartøy og prosjekt (kai, anlegg på land).
+  delivered: { label: 'Levert, ikke tatt i bruk', tone: 'info' },
   installed: { label: 'I bruk', tone: 'ok' },
   retired: { label: 'Utrangert', tone: 'neutral' },
 };
@@ -65,6 +66,64 @@ const REQUEST: Record<string, Label> = {
   rejected: { label: 'Avslått', tone: 'danger' },
   cancelled: { label: 'Trukket', tone: 'neutral' },
 };
+
+const CABINET: Record<string, Label> = {
+  in_production: { label: 'I produksjon', tone: 'warn' },
+  delivered: { label: 'Levert, ikke plassert', tone: 'info' },
+  installed: { label: 'Plassert', tone: 'ok' },
+  retired: { label: 'Utrangert', tone: 'neutral' },
+};
+
+const PROJECT_KIND: Record<string, Label> = {
+  quay: { label: 'Kai', tone: 'neutral' },
+  onshore: { label: 'Anlegg på land', tone: 'neutral' },
+  aquaculture: { label: 'Havbruksanlegg', tone: 'neutral' },
+  other: { label: 'Annet', tone: 'neutral' },
+};
+
+const PROJECT_STATUS: Record<string, Label> = {
+  active: { label: 'Aktivt', tone: 'ok' },
+  closed: { label: 'Avsluttet', tone: 'neutral' },
+};
+
+const CERTIFICATE: Record<string, Label> = {
+  valid: { label: 'Gyldig', tone: 'ok' },
+  expired: { label: 'Utløpt', tone: 'danger' },
+  replaced: { label: 'Erstattet', tone: 'neutral' },
+  revoked: { label: 'Trukket tilbake', tone: 'danger' },
+};
+
+const STAFF_ROLE: Record<string, Label> = {
+  admin: { label: 'Administrator', tone: 'ok' },
+  production: { label: 'Produksjon', tone: 'info' },
+  media: { label: 'Media', tone: 'info' },
+};
+
+/**
+ * Dokumentet som utstedes etter godkjent service. Navnet står bare her, så
+ * det byttes ett sted hvis NorthWest Coast kaller det noe annet.
+ */
+export const CERTIFICATE_NAME = 'Servicesertifikat';
+export const CERTIFICATE_NAME_LOWER = 'servicesertifikat';
+
+export type CertificateState = 'valid' | 'expired' | 'replaced' | 'revoked';
+
+/** Samme regel som get_certificate() i databasen. `today` er en ISO-dato (ÅÅÅÅ-MM-DD). */
+export function certificateState(
+  cert: { revoked_at: string | null; replaced_by: string | null; valid_until: string },
+  today: string = new Date().toISOString().slice(0, 10),
+): CertificateState {
+  if (cert.revoked_at) return 'revoked';
+  if (cert.replaced_by) return 'replaced';
+  return cert.valid_until < today ? 'expired' : 'valid';
+}
+
+export const cabinetStatus = (s: string | null | undefined) => pick(CABINET, s);
+export const projectKind = (s: string | null | undefined) => pick(PROJECT_KIND, s);
+export const projectStatus = (s: string | null | undefined) => pick(PROJECT_STATUS, s);
+export const certificateStatus = (s: string | null | undefined) => pick(CERTIFICATE, s);
+export const staffRoleLabel = (s: string | null | undefined) => pick(STAFF_ROLE, s);
+export const PROJECT_KINDS = Object.keys(PROJECT_KIND);
 
 export const orderStatus = (s: string | null | undefined) => pick(ORDER, s);
 export const jobStatus = (s: string | null | undefined) => pick(JOB, s);
@@ -114,10 +173,6 @@ export const LADDER_ROLES: Record<string, string> = {
   viewer: 'Kan se og loggføre',
 };
 
-export const STAFF_ROLES: Record<string, string> = {
-  admin: 'Administrator',
-  production: 'Produksjon',
-};
 
 export const PRODUCT_KINDS: Record<string, string> = {
   ladder: 'Leider',

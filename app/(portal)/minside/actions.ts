@@ -160,26 +160,106 @@ export async function cancelServiceBooking(formData: FormData): Promise<ActionRe
   return ok('Servicebestillingen er avbestilt.');
 }
 
-/** Monterer en levert leider på et fartøy. Servicefristen løper fra datoen. */
+// ── Plassering av leidere og oppbevaringsskap ──────────────────────────────
+
+/**
+ * Fartøy og prosjekt er valgfrie i install_ladder() og place_cabinet(): null
+ * betyr «ikke på et fartøy» / «ikke i et prosjekt». De genererte typene
+ * kjenner bare `string`, derfor omformingen.
+ */
+const orNull = (id: string | null) => id as string;
+
+/** Leser fartøy, prosjekt og dato fra plasseringsskjemaet (components/portal/placement.tsx). */
+function readPlacement(formData: FormData):
+  | { error: string }
+  | { error: null; vesselId: string | null; projectId: string | null; date: string } {
+  const vesselId = uuid(formData.get('vessel_id'));
+  const projectId = uuid(formData.get('project_id'));
+  if (!vesselId && !projectId) return { error: 'Velg et fartøy, et prosjekt eller begge.' };
+
+  const today = idag();
+  const date = isoDate(formData.get('installed_at')) ?? today;
+  if (date > today) return { error: 'Datoen kan ikke ligge fram i tid.' };
+
+  return { error: null, vesselId, projectId, date };
+}
+
+/**
+ * Plasserer en leider på et fartøy, i et prosjekt (kai, anlegg på land) eller
+ * begge. Leideren regnes som i bruk, og servicefristen løper fra datoen.
+ */
 export async function installLadder(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireUser();
 
   const ladderId = uuid(formData.get('ladder_id'));
-  const vesselId = uuid(formData.get('vessel_id'));
   if (!ladderId) return err('Fant ikke leideren.');
-  if (!vesselId) return err('Velg hvilket fartøy leideren skal monteres på.');
 
-  const today = idag();
-  const installedAt = isoDate(formData.get('installed_at')) ?? today;
-  if (installedAt > today) return err('Monteringsdatoen kan ikke ligge fram i tid.');
+  const place = readPlacement(formData);
+  if (place.error !== null) return err(place.error);
 
   const { error } = await supabase.rpc('install_ladder', {
     p_ladder: ladderId,
-    p_vessel: vesselId,
-    p_installed_at: installedAt,
+    p_vessel: orNull(place.vesselId),
+    p_installed_at: place.date,
+    p_project: place.projectId ?? undefined,
   });
-  if (error) return fail(error, 'Leideren kunne ikke monteres.');
+  if (error) return fail(error, 'Plasseringen kunne ikke lagres.');
 
   refresh();
-  return ok('Leideren er montert. Servicefristen regnes fra monteringsdatoen.');
+  return ok('Plasseringen er lagret. Servicefristen regnes fra datoen leideren ble tatt i bruk.');
+}
+
+/** Tar en leider ned fra fartøyet og ut av prosjektet. Den står da som levert. */
+export async function takeDownLadder(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+
+  const ladderId = uuid(formData.get('ladder_id'));
+  if (!ladderId) return err('Fant ikke leideren.');
+
+  const { error } = await supabase.rpc('install_ladder', { p_ladder: ladderId, p_vessel: orNull(null) });
+  if (error) return fail(error, 'Leideren kunne ikke tas ned.');
+
+  refresh();
+  return ok('Leideren er tatt ned og står som levert.');
+}
+
+/** Plasserer eller flytter et oppbevaringsskap: fartøy og/eller prosjekt, dato og nøyaktig sted. */
+export async function placeCabinet(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+
+  const cabinetId = uuid(formData.get('cabinet_id'));
+  if (!cabinetId) return err('Fant ikke skapet.');
+
+  const place = readPlacement(formData);
+  if (place.error !== null) return err(place.error);
+
+  const { error } = await supabase.rpc('place_cabinet', {
+    p_cabinet: cabinetId,
+    p_vessel: orNull(place.vesselId),
+    p_project: orNull(place.projectId),
+    p_installed_at: place.date,
+    p_location: optional(formData.get('location_note'), 200) ?? undefined,
+  });
+  if (error) return fail(error, 'Plasseringen kunne ikke lagres.');
+
+  refresh();
+  return ok('Plasseringen er lagret.');
+}
+
+/** Tar et oppbevaringsskap ned. Det står da som levert, ikke plassert. */
+export async function takeDownCabinet(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+
+  const cabinetId = uuid(formData.get('cabinet_id'));
+  if (!cabinetId) return err('Fant ikke skapet.');
+
+  const { error } = await supabase.rpc('place_cabinet', {
+    p_cabinet: cabinetId,
+    p_vessel: orNull(null),
+    p_project: orNull(null),
+  });
+  if (error) return fail(error, 'Skapet kunne ikke tas ned.');
+
+  refresh();
+  return ok('Skapet er tatt ned og står som ikke plassert.');
 }

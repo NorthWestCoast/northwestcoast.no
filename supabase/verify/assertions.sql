@@ -23,9 +23,9 @@ begin
     raise exception E'Regel 1 brutt - farlige tabellrettigheter:\n%', bad;
   end if;
 
-  -- 2) anon skal bare kunne lese produktkatalogen og nyhetene (RLS slipper
-  --    bare publiserte innlegg gjennom). Alt annet går gjennom innlogget
-  --    bruker eller en av funksjonene i regel 4.
+  -- 2) anon skal bare kunne lese produktkatalogen, nyhetene og galleriet (RLS
+  --    slipper bare publiserte innlegg og bilder gjennom). Alt annet går
+  --    gjennom innlogget bruker eller en av funksjonene i regel 4.
   select string_agg(format('%s: anon har %s', c.relname, p.priv), E'\n' order by c.relname)
     into bad
   from pg_class c
@@ -33,7 +33,7 @@ begin
   where c.relnamespace = 'public'::regnamespace
     and c.relkind in ('r', 'v')
     and has_table_privilege('anon', c.oid, p.priv)
-    and not (c.relname in ('products', 'posts') and p.priv = 'SELECT');
+    and not (c.relname in ('products', 'posts', 'gallery_images') and p.priv = 'SELECT');
   if bad is not null then
     raise exception E'Regel 2 brutt - anon har for mye tilgang:\n%', bad;
   end if;
@@ -65,7 +65,7 @@ begin
       -- Åpne skjema på nettsiden (uten innlogging). Alle er strupet i databasen.
       p.proname in ('place_order', 'submit_contact_request', 'subscribe_newsletter',
                     'submit_maintenance_report', 'finish_maintenance_report',
-                    'get_ladder_share')
+                    'get_ladder_share', 'get_certificate')
       or (
         r.rolname = 'authenticated'
         and p.proname in (
@@ -73,7 +73,8 @@ begin
           'request_ladder_access', 'decide_ladder_access', 'install_ladder',
           'complete_ladder_task', 'create_ticket', 'reply_ticket', 'set_ticket_status',
           'request_service', 'cancel_service_booking',
-          'confirm_order', 'set_production_step', 'assign_job_serial', 'advance_job')
+          'confirm_order', 'set_production_step', 'assign_job_serial', 'advance_job',
+          'place_cabinet', 'issue_ladder_certificate')
       )
     );
   if bad is not null then

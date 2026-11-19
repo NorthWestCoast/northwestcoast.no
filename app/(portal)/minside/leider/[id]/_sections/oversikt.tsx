@@ -5,6 +5,9 @@ import { dato, fristTekst, idag } from '@/lib/format';
 import LadderAdminPanel from '@/components/admin/ladder-admin-panel';
 import ServiceState from '@/components/minside/service-state';
 import { meter } from '@/components/minside/util';
+import { Place, placeText } from '@/components/portal/placement';
+import Plassering from './plassering';
+import Sertifikat from './sertifikat';
 import type { SectionProps } from './types';
 
 type Event = { iso: string; item: TimelineItem };
@@ -12,7 +15,7 @@ type Event = { iso: string; item: TimelineItem };
 const byDate = (a: Event, b: Event) => a.iso.localeCompare(b.iso);
 
 /** Oversikt: spesifikasjoner, snarveier og hele livsløpet på én tidslinje. */
-export default async function Oversikt({ supabase, ctx, ladder }: SectionProps) {
+export default async function Oversikt({ supabase, ctx, ladder, canManage }: SectionProps) {
   const id = ladder.ladder_id;
   const base = `/minside/leider/${id}`;
   const today = idag();
@@ -78,7 +81,11 @@ export default async function Oversikt({ supabase, ctx, ladder }: SectionProps) 
       item: {
         key: 'installed',
         date: dato(ladder.installed_at),
-        title: ladder.vessel_name ? `Montert på ${ladder.vessel_name}` : 'Montert',
+        title: ladder.vessel_name
+          ? `Montert på ${placeText(ladder.vessel_name, ladder.project_name)}`
+          : ladder.project_name
+            ? `Tatt i bruk i ${ladder.project_name}`
+            : 'Tatt i bruk',
         tone: 'ok',
       },
     });
@@ -157,10 +164,12 @@ export default async function Oversikt({ supabase, ctx, ladder }: SectionProps) 
 
   return (
     <>
-      {ladder.status === 'delivered' && !ladder.vessel_id && (
-        <Alert tone="info" title="Leideren er ikke montert ennå">
-          Servicefristen begynner å løpe når leideren er montert på et fartøy.{' '}
-          <Link href="/minside/leidere">Monter den under Leidere.</Link>
+      {ladder.status === 'delivered' && !ladder.vessel_id && !ladder.project_id && (
+        <Alert tone="info" title="Leideren er ikke tatt i bruk ennå">
+          Servicefristen begynner å løpe når leideren står på et fartøy eller i et prosjekt (kai, anlegg på land).{' '}
+          {canManage
+            ? <Link href="#plassering">Velg plassering under.</Link>
+            : 'Den som administrerer leideren velger plasseringen.'}
         </Alert>
       )}
 
@@ -173,6 +182,8 @@ export default async function Oversikt({ supabase, ctx, ladder }: SectionProps) 
         <a href={`${base}/pdf`} className="pt-btn pt-btn-ghost">Last ned vedlikeholdslogg (PDF)</a>
       </div>
 
+      <Sertifikat supabase={supabase} ladder={ladder} />
+
       <Card title="Spesifikasjoner">
         <KV
           items={[
@@ -183,10 +194,15 @@ export default async function Oversikt({ supabase, ctx, ladder }: SectionProps) 
             { label: 'Produsert', value: dato(ladder.produced_at) },
             { label: 'Installert', value: dato(ladder.installed_at) },
             {
-              label: 'Fartøy',
-              value: ladder.vessel_id
-                ? <Link href={`/minside/fartoy/${ladder.vessel_id}`}>{ladder.vessel_name ?? 'Fartøy'}</Link>
-                : 'Ikke montert',
+              label: 'Plassering',
+              value: (
+                <Place
+                  vesselId={ladder.vessel_id}
+                  vesselName={ladder.vessel_name}
+                  projectId={ladder.project_id}
+                  projectName={ladder.project_name}
+                />
+              ),
             },
             { label: 'Eier', value: ladder.company_name },
             {
@@ -202,6 +218,8 @@ export default async function Oversikt({ supabase, ctx, ladder }: SectionProps) 
           ]}
         />
       </Card>
+
+      <Plassering supabase={supabase} ctx={ctx} ladder={ladder} canManage={canManage} />
 
       <Card
         title="Livsløp"

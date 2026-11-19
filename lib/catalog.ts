@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { PRICE_TABLE, type PriceRow, type PriceTable } from './pricing';
+import { CUSTOM_PRODUCT_NUMBER, PRICE_TABLE, type CabinetRow, type PriceRow, type PriceTable } from './pricing';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, noteSupabaseMissing, supabaseConfigured } from './supabase/config';
 
 /**
@@ -59,6 +59,61 @@ export function buildPriceTable(products: ProductRow[]): PriceTable {
 }
 
 /**
+ * Skapene som kan bestilles alene, med lengdene de hører til. Lengdene
+ * utledes av hvilke leidere som peker på skapet.
+ */
+export function buildCabinets(products: ProductRow[]): CabinetRow[] {
+  const ladders = products.filter((p) => p.kind === 'ladder' && p.active && p.length_m !== null);
+
+  return products
+    .filter((p) => p.kind === 'cabinet' && p.active)
+    .map((cabinet): CabinetRow => ({
+      productId: cabinet.id,
+      productNumber: cabinet.product_number,
+      name: cabinet.name,
+      model: cabinetModel(cabinet.name),
+      price: cabinet.price_nok,
+      onRequest: cabinet.price_on_request || undefined,
+      fitsLengths: ladders
+        .filter((ladder) => ladder.cabinet_product_id === cabinet.id)
+        .map((ladder) => Number(ladder.length_m))
+        .sort((a, b) => a - b),
+    }))
+    // Minste leider først; skap ingen leider peker på kommer sist.
+    .sort((a, b) =>
+      (a.fitsLengths[0] ?? Infinity) - (b.fitsLengths[0] ?? Infinity) || a.name.localeCompare(b.name, 'nb'));
+}
+
+/** Prislista, skapene som kan bestilles alene, og om halvmetere tilbys. */
+export type Catalog = {
+  table: PriceTable;
+  cabinets: CabinetRow[];
+  /** Produktet for spesiallengder er aktivt, så halvmetere kan bestilles. */
+  customLengths: boolean;
+};
+
+/** Reserven når databasen ikke svarer: bare leiderne, ingen skap alene. */
+const FALLBACK_CATALOG: Catalog = { table: PRICE_TABLE, cabinets: [], customLengths: true };
+
+/**
+ * Henter hele katalogen med en gitt klient. Kaster ved feil, som
+ * fetchPriceTable().
+ */
+export async function fetchCatalog(client: SupabaseClient): Promise<Catalog> {
+  const { data, error } = await client.from('products').select(COLUMNS).eq('active', true);
+  if (error) throw new Error(`Kunne ikke lese prislista: ${error.message}`);
+
+  const products = (data ?? []) as ProductRow[];
+  const table = buildPriceTable(products);
+  if (table.length === 0) throw new Error('Prislista i databasen er tom.');
+  return {
+    table,
+    cabinets: buildCabinets(products),
+    customLengths: products.some((p) => p.active && p.product_number === CUSTOM_PRODUCT_NUMBER),
+  };
+}
+
+/**
  * Henter prislista med en gitt klient. Kaster ved feil – kallere som kan leve
  * med reserven bruker getPriceTable(); /api/order vil heller feile enn å
  * regne med en annen pris enn den kunden så.
@@ -92,6 +147,33 @@ const cached = unstable_cache(
   // Kaster vi, lagres ingenting – reserven blir altså aldri mellomlagret.
   { tags: [CATALOG_TAG], revalidate: 3600 },
 );
+
+const cachedCatalog = unstable_cache(
+  async () => {
+    if (!supabaseConfigured) throw new Error('Supabase er ikke konfigurert.');
+    return fetchCatalog(anonClient());
+  },
+  ['catalog'],
+  { tags: [CATALOG_TAG], revalidate: 3600 },
+);
+
+/**
+ * Prislista og skapene til bestillingssiden. Svarer ikke databasen, brukes
+ * reservelista, og da er skaplista tom: skap alene kan ikke bestilles uten et
+ * produkt i databasen å knytte linja til.
+ */
+export async function getCatalog(): Promise<Catalog> {
+  if (!supabaseConfigured) {
+    noteSupabaseMissing();
+    return FALLBACK_CATALOG;
+  }
+  try {
+    return await cachedCatalog();
+  } catch (error) {
+    console.error('[catalog] Bruker reserveprisliste:', error instanceof Error ? error.message : error);
+    return FALLBACK_CATALOG;
+  }
+}
 
 /** Prislista til sidene. Faller tilbake på den statiske lista ved feil. */
 export async function getPriceTable(): Promise<PriceTable> {

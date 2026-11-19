@@ -115,6 +115,20 @@ const authUser = (user) => ({
   user_metadata: {}, identities: [], created_at: user.created_at, updated_at: user.created_at,
 });
 
+// `node server.mjs --print-cookie <e-post>`: en ferdig innlogget økt som
+// Cookie-hode, til curl og skript. Krever at databasen kjører.
+//   curl -H "Cookie: $(node supabase/local/server.mjs --print-cookie admin@nwc.test)" http://localhost:3000/admin
+if (process.argv.includes('--print-cookie')) {
+  const email = process.argv[process.argv.indexOf('--print-cookie') + 1];
+  if (!email || !email.includes('@')) {
+    console.error('Bruk: node supabase/local/server.mjs --print-cookie <e-post>');
+    process.exit(1);
+  }
+  const value = `base64-${b64(JSON.stringify(session(userFor(email))))}`;
+  console.log(`sb-localhost-auth-token=${value}`);
+  process.exit(0);
+}
+
 function readBody(req) {
   return new Promise((resolve) => {
     const chunks = [];

@@ -2,7 +2,7 @@ import JsonLd from '@/components/json-ld';
 import { breadcrumbLd } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Nav from '@/components/nav';
-import { getPriceTable } from '@/lib/catalog';
+import { getCatalog } from '@/lib/catalog';
 import Footer from '@/components/footer';
 import OrderConfigurator from '@/components/order-configurator';
 import { getDict, isLang, pageMetadata, DEFAULT_LANG } from '@/lib/i18n';
@@ -23,7 +23,8 @@ export default async function BestillPage({
 }) {
   const { lang } = await params;
   const l = isLang(lang) ? lang : DEFAULT_LANG;
-  const rows = await getPriceTable();
+  // Skaplista er tom når databasen ikke svarer; da vises bare leiderne.
+  const { table: rows, cabinets, customLengths } = await getCatalog();
   const t = getDict(l);
 
   return (
@@ -39,7 +40,7 @@ export default async function BestillPage({
       </div>
 
       <section className="config-section">
-        <OrderConfigurator rows={rows} />
+        <OrderConfigurator rows={rows} cabinets={cabinets} customLengths={customLengths} />
       </section>
 
       <Footer />

@@ -4,6 +4,7 @@ import { Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui'
 import { PortalForm } from '@/components/portal/forms';
 import { SearchForm } from '@/components/admin/fields';
 import CompanyFields from '@/components/admin/company-fields';
+import VesselInputs from '@/components/portal/vessel-inputs';
 import { createCompany } from '../actions';
 import { anyColumnMatches, searchTerm } from '../_lib/search';
 
@@ -22,7 +23,14 @@ export default async function SelskapPage({
     .limit(300);
   if (q) query = query.or(anyColumnMatches(['name', 'org_number', 'contact_name', 'contact_email', 'city'], q));
 
-  const { data: companies } = await query;
+  const [{ data: companies }, { data: withOrgNumber }] = await Promise.all([
+    query,
+    // Til dublettkontrollen i «Ny kunde»: alle som har organisasjonsnummer.
+    supabase.from('companies').select('id, name, org_number').not('org_number', 'is', null).limit(5000),
+  ]);
+  const known = (withOrgNumber ?? []).flatMap((company) =>
+    company.org_number ? [{ id: company.id, name: company.name, orgNumber: company.org_number }] : [],
+  );
 
   return (
     <>
@@ -32,9 +40,20 @@ export default async function SelskapPage({
       />
 
       <Card flush>
-        <Disclosure summary="Nytt selskap">
-          <PortalForm action={createCompany} submitLabel="Opprett selskap">
-            <CompanyFields scope="new" />
+        <Disclosure summary="Ny kunde">
+          <PortalForm action={createCompany} submitLabel="Opprett kunde" pendingLabel="Oppretter…">
+            <CompanyFields scope="new" lookup={{ known, vesselPrefix: 'vessel_' }} />
+            {/* Fylles ut av «Finn kunde via fartøy», eller for hånd. Uten navn opprettes ikke noe fartøy. */}
+            <details className="pt-fold">
+              <summary>Legg til et fartøy samtidig (valgfritt)</summary>
+              <div className="pt-form">
+                <p className="pt-hint">
+                  Fartøyet opprettes sammen med kunden. La navnet stå tomt hvis kunden ikke skal ha et fartøy nå.
+                  Flere fartøy legger du til på kundens side etterpå.
+                </p>
+                <VesselInputs scope="new-vessel" prefix="vessel_" nameRequired={false} />
+              </div>
+            </details>
           </PortalForm>
         </Disclosure>
       </Card>

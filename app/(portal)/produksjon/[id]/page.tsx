@@ -5,7 +5,7 @@ import { uuid } from '@/lib/portal/forms';
 import { jobStatus } from '@/lib/portal/labels';
 import { Alert, Badge, Card, KV, PageHeader, Progress } from '@/components/portal/ui';
 import { ActionButton, PortalForm } from '@/components/portal/forms';
-import { isOverdue, meter, specLine } from '@/components/produksjon/job';
+import { JobKindBadge, isCabinetJob, isCustomJob, isOverdue, meter, specLine } from '@/components/produksjon/job';
 import { StepSignoff } from '@/components/produksjon/step-signoff';
 import { dato, datoTid, idag } from '@/lib/format';
 import { assignSerial, cancelJob, deliverJob, setStep, shipJob, updateJob } from '../actions';
@@ -13,6 +13,9 @@ import { assignSerial, cancelJob, deliverJob, setStep, shipJob, updateJob } from
 /**
  * Én produksjonsjobb: spesifikasjonen, stegene som kvitteres ut,
  * produksjonsnummeret og forsendelsen.
+ *
+ * En jobb er enten en leider eller et oppbevaringsskap bestilt alene. Skapet
+ * har verken lengde eller trinn, og kan sendes uten produksjonsnummer.
  *
  * Alt leses fra production_jobs og production_job_steps. Bestillingen og
  * kunden slås ikke opp; det produksjon trenger ble kopiert til jobben da den
@@ -46,6 +49,13 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
   const stepsLocked = closed || job.status === 'shipped';
   const overdue = isOverdue(job, idag());
 
+  const cabinetJob = isCabinetJob(job);
+  const customJob = isCustomJob(job);
+  /** «leideren» eller «skapet», til setninger om det som produseres. */
+  const thing = cabinetJob ? 'skapet' : 'leideren';
+  /** Skap kan sendes uten nummer; en leider må ha det. */
+  const serialMissing = !cabinetJob && !job.serial_number;
+
   // Transportør og sporing ligger på leveransen, som hører til bestillingen.
   // Den er bare lesbar for administratorer.
   const { data: delivery } = isAdmin && (job.status === 'shipped' || job.status === 'delivered')
@@ -62,9 +72,9 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
     <>
       <PageHeader
         title={`Jobb ${job.job_number}`}
-        description={`${job.product_name} · ${specLine(job)}`}
+        description={cabinetJob ? `${job.product_name} · bestilt uten leider` : `${job.product_name} · ${specLine(job)}`}
         crumbs={[{ href: '/produksjon', label: 'Tavle' }, { label: job.job_number }]}
-        badge={<Badge tone={status.tone}>{status.label}</Badge>}
+        badge={<><Badge tone={status.tone}>{status.label}</Badge> <JobKindBadge job={job} /></>}
         actions={
           isAdmin && job.order_id && (
             <Link href={`/admin/bestillinger/${job.order_id}`} className="pt-btn pt-btn-ghost">
@@ -80,6 +90,15 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
         </Alert>
       )}
 
+      {customJob && !closed && (
+        <Alert tone="warn" title={`Spesiallengde: ${meter(job.length_m)}`}>
+          Leideren lages i lengden kunden har bedt om, ikke i en standardlengde.
+          {job.steps
+            ? ` Antall trinn er satt til ${job.steps}.`
+            : ' Antall trinn er ikke fastsatt. Avklar det med en administrator før du starter.'}
+        </Alert>
+      )}
+
       <Card title="Spesifikasjon">
         <KV
           items={[
@@ -89,19 +108,27 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
             { label: 'Fartøy', value: job.vessel_name ?? '–' },
             { label: 'Produkt', value: job.product_name },
             { label: 'Produktnummer', value: <span className="pt-mono">{job.product_number}</span> },
-            { label: 'Lengde', value: meter(job.length_m) },
-            { label: 'Antall trinn', value: job.steps ?? '–' },
-            {
-              label: 'Oppbevaringsskap',
-              value: job.with_cabinet ? `Ja${job.cabinet_name ? `, ${job.cabinet_name}` : ''}` : 'Nei',
-            },
+            // Et skap bestilt alene har verken lengde, trinn eller tilhørende skap.
+            ...(cabinetJob
+              ? [{ label: 'Type', value: 'Oppbevaringsskap uten leider' }]
+              : [
+                  {
+                    label: customJob ? 'Ønsket lengde' : 'Lengde',
+                    value: customJob ? <strong>{meter(job.length_m)} (spesiallengde)</strong> : meter(job.length_m),
+                  },
+                  { label: 'Antall trinn', value: job.steps ?? 'Må avklares' },
+                  {
+                    label: 'Oppbevaringsskap',
+                    value: job.with_cabinet ? `Ja${job.cabinet_name ? `, ${job.cabinet_name}` : ''}` : 'Nei',
+                  },
+                ]),
             { label: 'Frist', value: job.due_date ? dato(job.due_date) : 'Ingen frist' },
             { label: 'Status', value: status.label },
             {
               label: 'Produksjonsnummer',
               value: job.serial_number
                 ? <span className="pt-mono">{job.serial_number}</span>
-                : 'Ikke registrert',
+                : cabinetJob ? 'Ikke registrert (valgfritt for skap)' : 'Ikke registrert',
             },
           ]}
         />
@@ -145,15 +172,21 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
             </ol>
           ) : (
             <p className="pt-hint" style={{ padding: '1.1rem' }}>
-              Jobben har ingen steg. Stegene hentes fra malen når jobben opprettes.
+              {cabinetJob
+                ? 'Jobben har ingen steg. Ingen av stegene i malen gjelder skap, så jobben er klar for forsendelse.'
+                : 'Jobben har ingen steg. Stegene hentes fra malen når jobben opprettes.'}
             </p>
           )}
         </Card>
 
         <div className="pt-stack">
           <Card
-            title="Produksjonsnummer"
-            description="Nummeret som merkes på leideren. Når det registreres, opprettes leideren i registeret."
+            title={cabinetJob ? 'Produksjonsnummer (valgfritt)' : 'Produksjonsnummer'}
+            description={
+              cabinetJob
+                ? 'Har skapet et eget nummer, registrerer du det her. Skapet kan sendes og leveres uten.'
+                : 'Nummeret som merkes på leideren. Når det registreres, opprettes leideren i registeret.'
+            }
           >
             {closed ? (
               <p className="pt-mono">{job.serial_number ?? 'Ikke registrert'}</p>
@@ -188,13 +221,15 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
           <Card title="Forsendelse">
             {(job.status === 'queued' || job.status === 'in_progress') && (
               <p className="pt-hint">
-                Jobben kan sendes når alle steg er kvittert ut og produksjonsnummeret er registrert.
+                {cabinetJob
+                  ? 'Jobben kan sendes når alle steg er kvittert ut. Skap trenger ikke produksjonsnummer.'
+                  : 'Jobben kan sendes når alle steg er kvittert ut og produksjonsnummeret er registrert.'}
               </p>
             )}
 
             {job.status === 'ready' && (
               <>
-                {!job.serial_number && (
+                {serialMissing && (
                   <Alert tone="warn" title="Produksjonsnummeret mangler">
                     Registrer det før jobben sendes eller leveres.
                   </Alert>
@@ -243,7 +278,7 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
                 />
                 {job.status === 'ready' && (
                   <p className="pt-hint" style={{ marginTop: '0.4rem' }}>
-                    Bruk denne når kunden henter leideren selv, uten forsendelse.
+                    Bruk denne når kunden henter {thing} selv, uten forsendelse.
                   </p>
                 )}
               </div>
@@ -271,6 +306,22 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
                   <label htmlFor="job-due">Frist</label>
                   <input id="job-due" name="due_date" type="date" defaultValue={job.due_date ?? ''} />
                 </div>
+                {/* Trinn følger produktet. Bare der de ikke er gitt, settes de for hånd. */}
+                {!cabinetJob && (customJob || job.steps === null) && (
+                  <div className="pt-field">
+                    <label htmlFor="job-steps">Antall trinn</label>
+                    <input
+                      id="job-steps"
+                      name="steps"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={200}
+                      defaultValue={job.steps ?? ''}
+                    />
+                    <small>Fylles inn når antallet er avklart. Vises i spesifikasjonen og på tavla.</small>
+                  </div>
+                )}
                 <div className="pt-field">
                   <label htmlFor="job-notes">Spesielle krav</label>
                   <textarea id="job-notes" name="spec_notes" maxLength={2000} defaultValue={job.spec_notes ?? ''} />

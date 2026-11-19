@@ -49,11 +49,13 @@ export async function setLadderStatus(formData: FormData): Promise<ActionResult>
   if (status === 'installed') {
     const { data: ladder } = await supabase
       .from('ladders')
-      .select('vessel_id')
+      .select('vessel_id, project_id')
       .eq('id', ladderId)
       .maybeSingle();
     if (!ladder) return err('Fant ikke leideren.');
-    if (!ladder.vessel_id) return err('Leideren må stå på et fartøy før den kan settes til «I bruk».');
+    if (!ladder.vessel_id && !ladder.project_id) {
+      return err('Leideren må stå på et fartøy eller i et prosjekt før den kan settes til «I bruk».');
+    }
   }
 
   const { error } = await supabase.from('ladders').update({ status }).eq('id', ladderId);

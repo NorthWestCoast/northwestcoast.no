@@ -69,7 +69,12 @@ export default async function LeiderPage({
     <>
       <PageHeader
         title={`Leider ${ladder.serial_number ?? ''}`}
-        description={[ladder.product_name, ladder.vessel_name ?? ladder.company_name].filter(Boolean).join(' · ') || undefined}
+        description={
+          // Fartøyet og/eller prosjektet leideren står i; ellers eieren.
+          [ladder.product_name, ladder.vessel_name, ladder.project_name, ladder.vessel_name || ladder.project_name ? null : ladder.company_name]
+            .filter(Boolean)
+            .join(' · ') || undefined
+        }
         crumbs={[
           { href: '/minside/leidere', label: 'Leidere' },
           { label: ladder.serial_number ?? 'Leider' },

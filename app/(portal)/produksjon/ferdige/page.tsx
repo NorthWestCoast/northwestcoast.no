@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireProduction } from '@/lib/portal/context';
 import { jobStatus } from '@/lib/portal/labels';
 import { Badge, Card, Empty, PageHeader, Td } from '@/components/portal/ui';
-import { datoOslo, specLine } from '@/components/produksjon/job';
+import { JobKindBadge, datoOslo, specLine } from '@/components/produksjon/job';
 
 /** Jobber som har forlatt produksjonen: sendt, levert eller kansellert. */
 export default async function FerdigeJobberPage() {
@@ -11,7 +11,7 @@ export default async function FerdigeJobberPage() {
   const { data: jobs, error } = await supabase
     .from('production_jobs')
     .select(
-      'id, job_number, status, product_name, length_m, steps, with_cabinet, customer_label, vessel_name, serial_number, shipped_at, delivered_at',
+      'id, job_number, kind, status, product_name, product_number, length_m, steps, with_cabinet, customer_label, vessel_name, serial_number, shipped_at, delivered_at',
     )
     .in('status', ['shipped', 'delivered', 'cancelled'])
     .order('updated_at', { ascending: false })
@@ -51,7 +51,7 @@ export default async function FerdigeJobberPage() {
                     </Td>
                     <Td label="Produkt">
                       <div>
-                        {job.product_name}
+                        {job.product_name} <JobKindBadge job={job} />
                         <div className="pt-muted">{specLine(job)}</div>
                       </div>
                     </Td>

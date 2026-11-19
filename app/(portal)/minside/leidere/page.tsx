@@ -1,18 +1,22 @@
 import Link from 'next/link';
-import { managedCompanies, requireUser } from '@/lib/portal/context';
+import { requireUser } from '@/lib/portal/context';
 import { Badge, Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
-import { PortalForm } from '@/components/portal/forms';
+import { Place } from '@/components/portal/placement';
 import { ladderStatus } from '@/lib/portal/labels';
 import { idag } from '@/lib/format';
+import CabinetTable, { CABINET_COLUMNS } from '@/components/minside/cabinet-table';
 import { LadderAccessForm } from '@/components/minside/forms';
+import { loadPlacementTargets, targetsFor } from '@/components/minside/placement';
+import { CabinetPlacement, LadderPlacementForm } from '@/components/minside/placement-forms';
 import OwnRequestList from '@/components/minside/request-list';
 import ServiceState from '@/components/minside/service-state';
 import { meter } from '@/components/minside/util';
-import { installLadder, requestLadderAccess } from '../actions';
+import { requestLadderAccess } from '../actions';
 
 /**
  * Alle leidere brukeren har tilgang til, uansett om tilgangen kommer fra
- * selskapet, fartøyet eller direkte på leideren.
+ * selskapet, fartøyet eller direkte på leideren. Under leiderne står
+ * oppbevaringsskapene, som plasseres for seg.
  */
 export default async function LeiderePage() {
   const { supabase, ctx } = await requireUser('/minside/leidere');
@@ -20,13 +24,13 @@ export default async function LeiderePage() {
   const [
     { data: ladderRows },
     { data: requests },
-    { data: vessels },
-    { data: vesselRoles },
     { data: ladderRoles },
+    { data: cabinetRows },
+    targets,
   ] = await Promise.all([
     supabase
       .from('ladder_status')
-      .select('ladder_id, serial_number, product_name, product_number, length_m, vessel_id, vessel_name, company_id, company_name, status, service_state, next_service_due, days_until_service, open_tasks')
+      .select('ladder_id, serial_number, product_name, product_number, length_m, vessel_id, vessel_name, project_id, project_name, company_id, company_name, status, installed_at, service_state, next_service_due, days_until_service, open_tasks')
       .order('serial_number')
       .limit(500),
     supabase
@@ -35,30 +39,36 @@ export default async function LeiderePage() {
       .eq('requester_id', ctx.userId)
       .order('created_at', { ascending: false })
       .limit(20),
-    supabase.from('vessels').select('id, name, company_id').order('name'),
-    supabase.from('vessel_members').select('vessel_id, role').eq('user_id', ctx.userId),
     supabase.from('ladder_members').select('ladder_id, role').eq('user_id', ctx.userId),
+    supabase
+      .from('cabinets')
+      .select(CABINET_COLUMNS)
+      .neq('status', 'retired')
+      .order('created_at')
+      .limit(500),
+    loadPlacementTargets(supabase, ctx),
   ]);
 
   const ladders = (ladderRows ?? []).filter((l) => l.ladder_id);
-  const isAdmin = ctx.staffRole === 'admin';
-  const managedCompanyIds = new Set(managedCompanies(ctx).map((c) => c.id));
-  const masterVesselIds = new Set((vesselRoles ?? []).filter((m) => m.role === 'master').map((m) => m.vessel_id));
+  const cabinets = cabinetRows ?? [];
+  const { isAdmin, managedCompanyIds } = targets;
   const managerLadderIds = new Set((ladderRoles ?? []).filter((m) => m.role === 'manager').map((m) => m.ladder_id));
 
-  // Fartøy brukeren kan montere leidere på.
-  const manageableVessels = (vessels ?? []).filter(
-    (v) => isAdmin || managedCompanyIds.has(v.company_id) || masterVesselIds.has(v.id),
-  );
-
-  // Leverte leidere uten fartøy som brukeren selv kan montere.
-  const toInstall = ladders.filter(
+  // Leverte leidere som ikke står noe sted, og som brukeren selv kan plassere.
+  const toPlace = ladders.filter(
     (l) =>
       l.status === 'delivered' &&
       !l.vessel_id &&
+      !l.project_id &&
       (isAdmin ||
         (l.company_id !== null && managedCompanyIds.has(l.company_id)) ||
         managerLadderIds.has(l.ladder_id as string)),
+  );
+
+  // Skap plasseres av eiere og administratorer i selskapet. Administratorer i
+  // NorthWest Coast gjør det under Admin, der alle kunders skap står samlet.
+  const placeableCabinets = cabinets.filter(
+    (c) => c.company_id !== null && managedCompanyIds.has(c.company_id),
   );
 
   const today = idag();
@@ -71,47 +81,31 @@ export default async function LeiderePage() {
         actions={<Link href="/minside/bestill" className="pt-btn">Bestill ny leider</Link>}
       />
 
-      {toInstall.length > 0 && (
+      {toPlace.length > 0 && (
         <Card
-          title="Monter på fartøy"
-          description="Disse leiderne er levert, men ikke montert. Servicefristen begynner å løpe fra monteringsdatoen."
+          title="Velg plassering"
+          description="Disse leiderne er levert, men ikke tatt i bruk. Velg fartøyet eller prosjektet de står på. Servicefristen begynner å løpe fra datoen."
         >
           <div className="pt-stack">
-            {toInstall.map((ladder) => {
-              const options = manageableVessels.filter((v) => !ladder.company_id || v.company_id === ladder.company_id);
-              return (
-                <div key={ladder.ladder_id}>
-                  <p>
-                    <Link href={`/minside/leider/${ladder.ladder_id}`}><strong>{ladder.serial_number}</strong></Link>
-                    {ladder.product_name ? ` · ${ladder.product_name}` : ''}
-                  </p>
-                  {options.length > 0 ? (
-                    <PortalForm action={installLadder} submitLabel="Monter" tone="green">
-                      <input type="hidden" name="ladder_id" value={ladder.ladder_id as string} />
-                      <div className="pt-form-row">
-                        <div className="pt-field">
-                          <label htmlFor={`vessel-${ladder.ladder_id}`}>Fartøy</label>
-                          <select id={`vessel-${ladder.ladder_id}`} name="vessel_id" required defaultValue={options.length === 1 ? options[0].id : ''}>
-                            <option value="" disabled>Velg fartøy</option>
-                            {options.map((v) => (
-                              <option key={v.id} value={v.id}>{v.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="pt-field">
-                          <label htmlFor={`installed-${ladder.ladder_id}`}>Montert dato</label>
-                          <input id={`installed-${ladder.ladder_id}`} name="installed_at" type="date" defaultValue={today} max={today} required />
-                        </div>
-                      </div>
-                    </PortalForm>
-                  ) : (
-                    <p className="pt-hint">
-                      Du har ingen fartøy å montere den på ennå. <Link href="/minside/fartoy">Legg til fartøyet</Link> først.
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+            {toPlace.map((ladder) => (
+              <div key={ladder.ladder_id}>
+                <p style={{ marginBottom: '0.6rem' }}>
+                  <Link href={`/minside/leider/${ladder.ladder_id}`}><strong>{ladder.serial_number}</strong></Link>
+                  {ladder.product_name ? ` · ${ladder.product_name}` : ''}
+                </p>
+                <LadderPlacementForm
+                  ladder={{
+                    id: ladder.ladder_id as string,
+                    status: ladder.status,
+                    vessel_id: ladder.vessel_id,
+                    project_id: ladder.project_id,
+                    installed_at: ladder.installed_at,
+                  }}
+                  options={targetsFor(targets, ladder.company_id)}
+                  today={today}
+                />
+              </div>
+            ))}
           </div>
         </Card>
       )}
@@ -123,7 +117,7 @@ export default async function LeiderePage() {
               <tr>
                 <th>Produksjonsnr.</th>
                 <th>Produkt</th>
-                <th>Fartøy</th>
+                <th>Plassering</th>
                 <th>Status</th>
                 <th>Service</th>
                 <th>Åpne oppgaver</th>
@@ -140,12 +134,16 @@ export default async function LeiderePage() {
                     <Td label="Produkt">
                       {[ladder.product_name, meter(ladder.length_m)].filter(Boolean).join(' · ') || '–'}
                     </Td>
-                    <Td label="Fartøy">
-                      {ladder.vessel_id ? (
-                        <Link href={`/minside/fartoy/${ladder.vessel_id}`}>{ladder.vessel_name ?? 'Fartøy'}</Link>
-                      ) : (
-                        <span className="pt-muted">{ladder.company_name ?? 'Ikke montert'}</span>
-                      )}
+                    <Td label="Plassering">
+                      <div>
+                        <Place
+                          vesselId={ladder.vessel_id}
+                          vesselName={ladder.vessel_name}
+                          projectId={ladder.project_id}
+                          projectName={ladder.project_name}
+                          empty={ladder.company_name ?? 'Ikke plassert'}
+                        />
+                      </div>
                     </Td>
                     <Td label="Status"><div><Badge tone={status.tone}>{status.label}</Badge></div></Td>
                     <Td label="Service">
@@ -182,6 +180,29 @@ export default async function LeiderePage() {
           <LadderAccessForm action={requestLadderAccess} />
         </Disclosure>
       </Card>
+
+      {cabinets.length > 0 && (
+        <Card
+          id="skap"
+          title="Oppbevaringsskap"
+          description={
+            placeableCabinets.length > 0
+              ? 'Skapene dine, og hvor de står. Et skap kan stå på et fartøy, i et prosjekt eller begge deler, uavhengig av leideren det kom sammen med.'
+              : 'Skapene du har tilgang til, og hvor de står.'
+          }
+          flush
+        >
+          <CabinetTable cabinets={cabinets} />
+          {placeableCabinets.map((cabinet) => (
+            <CabinetPlacement
+              key={cabinet.id}
+              cabinet={cabinet}
+              options={targetsFor(targets, cabinet.company_id, { vesselId: cabinet.vessel_id, projectId: cabinet.project_id })}
+              today={today}
+            />
+          ))}
+        </Card>
+      )}
 
       {requests && requests.length > 0 && (
         <Card title="Dine forespørsler" description="Forespørsler du har sendt om tilgang til leidere." flush>
