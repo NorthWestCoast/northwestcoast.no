@@ -1,8 +1,7 @@
 import { headers } from 'next/headers';
 import { certificateState, type CertificateState } from '@/lib/portal/labels';
-import { requestOrigin } from '@/lib/portal/landing';
+import { portalOrigin } from '@/lib/portal/landing';
 import { BUCKETS, signedUrls } from '@/lib/portal/storage';
-import { SITE_URL } from '@/lib/site';
 import { idag } from '@/lib/format';
 import type { Tables } from '@/lib/supabase/database.types';
 import type { PortalSupabase } from './util';
@@ -27,9 +26,9 @@ export type Certificate = Pick<
   verifyUrl: string;
 };
 
-/** Adressen til kontrollsiden for et sertifikat, på domenet brukeren faktisk er på. */
+/** Adressen til kontrollsiden for et sertifikat, på portalens adresse (se portalOrigin). */
 export async function certificateVerifyBase(): Promise<string> {
-  return `${requestOrigin(await headers(), SITE_URL)}/sertifikat`;
+  return `${portalOrigin(await headers())}/sertifikat`;
 }
 
 /** Alle sertifikatene til leideren, nyeste først. */

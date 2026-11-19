@@ -29,6 +29,70 @@ function resolveSiteUrl(): string {
 
 export const SITE_URL = resolveSiteUrl().replace(/\/$/, '');
 
+/**
+ * Adressen til den innloggede delen: Min side, Admin, Produksjon,
+ * innloggingen, delte rapporter (/los) og sertifikater (/sertifikat).
+ *
+ * Med NEXT_PUBLIC_PORTAL_URL satt (https://portal.northwestcoast.no) ligger
+ * den på sitt eget vertsnavn, så innloggingen ikke deler opprinnelse med det
+ * offentlige nettstedet. Uten variabelen ligger alt på samme adresse, som i
+ * lokal utvikling og i forhåndsvisninger. Vertsreglene står i next.config.mjs.
+ */
+export const PORTAL_URL = (process.env.NEXT_PUBLIC_PORTAL_URL || SITE_URL).replace(/\/$/, '');
+
+function hostnameOf(url: string | undefined): string | null {
+  try {
+    return new URL(url ?? '').hostname;
+  } catch {
+    return null;
+  }
+}
+
+const SITE_HOSTNAME = hostnameOf(process.env.NEXT_PUBLIC_SITE_URL);
+const PORTAL_HOSTNAME = hostnameOf(process.env.NEXT_PUBLIC_PORTAL_URL);
+
+/**
+ * Sant når portalen ligger på sitt eget vertsnavn: begge adressene er satt,
+ * og vertsnavnene er ulike. Samme vilkår som portalHosts() i
+ * next.config.mjs, som setter opp videresendingene mellom de to.
+ *
+ * Bare NEXT_PUBLIC_-variablene leses her, ikke SITE_URL: i nettleseren
+ * finnes ikke VERCEL_*, så SITE_URL kan være en annen der enn på serveren.
+ * Lenkene under brukes i klientkomponenter og må bli like begge steder.
+ */
+export const PORTAL_HAS_OWN_HOST = Boolean(
+  SITE_HOSTNAME && PORTAL_HOSTNAME && SITE_HOSTNAME !== PORTAL_HOSTNAME,
+);
+
+/**
+ * Sider i portaldelen (app/(portal)), som kan vises på portalens vertsnavn.
+ * Områdene følger PORTAL_AREAS i next.config.mjs. /personvern er med fordi
+ * den svarer på begge vertsnavnene.
+ */
+const PORTAL_PAGE = /^\/(minside|admin|produksjon|logg-inn|auth|los|sertifikat|personvern)(\/|$)/;
+
+export function isPortalPage(pathname: string): boolean {
+  return PORTAL_PAGE.test(pathname);
+}
+
+/**
+ * Lenke fra en offentlig side inn i portalen, f.eks. portalHref('/logg-inn').
+ * Med portalen på eget vertsnavn går den rett dit, så besøkende slipper
+ * hoppet via videresendingen. Ellers er den en vanlig relativ lenke.
+ */
+export function portalHref(path: string): string {
+  return PORTAL_HAS_OWN_HOST ? `${PORTAL_URL}${path}` : path;
+}
+
+/**
+ * Lenke fra en side i portaldelen til en offentlig side. På portalens
+ * vertsnavn finnes ikke de offentlige sidene, og «/» er Min side, så lenken
+ * må ha nettstedets adresse. Ellers er den en vanlig relativ lenke.
+ */
+export function siteHref(path: string): string {
+  return PORTAL_HAS_OWN_HOST ? `${SITE_URL}${path}` : path;
+}
+
 export const ORG = {
   name: 'Northwestcoast AS',
   legalName: 'Northwestcoast AS',
@@ -76,9 +140,12 @@ export const CONFIRMED_SOCIAL_URLS: string[] = Object.values(SOCIAL_ENV).filter(
   (url): url is string => typeof url === 'string' && /^https:\/\//i.test(url),
 );
 
-/** Delingsbildet som genereres av app/og/[lang]/route.tsx. */
+/**
+ * Delingsbildet som genereres av app/og/[lang]/route.tsx. Med hele adressen:
+ * sidene som bruker det ligger i portaldelen, og bildet lages på nettstedet.
+ */
 const OG_IMAGE = {
-  url: '/og/no',
+  url: `${SITE_URL}/og/no`,
   width: 1200,
   height: 630,
   alt: 'Argostep – modulær leider til båt fra NorthWest Coast',

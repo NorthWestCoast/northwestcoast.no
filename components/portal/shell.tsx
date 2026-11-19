@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { siteHref } from '@/lib/site';
 import PortalNav, { type NavGroup } from './nav';
 import { signOut } from '@/lib/portal/actions';
 import type { PortalContext, StaffRole } from '@/lib/portal/context';
@@ -68,7 +69,7 @@ export default function PortalShell({
               {others.map((other) => (
                 <Link key={other.home} href={other.home}>{other.label}</Link>
               ))}
-              <Link href="/">Nettsiden</Link>
+              <Link href={siteHref('/')}>Nettsiden</Link>
               <form action={signOut}>
                 <button type="submit">Logg ut</button>
               </form>

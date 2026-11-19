@@ -1,17 +1,17 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/supabase/staff';
-import { Card, Empty, KV, PageHeader, Td, Timeline } from '@/components/portal/ui';
-import { PortalForm } from '@/components/portal/forms';
+import { Badge, Card, Empty, KV, PageHeader, Td, Timeline } from '@/components/portal/ui';
+import { ActionButton, PortalForm } from '@/components/portal/forms';
 import { Hidden, SearchForm, Select } from '@/components/admin/fields';
 import MaintenanceReportForm from '@/components/admin/maintenance-report-form';
 import { uuid } from '@/lib/portal/forms';
 import { BUCKETS, signedUrls } from '@/lib/portal/storage';
 import { logKind } from '@/lib/portal/labels';
 import { dato, datoTid, idag } from '@/lib/format';
-import { linkMaintenanceLog } from '../actions';
+import { linkMaintenanceLog, verifyMaintenanceLog } from '../actions';
 import { anyColumnMatches, searchTerm } from '../_lib/search';
 
-const COLUMNS = 'id, kind, title, serial_number_raw, vessel_name_raw, imo_raw, reporter_name, reporter_email, performed_at, notes, created_at, source, ladder_id, ladders(serial_number), maintenance_photos(storage_path, caption)';
+const COLUMNS = 'id, kind, title, serial_number_raw, vessel_name_raw, imo_raw, reporter_name, reporter_email, performed_at, notes, created_at, source, verified_at, ladder_id, ladders(serial_number), maintenance_photos(storage_path, caption)';
 
 const SOURCES: Record<string, string> = {
   web: 'Skjemaet på nettsiden',
@@ -219,7 +219,11 @@ export default async function VedlikeholdPage({
         </Card>
       )}
 
-      <Card title="Siste rapporter" description="De 50 siste som er koblet til en leider." flush>
+      <Card
+        title="Siste rapporter"
+        description="De 50 siste som er koblet til en leider. Meldinger fra det åpne skjemaet på nettsiden teller ikke som vedlikehold, og vises ikke for los, før de er bekreftet her."
+        flush
+      >
         {recent?.length ? (
           <Timeline
             items={recent.map((log) => ({
@@ -231,13 +235,28 @@ export default async function VedlikeholdPage({
                     {log.ladders?.serial_number ?? log.serial_number_raw ?? 'Leider'}
                   </Link>
                   {' · '}{logKind(log.kind)}{log.title ? ` · ${log.title}` : ''}
+                  {log.source === 'web' && !log.verified_at && <> <Badge tone="warn">Ikke bekreftet</Badge></>}
                 </>
               ),
               text: [
                 log.notes,
                 [log.reporter_name, log.vessel_name_raw, SOURCES[log.source] ?? log.source].filter(Boolean).join(' · '),
               ].filter(Boolean).join('\n'),
-              extra: <Photos photos={log.maintenance_photos} urls={urls} />,
+              extra: (
+                <>
+                  <Photos photos={log.maintenance_photos} urls={urls} />
+                  {log.source === 'web' && !log.verified_at && (
+                    <div style={{ marginTop: '0.6rem' }}>
+                      <ActionButton
+                        action={verifyMaintenanceLog}
+                        fields={{ log_id: log.id }}
+                        label="Bekreft meldingen"
+                        tone="green"
+                      />
+                    </div>
+                  )}
+                </>
+              ),
             }))}
           />
         ) : (

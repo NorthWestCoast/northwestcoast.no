@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clientIp, langOf, line, rateLimit, readBody, rejected } from '@/lib/api-guard';
+import { clientIp, gateHeaders, langOf, line, rateLimit, readBody, rejected } from '@/lib/api-guard';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { finishMaintenance } from '../notify';
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     .slice(0, MAX_IMAGES);
 
   try {
-    const supabase = await createServerSupabase();
+    const supabase = await createServerSupabase(gateHeaders(req));
     const result = await finishMaintenance(supabase, logId, paths, langOf(body));
     return NextResponse.json({ ok: result.ok, photos: result.photos });
   } catch (error) {

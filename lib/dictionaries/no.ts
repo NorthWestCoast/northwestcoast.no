@@ -353,7 +353,7 @@ export const no = {
     placeholder: 'Din e-postadresse...',
     submit: 'Registrer',
     sending: 'Sender…',
-    success: '✓ Du er registrert!',
+    success: 'Sjekk e-posten din: vi har sendt en lenke du må trykke på for å bekrefte påmeldingen.',
   },
 
   footer: {

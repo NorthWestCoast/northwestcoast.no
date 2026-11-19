@@ -38,10 +38,12 @@ av den som leser e-posten på en annen enhet.
 
 **Authentication → URL Configuration**
 
-- **Site URL:** adressen nettstedet faktisk svarer på
-  (`https://northwestcoast-no.vercel.app` nå, `https://northwestcoast.no`
-  etter lansering). Lenkene i e-postene bygges av den.
-- **Redirect URLs:** bare hele, eksakte adresser. Ingen jokertegn på
+- **Site URL:** adressen den innloggede delen svarer på:
+  `https://portal.northwestcoast.no` når portalen er flyttet dit
+  (`https://northwestcoast-no.vercel.app` fram til da). Lenkene og logoen i
+  e-postene bygges av den, så den må peke dit `/auth/confirm` faktisk ligger.
+- **Redirect URLs:** bare hele, eksakte adresser, i praksis
+  `https://portal.northwestcoast.no/auth/callback`. Ingen jokertegn på
   `vercel.app`: hvem som helst kan opprette et Vercel-prosjekt med et navn som
   passer mønsteret.
 

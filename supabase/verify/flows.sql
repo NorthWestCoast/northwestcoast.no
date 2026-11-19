@@ -261,8 +261,12 @@ begin
   perform t.ok(v_failed, 'bare administratorer i selskapet kan invitere');
 
   perform t.login(f);
-  perform t.ok((public.portal_bootstrap() ->> 'redeemed')::integer = 1, 'invitasjonen løses inn ved første innlogging');
-  perform t.ok(exists (select 1 from public.vessels where id = v_vessel), 'den inviterte ser selskapets fartøy');
+  v_res := public.portal_bootstrap();
+  perform t.ok(jsonb_array_length(v_res -> 'invitations') = 1, 'invitasjonen venter på den inviterte');
+  perform t.ok(not exists (select 1 from public.vessels where id = v_vessel), 'invitasjonen gir ingen tilgang før den er godtatt');
+  perform public.accept_invitation((v_res #>> '{invitations,0,id}')::uuid);
+  perform t.ok(exists (select 1 from public.vessels where id = v_vessel), 'den inviterte ser selskapets fartøy når hun har godtatt');
+  perform t.ok(jsonb_array_length(public.portal_bootstrap() -> 'invitations') = 0, 'en godtatt invitasjon vises ikke igjen');
 
   -- ── Deling med los ────────────────────────────────────────────────────────
   perform t.login(a);
@@ -619,6 +623,7 @@ declare
   v_company uuid; v_other uuid; v_vessel uuid; v_other_vessel uuid; v_ladder uuid;
   v_share uuid; v_ticket uuid; v_failed boolean; v_count integer;
   v_token text := 'tok_sec_abcdefghijklmnopqrstuvwxyz01234';
+  v_res jsonb; v_tok text; v_last date; v_user uuid;
 begin
   perform t.root();
   insert into auth.users (email, email_confirmed_at) values ('eier@sikker.test', now()) returning id into o;
@@ -826,6 +831,130 @@ begin
   perform set_config('request.jwt.claims',
     json_build_object('sub', x, 'role', 'authenticated', 'app_metadata', json_build_object('staff', true))::text, true);
   perform t.ok(app.staff_role() is null, 'et flagg i JWT-en gir ikke lenger administrator');
+
+  -- ── En invitasjon gir ikke medlemskap før den er godtatt ───────────────
+  perform t.root();
+  delete from public.company_members where company_id = v_other and user_id = o;
+  perform t.login(x);
+  insert into public.access_invitations (email, scope, company_id, role, invited_by)
+  values ('eier@sikker.test', 'company', v_other, 'member', x);
+  perform t.login(o);
+  v_res := public.portal_bootstrap();
+  perform t.ok(jsonb_array_length(v_res -> 'invitations') = 1
+               and (v_res #>> '{invitations,0,target}') = 'Sikker Rederi',
+               'den inviterte ser invitasjonen og hvem den gjelder');
+  perform t.root();
+  perform t.ok(not exists (select 1 from public.company_members where company_id = v_other and user_id = o),
+               'ingen blir medlem av et selskap uten å godta selv');
+  perform t.login(m);
+  v_failed := false;
+  begin
+    perform public.accept_invitation((v_res #>> '{invitations,0,id}')::uuid);
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en invitasjon kan ikke godtas av andre enn mottakeren');
+  perform t.login(o);
+  perform public.decline_invitation((v_res #>> '{invitations,0,id}')::uuid);
+  perform t.ok(jsonb_array_length(public.portal_bootstrap() -> 'invitations') = 0, 'en avslått invitasjon er borte');
+
+  -- ── Meldinger fra det åpne skjemaet teller ikke før de er bekreftet ────
+  perform t.root();
+  select last_maintenance_at into v_last from public.ladder_status where ladder_id = v_ladder;
+  perform t.anon();
+  perform public.submit_maintenance_report(jsonb_build_object(
+    'name', 'Kontrollert OK – NWC service', 'boat', 'x', 'serial', 'sec-2026-0001'));
+  perform t.root();
+  perform t.ok((select last_maintenance_at from public.ladder_status where ladder_id = v_ladder) is not distinct from v_last,
+               'en anonym melding endrer ikke «siste vedlikehold»');
+  perform t.login(o);
+  insert into public.ladder_state_shares (ladder_id, vessel_id, token_hash, created_by, title)
+  values (v_ladder, v_vessel, encode(sha256(convert_to(v_token || 'b', 'UTF8')), 'hex'), o, 'Rapport 2');
+  perform t.anon();
+  perform t.ok(not exists (
+      select 1 from jsonb_array_elements(public.get_ladder_share(v_token || 'b') -> 'recent_logs') e
+      where e ->> 'reporter_name' = 'Kontrollert OK – NWC service'),
+    'en anonym melding vises ikke for los');
+  perform t.root();
+  update public.maintenance_logs set verified_at = now() where reporter_name = 'Kontrollert OK – NWC service';
+  perform t.anon();
+  perform t.ok(exists (
+      select 1 from jsonb_array_elements(public.get_ladder_share(v_token || 'b') -> 'recent_logs') e
+      where e ->> 'reporter_name' = 'Kontrollert OK – NWC service'),
+    'en bekreftet melding vises');
+
+  -- ── Skjemaene kan ikke stenges for andre ───────────────────────────────
+  perform t.root();
+  insert into app.gates (name, secret_hash) values ('forms', encode(sha256(convert_to('hemmelig', 'UTF8')), 'hex'));
+  perform t.anon();
+  perform set_config('request.headers', '{}', true);
+  for i in 1..20 loop
+    perform public.submit_contact_request(jsonb_build_object('name', 'Bot', 'email', 'bot' || i || '@flom.test'));
+  end loop;
+  v_failed := false;
+  begin
+    perform public.submit_contact_request(jsonb_build_object('name', 'Bot', 'email', 'bot21@flom.test'));
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'kall rett mot API-et har sin egen, lille kvote');
+
+  perform set_config('request.headers', json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '203.0.113.7')::text, true);
+  perform public.submit_contact_request(jsonb_build_object('name', 'Kari', 'email', 'kari@kunde.test'));
+  perform t.ok(true, 'en besøkende på nettstedet slipper gjennom selv om kvoten for direkte kall er brukt opp');
+
+  v_failed := false;
+  begin
+    for i in 1..8 loop
+      perform public.submit_contact_request(jsonb_build_object('name', 'Kari', 'email', 'kari' || i || '@kunde.test'));
+    end loop;
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'én besøkende har sin egen grense');
+  perform set_config('request.headers', json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '203.0.113.8')::text, true);
+  perform public.submit_contact_request(jsonb_build_object('name', 'Ola', 'email', 'ola@kunde.test'));
+  perform t.ok(true, 'og den rammer ikke neste besøkende');
+
+  perform set_config('request.headers', json_build_object('x-nwc-gate', 'feil', 'x-nwc-client', '203.0.113.9')::text, true);
+  v_failed := false;
+  begin
+    perform public.submit_contact_request(jsonb_build_object('name', 'Bot', 'email', 'bot@flom2.test'));
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'feil nøkkel regnes som et direkte kall');
+
+  -- ── Nyhetsbrev: påmelding gjelder først når adressen er bekreftet ──────
+  perform set_config('request.headers', '{}', true);
+  v_res := public.subscribe_newsletter('offer@nyhet.test');
+  perform t.ok(v_res ->> 'status' = 'pending' and not (v_res ? 'token'),
+               'nøkkelen til bekreftelsen gis ikke ut rett fra API-et');
+  perform set_config('request.headers', json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '203.0.113.20')::text, true);
+  v_res := public.subscribe_newsletter('ny@nyhet.test');
+  v_tok := v_res ->> 'token';
+  perform t.ok(v_res ->> 'status' = 'pending' and length(v_tok) = 48, 'nettstedet får nøkkelen til bekreftelses-e-posten');
+  perform t.root();
+  perform t.ok((select confirmed_at is null from public.newsletter_subscribers where email = 'ny@nyhet.test'),
+               'påmeldingen er ventende til den er bekreftet');
+  perform t.anon();
+  perform t.ok(public.confirm_newsletter('x' || v_tok) is false, 'feil nøkkel bekrefter ingenting');
+  perform t.ok(public.confirm_newsletter(v_tok) is true, 'riktig nøkkel bekrefter');
+  perform t.ok(public.confirm_newsletter(v_tok) is false, 'nøkkelen virker bare én gang');
+  perform t.ok((public.subscribe_newsletter('ny@nyhet.test') ->> 'status') = 'active', 'en bekreftet adresse får ingen ny e-post');
+  perform t.root();
+  select unsubscribe_token into v_tok from public.newsletter_subscribers where email = 'ny@nyhet.test';
+  perform t.anon();
+  perform t.ok(public.unsubscribe_newsletter(v_tok) is true, 'avmelding med lenken virker');
+  perform t.root();
+  perform t.ok((select unsubscribed_at is not null from public.newsletter_subscribers where email = 'ny@nyhet.test'),
+               'og adressen står som avmeldt');
+  perform set_config('request.headers', '', true);
+
+  -- ── Ingen passord på kontoene ──────────────────────────────────────────
+  insert into auth.users (email, encrypted_password) values ('forhånd@sikker.test', 'angriperens-passord')
+  returning id into v_user;
+  perform t.ok((select encrypted_password is null from auth.users where id = v_user),
+               'et passord satt ved registrering blir ikke stående');
+  update auth.users set encrypted_password = 'nytt-forsøk' where id = v_user;
+  perform t.ok((select encrypted_password is null from auth.users where id = v_user),
+               'og kan ikke settes etterpå');
 
   raise notice 'Sikkerhetstestene består.';
 end $$;

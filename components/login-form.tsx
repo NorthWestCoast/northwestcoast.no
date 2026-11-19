@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { track } from '@/lib/analytics';
+import { siteHref } from '@/lib/site';
 import { confirmCode } from '@/app/(portal)/auth/confirm/actions';
 
 const FEIL: Record<string, string> = {
@@ -143,7 +144,7 @@ export default function LoginForm() {
       <p className="auth-hint">
         Alle kan opprette konto. På Min side registrerer du selskapet ditt og
         legger til leiderne dine med produksjonsnummeret som står på leideren.
-        Spørsmål? <Link href="/#kontakt">Ta kontakt</Link>.
+        Spørsmål? <Link href={siteHref('/#kontakt')}>Ta kontakt</Link>.
       </p>
     </form>
   );

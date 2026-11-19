@@ -124,3 +124,19 @@ export function langOf(body: Record<string, unknown>): ApiLang {
 export function tr(lang: ApiLang, no: string, en: string): string {
   return lang === 'en' ? en : no;
 }
+
+/**
+ * Hodene som forteller databasen at et skjemakall kommer gjennom nettstedet,
+ * og fra hvilken besøkende.
+ *
+ * Skjemafunksjonene i databasen kan kalles av alle med den offentlige
+ * nøkkelen. Med FORM_GATE_SECRET satt teller kall herfra per besøkende, mens
+ * kall rett mot API-et får sin egen lille kvote. Da kan ingen stenge
+ * skjemaene for andre ved å bruke opp en felles grense (se app.form_throttle).
+ * Uten variabelen gjelder den gamle, felles grensen.
+ */
+export function gateHeaders(req: NextRequest): Record<string, string> | undefined {
+  const secret = process.env.FORM_GATE_SECRET?.trim();
+  if (!secret) return undefined;
+  return { 'x-nwc-gate': secret, 'x-nwc-client': clientIp(req).slice(0, 64) };
+}

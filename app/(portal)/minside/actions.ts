@@ -263,3 +263,34 @@ export async function takeDownCabinet(formData: FormData): Promise<ActionResult>
   refresh();
   return ok('Skapet er tatt ned og står som ikke plassert.');
 }
+
+/**
+ * Godtar en invitasjon. Først da gir den tilgang: databasen sjekker at den
+ * er sendt til innloggerens egen, bekreftede e-postadresse.
+ */
+export async function acceptInvitation(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+
+  const id = uuid(formData.get('invitation_id'));
+  if (!id) return err('Fant ikke invitasjonen.');
+
+  const { error } = await supabase.rpc('accept_invitation', { p_invitation: id });
+  if (error) return fail(error, 'Invitasjonen kunne ikke godtas.');
+
+  refresh();
+  return ok('Invitasjonen er godtatt. Du har nå tilgang.');
+}
+
+/** Avslår en invitasjon. Den som inviterte får beskjed. */
+export async function declineInvitation(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+
+  const id = uuid(formData.get('invitation_id'));
+  if (!id) return err('Fant ikke invitasjonen.');
+
+  const { error } = await supabase.rpc('decline_invitation', { p_invitation: id });
+  if (error) return fail(error, 'Invitasjonen kunne ikke avslås.');
+
+  refresh();
+  return ok('Invitasjonen er avslått.');
+}

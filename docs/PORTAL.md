@@ -168,3 +168,35 @@ Oppfølgings-e-postene sendes med den ansattes egen sesjon. Rollen produksjon
 kan ikke lese bestillinger, så «levert» fra produksjonssiden gir bare varsel
 i portalen; e-posten går når en administrator markerer leveransen som levert.
 
+## Etter sikkerhetsgjennomgangen 19.11.2026
+
+Fire migrasjoner (`anon_app_usage` og `security_hardening_access`, `_forms`,
+`_consent`) strammet inn det en innlogget bruker, eller en anonym med den
+offentlige nøkkelen, kunne gjøre rett mot API-et. Hver regel har en test i
+`supabase/verify/flows.sql` som prøver angrepet og forventer avslag. Det som
+endret hvordan portalen oppfører seg:
+
+- **Invitasjoner må godtas.** En invitasjon gir ingen tilgang før mottakeren
+  selv har godtatt den på Min side (`accept_invitation`, `decline_invitation`).
+  `portal_bootstrap()` gir lista over ventende invitasjoner og løser ikke inn
+  noe selv. Medlemmer settes aldri inn direkte i `company_members`.
+- **Eierrollen** i et selskap kan bare gis og tas av en eier, og den siste
+  eieren kan ikke fjernes.
+- **Meldinger fra det åpne vedlikeholdsskjemaet** (`source = 'web'`) teller
+  ikke som «siste vedlikehold» og vises ikke i rapporter til los før en
+  administrator har bekreftet dem under Vedlikeholdsrapporter (`verified_at`).
+  Å koble en melding til en leider er også en bekreftelse.
+- **Delte rapporter**: bare «trukket tilbake» kan endres, og en lenke varer
+  høyst 15 dager. Bildene hentes bare av den som har tilgang til leideren,
+  eller som sender nøkkelen fra lenken i hodet `x-share-token` (det gjør
+  `/los/[token]`).
+- **Nyhetsbrev**: en påmelding er ventende til mottakeren har bekreftet den
+  med lenken i e-posten (`/api/newsletter/confirm`). Samme side melder av med
+  `&a=avmeld` og abonnentens `unsubscribe_token`.
+- **Grenser på de åpne skjemaene**: med `FORM_GATE_SECRET` satt i nettlaget og
+  sjekksummen i `app.gates` teller kall gjennom nettstedet per besøkende, og
+  kall rett mot API-et har en egen liten kvote. Uten nøkkelen gjelder én
+  felles grense per skjema, som før.
+- **Ingen passord**: en trigger på `auth.users` tømmer passordfeltet, så
+  innlogging med passord aldri virker, heller ikke rett mot Auth-API-et.
+

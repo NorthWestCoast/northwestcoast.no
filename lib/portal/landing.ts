@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
+import { PORTAL_HAS_OWN_HOST, PORTAL_URL, SITE_URL } from '@/lib/site';
 
 export const DEFAULT_NEXT = '/minside';
 
@@ -61,4 +62,16 @@ export function requestOrigin(headers: Headers, fallback: string): string {
   if (!host) return fallback;
   const proto = headers.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
   return `${proto.split(',')[0]}://${host}`;
+}
+
+/**
+ * Adressen lenker inn i portalen skal ha når de skrives ut eller sendes
+ * videre: kontrollsiden på et sertifikat, lenken til en delt rapport.
+ *
+ * Med portalen på eget vertsnavn er det den adressen som er satt opp, ikke
+ * noe som leses ut av forespørselen. Ellers er det adressen brukeren faktisk
+ * er på, så forhåndsvisninger og localhost lager lenker til seg selv.
+ */
+export function portalOrigin(headers: Headers): string {
+  return PORTAL_HAS_OWN_HOST ? PORTAL_URL : requestOrigin(headers, SITE_URL);
 }

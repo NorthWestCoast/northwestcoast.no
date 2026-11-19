@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { MAINTENANCE_EMAIL, sendMail } from '@/lib/mail';
 import { maintenanceInternal, maintenanceReceipt } from '@/lib/mail/templates';
-import { SITE_URL } from '@/lib/site';
+import { PORTAL_URL } from '@/lib/site';
 
 export const MAINTENANCE_BUCKET = 'maintenance-photos';
 
@@ -84,7 +84,7 @@ export async function finishMaintenance(
         ...maintenanceInternal({
           ...fields,
           matchedLadder: report.matched === true,
-          adminUrl: `${SITE_URL}/admin/vedlikehold`,
+          adminUrl: `${PORTAL_URL}/admin/vedlikehold`,
         }),
       },
       { template: 'maintenance_internal', relatedType: 'maintenance_log', relatedId: logId },

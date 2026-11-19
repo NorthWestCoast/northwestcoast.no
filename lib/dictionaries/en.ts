@@ -355,7 +355,7 @@ export const en: Dict = {
     placeholder: 'Your email address...',
     submit: 'Sign up',
     sending: 'Sending…',
-    success: '✓ You are signed up!',
+    success: 'Check your email: we have sent a link you need to use to confirm your subscription.',
   },
 
   footer: {

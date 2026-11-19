@@ -3,7 +3,7 @@ import { Playfair_Display, DM_Sans, DM_Mono } from 'next/font/google';
 import '../globals.css'; // Global styles
 import './portal.css';
 import { no } from '@/lib/dictionaries/no';
-import { SITE_URL, THEME_COLOR } from '@/lib/site';
+import { PORTAL_URL, SITE_URL, THEME_COLOR } from '@/lib/site';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -33,16 +33,17 @@ export const viewport: Viewport = { themeColor: THEME_COLOR };
 
 /**
  * Standardverdier for sidene i denne delen: innlogging, personvern og de
- * innloggede områdene (som selv setter noindex). Favikon, apple-touch-icon og
- * manifest kommer fra filene i app/ og gjelder begge rot-layoutene.
+ * innloggede områdene. Favikon, apple-touch-icon og manifest kommer fra
+ * filene i app/ og gjelder begge rot-layoutene.
  *
  * Ingen canonical her: en standard-canonical til «/» ville blitt arvet av
  * sider som ikke setter sin egen, og pekt dem til forsiden.
  */
 export const metadata: Metadata = {
-  // metadataBase gjør at OG-bilder og kanoniske URL-er blir absolutte.
-  // Uten den blir delte lenker på LinkedIn/Facebook/WhatsApp uten bilde.
-  metadataBase: new URL(SITE_URL),
+  // metadataBase gjør at kanoniske URL-er og og:url blir absolutte. Sidene
+  // her ligger på portalens adresse, som er nettstedets egen når portalen
+  // ikke har eget vertsnavn.
+  metadataBase: new URL(PORTAL_URL),
   title: {
     default: 'NorthWest Coast – Argostep leider til båt',
     template: '%s | NorthWest Coast',
@@ -55,11 +56,16 @@ export const metadata: Metadata = {
     siteName: 'NorthWest Coast',
     locale: 'nb_NO',
     type: 'website',
-    images: [{ url: '/og/no', width: 1200, height: 630 }],
+    // Delingsbildet lages på nettstedet, ikke på portalens vertsnavn.
+    images: [{ url: `${SITE_URL}/og/no`, width: 1200, height: 630 }],
   },
   // Bare korttypen: tittel, beskrivelse og bilde fylles fra openGraph.
   twitter: { card: 'summary_large_image' },
-  robots: { index: true, follow: true },
+  // Ingenting i portaldelen skal i søk, heller ikke en ny side som glemmer
+  // å si det selv. /personvern er unntaket og åpner for indeksering i sin
+  // egen metadata. På portalens vertsnavn setter next.config.mjs i tillegg
+  // X-Robots-Tag på alle svar.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

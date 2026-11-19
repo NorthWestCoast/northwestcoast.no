@@ -1,5 +1,5 @@
 import { fmt, fmtLength } from '@/lib/pricing';
-import { SITE_URL } from '@/lib/site';
+import { PORTAL_URL, SITE_URL } from '@/lib/site';
 import { CERTIFICATE_NAME, CERTIFICATE_NAME_LOWER } from '@/lib/portal/labels';
 import { CONTACT_EMAIL, SUPPORT_PHONE } from './config';
 import {
@@ -408,7 +408,7 @@ export function orderConfirmed(args: {
       followUpText(args.lines),
       ``,
       `Har du konto på Min side, kan du følge bestillingen der:`,
-      `${SITE_URL}/minside/bestillinger`,
+      `${PORTAL_URL}/minside/bestillinger`,
       ``,
       `Spørsmål? Svar på denne e-posten eller ring ${SUPPORT_PHONE}.`,
       ``,
@@ -428,7 +428,7 @@ export function orderConfirmed(args: {
           ['Forventet ferdig', expected],
         ]),
         lineTable(followUpRows(args.lines)),
-        p(html`Har du konto på Min side, kan du ${link('følge bestillingen der', `${SITE_URL}/minside/bestillinger`)}.`),
+        p(html`Har du konto på Min side, kan du ${link('følge bestillingen der', `${PORTAL_URL}/minside/bestillinger`)}.`),
         p(`Spørsmål? Svar på denne e-posten eller ring ${SUPPORT_PHONE}.`),
         signature(),
         small(english),
@@ -464,7 +464,7 @@ export function orderDelivered(args: {
       ``,
       `På Min side finner du leiderne med serienummer, servicefrister og`,
       `vedlikeholdslogg. Der loggfører dere også egne kontroller:`,
-      `${SITE_URL}/minside`,
+      `${PORTAL_URL}/minside`,
       ``,
       `Er noe ikke som det skal? Svar på denne e-posten eller ring ${SUPPORT_PHONE}.`,
       ``,
@@ -482,7 +482,7 @@ export function orderDelivered(args: {
         lineTable(followUpRows(args.lines)),
         details([['Serienummer', serials.join(', ')]]),
         p('På Min side finner du leiderne med serienummer, servicefrister og vedlikeholdslogg. Der loggfører dere også egne kontroller.'),
-        button('Åpne Min side', `${SITE_URL}/minside`),
+        button('Åpne Min side', `${PORTAL_URL}/minside`),
         p(`Er noe ikke som det skal? Svar på denne e-posten eller ring ${SUPPORT_PHONE}.`),
         signature(),
         small(english),
@@ -616,18 +616,74 @@ export function contactReceipt(args: { name: string; lang?: MailLang }): Mail {
   };
 }
 
-/** Til NWC: ny påmelding til nyhetsbrevet. */
-export function newsletterNotice(args: { email: string }): Mail {
-  const subject = oneLine(`Ny nyhetsbrevpåmelding: ${args.email}`);
+/**
+ * Til den som meldte seg på nyhetsbrevet: bekreft påmeldingen.
+ *
+ * Påmeldingen gjelder først når lenken er brukt, så ingen kan melde på en
+ * adresse som ikke er deres egen. Bare fast tekst.
+ */
+export function newsletterConfirm(args: { confirmUrl: string; lang?: MailLang }): Mail {
+  const lang = args.lang ?? 'no';
+
+  if (lang === 'en') {
+    const subject = 'Confirm your newsletter subscription';
+    return {
+      subject,
+      text: [
+        'Hi,',
+        '',
+        'Please confirm that you want the newsletter from NorthWest Coast:',
+        args.confirmUrl,
+        '',
+        'The link is valid for seven days. If you did not ask for this, you can',
+        'ignore this email, and you will not be subscribed.',
+        '',
+        ...SIGN.en,
+      ].join('\n'),
+      html: shell({
+        lang,
+        title: subject,
+        preheader: 'One click, and you are subscribed.',
+        heading: 'Confirm your subscription',
+        body: [
+          p('Hi,'),
+          p('Please confirm that you want the newsletter from NorthWest Coast: maritime safety, Argostep and Norwegian maritime regulations.'),
+          button('Confirm subscription', args.confirmUrl),
+          small('The link is valid for seven days. If you did not ask for this, you can ignore this email, and you will not be subscribed.'),
+          signature('en'),
+        ],
+        reason: `You are receiving this email because this address was entered in the newsletter form at ${SITE_HOST}.`,
+        brand: brand(),
+      }),
+    };
+  }
+
+  const subject = 'Bekreft påmeldingen til nyhetsbrevet';
   return {
     subject,
-    text: `E-post: ${args.email}\nLagret i newsletter_subscribers: ja`,
+    text: [
+      'Hei,',
+      '',
+      'Bekreft at du vil ha nyhetsbrevet fra NorthWest Coast:',
+      args.confirmUrl,
+      '',
+      'Lenken virker i sju dager. Ba du ikke om dette, kan du se bort fra',
+      'e-posten, og du blir ikke påmeldt.',
+      '',
+      ...SIGN.no,
+    ].join('\n'),
     html: shell({
       title: subject,
-      preheader: args.email,
-      heading: 'Ny påmelding til nyhetsbrevet',
-      body: [details([['E-post', args.email]]), small('Adressen er lagret i lista over abonnenter.')],
-      reason: `Sendt automatisk fra påmeldingsskjemaet på ${SITE_HOST}.`,
+      preheader: 'Ett klikk, så er du påmeldt.',
+      heading: 'Bekreft påmeldingen',
+      body: [
+        p('Hei,'),
+        p('Bekreft at du vil ha nyhetsbrevet fra NorthWest Coast: maritim sikkerhet, Argostep og norske sjøfartsforskrifter.'),
+        button('Bekreft påmeldingen', args.confirmUrl),
+        small('Lenken virker i sju dager. Ba du ikke om dette, kan du se bort fra e-posten, og du blir ikke påmeldt.'),
+        signature(),
+      ],
+      reason: `Du får denne e-posten fordi adressen ble oppgitt i påmeldingen til nyhetsbrev på ${SITE_HOST}.`,
       brand: brand(),
     }),
   };
@@ -839,21 +895,21 @@ export function accessInvitation(args: {
   // Adressen vises som tekst, ikke som lenke.
   const inviter = inviterName ? `${inviterName} (${unlink(inviterEmail)})` : unlink(inviterEmail);
   const target = safeLabel(args.targetName, 60);
-  const what = target ? `tilgang til ${target}` : 'tilgang';
-  const subject = 'Du har fått tilgang på Min side hos NorthWest Coast';
-  const loginUrl = `${SITE_URL}/logg-inn`;
+  const subject = 'Du er invitert til Min side hos NorthWest Coast';
+  const loginUrl = `${PORTAL_URL}/logg-inn`;
 
   return {
     subject,
     text: [
       'Hei,',
       '',
-      `${inviter} har gitt deg ${what} på Min side hos NorthWest Coast.`,
+      `${inviter} har invitert deg til Min side hos NorthWest Coast${target ? `, med tilgang til ${target}` : ''}.`,
       '',
       'Der finner du leiderens historikk, servicefrister og vedlikeholdslogg,',
       'og du kan loggføre kontroller og dele tilstandsrapporter.',
       '',
-      'Logg inn eller opprett konto med denne e-postadressen:',
+      'Logg inn eller opprett konto med denne e-postadressen, og godta',
+      'invitasjonen på Min side:',
       loginUrl,
       '',
       'Du trenger ikke passord. Vi sender deg en innloggingslenke.',
@@ -865,13 +921,13 @@ export function accessInvitation(args: {
     html: shell({
       title: subject,
       preheader: 'Logg inn med denne e-postadressen. Du trenger ikke passord.',
-      heading: 'Du har fått tilgang på Min side',
+      heading: 'Du er invitert til Min side',
       body: [
         p('Hei,'),
-        p(html`<strong>${inviter}</strong> har gitt deg ${what} på Min side hos NorthWest Coast.`),
+        p(html`<strong>${inviter}</strong> har invitert deg til Min side hos NorthWest Coast${target ? html`, med tilgang til <strong>${target}</strong>` : ''}.`),
         p('Der finner du leiderens historikk, servicefrister og vedlikeholdslogg, og du kan loggføre kontroller og dele tilstandsrapporter.'),
         button('Logg inn på Min side', loginUrl),
-        small('Logg inn med denne e-postadressen. Du trenger ikke passord: vi sender deg en innloggingslenke, og kontoen opprettes første gang du bruker den.'),
+        small('Logg inn med denne e-postadressen og godta invitasjonen på Min side. Du trenger ikke passord: vi sender deg en innloggingslenke, og kontoen opprettes første gang du bruker den.'),
         signature(),
       ],
       reason: `Du får denne e-posten fordi en bruker på ${SITE_HOST} har invitert denne adressen til Min side. Kjenner du ikke til dette, kan du se bort fra den.`,

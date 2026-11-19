@@ -386,7 +386,7 @@ export async function assignLadder(formData: FormData): Promise<ActionResult> {
  * råteksten selv når oppslaget bommer. Her ryddes de bommene opp.
  */
 export async function linkMaintenanceLog(formData: FormData): Promise<ActionResult> {
-  const { supabase } = await requireStaff();
+  const { supabase, ctx } = await requireStaff();
 
   const logId = uuid(formData.get('log_id'));
   const ladderId = uuid(formData.get('ladder_id'));
@@ -401,7 +401,9 @@ export async function linkMaintenanceLog(formData: FormData): Promise<ActionResu
 
   const { error } = await supabase
     .from('maintenance_logs')
-    .update({ ladder_id: ladder.id, vessel_id: ladder.vessel_id })
+    // Å koble meldingen til en leider er samtidig å bekrefte den: da teller
+    // den som vedlikehold og kan vises for los.
+    .update({ ladder_id: ladder.id, vessel_id: ladder.vessel_id, verified_at: new Date().toISOString(), verified_by: ctx.userId })
     .eq('id', logId);
   if (error) return fail(error);
 
@@ -409,4 +411,30 @@ export async function linkMaintenanceLog(formData: FormData): Promise<ActionResu
   revalidatePath('/admin/vedlikehold');
   revalidatePath(`/minside/leider/${ladder.id}`);
   return ok('Rapporten er koblet til leideren.');
+}
+
+/**
+ * Bekrefter en melding fra det åpne vedlikeholdsskjemaet. Skjemaet krever
+ * ikke innlogging, så meldingen teller ikke som vedlikehold og vises ikke i
+ * rapporter til los før NorthWest Coast har sett over den.
+ */
+export async function verifyMaintenanceLog(formData: FormData): Promise<ActionResult> {
+  const { supabase, ctx } = await requireStaff();
+
+  const logId = uuid(formData.get('log_id'));
+  if (!logId) return err('Fant ikke meldingen.');
+
+  const { data, error } = await supabase
+    .from('maintenance_logs')
+    .update({ verified_at: new Date().toISOString(), verified_by: ctx.userId })
+    .eq('id', logId)
+    .is('verified_at', null)
+    .select('ladder_id')
+    .maybeSingle();
+  if (error) return fail(error);
+  if (!data) return err('Meldingen er allerede bekreftet.');
+
+  revalidatePath('/admin/vedlikehold');
+  if (data.ladder_id) revalidatePath(`/minside/leider/${data.ladder_id}`);
+  return ok('Meldingen er bekreftet og teller nå som vedlikehold.');
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
+import { clean, clientIp, gateHeaders, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { CONTACT_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
 import { contactInternal, contactReceipt } from '@/lib/mail/templates';
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   let stored = false;
 
   try {
-    const supabase = await createServerSupabase();
+    const supabase = await createServerSupabase(gateHeaders(req));
     const { data, error } = await supabase.rpc('submit_contact_request', {
       payload: { name, email, phone, company, product, message },
     });

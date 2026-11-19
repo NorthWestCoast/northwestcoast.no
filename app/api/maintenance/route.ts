@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
+import { clean, clientIp, gateHeaders, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { SUPPORT_PHONE } from '@/lib/mail';
 import { MAINTENANCE_BUCKET, finishMaintenance } from './notify';
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   let supabase: Awaited<ReturnType<typeof createServerSupabase>>;
   try {
-    supabase = await createServerSupabase();
+    supabase = await createServerSupabase(gateHeaders(req));
   } catch (error) {
     console.error('[maintenance] Supabase er ikke konfigurert – rapport tapt:', error);
     return NextResponse.json({ error: failed }, { status: 500 });

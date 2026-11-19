@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
+import { clean, clientIp, gateHeaders, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
 import { fetchCatalog, type Catalog } from '@/lib/catalog';
 import { cabinetAvailable, isCustomLength, type CabinetRow, type PriceRow } from '@/lib/pricing';
 import { createServerSupabase } from '@/lib/supabase/server';
-import { SITE_URL } from '@/lib/site';
+import { PORTAL_URL } from '@/lib/site';
 import { ORDER_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
 import { orderInternal, orderReceipt, type OrderLineView } from '@/lib/mail/templates';
 
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
   let supabase: Awaited<ReturnType<typeof createServerSupabase>>;
   let catalog: Catalog;
   try {
-    supabase = await createServerSupabase();
+    supabase = await createServerSupabase(gateHeaders(req));
     catalog = await fetchCatalog(supabase);
   } catch (error) {
     console.error('[order] Kunne ikke lese prislista:', error);
@@ -310,7 +310,7 @@ export async function POST(req: NextRequest) {
       name, email, phone, vessel,
       notes: mailNotes,
       lines: view, total,
-      adminUrl: orderId ? `${SITE_URL}/admin/bestillinger/${orderId}` : undefined,
+      adminUrl: orderId ? `${PORTAL_URL}/admin/bestillinger/${orderId}` : undefined,
     });
     const internalResult = await sendMail(
       { to: ORDER_EMAIL, replyTo: email, ...internal },

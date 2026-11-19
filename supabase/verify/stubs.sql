@@ -13,6 +13,7 @@ create table auth.users (
   id                 uuid primary key default gen_random_uuid(),
   email              varchar(255) unique,
   email_confirmed_at timestamptz,
+  encrypted_password varchar(255),
   raw_app_meta_data  jsonb not null default '{}'::jsonb,
   created_at         timestamptz not null default now()
 );

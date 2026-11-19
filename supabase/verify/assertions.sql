@@ -64,6 +64,7 @@ begin
     and not (
       -- Åpne skjema på nettsiden (uten innlogging). Alle er strupet i databasen.
       p.proname in ('place_order', 'submit_contact_request', 'subscribe_newsletter',
+                    'confirm_newsletter', 'unsubscribe_newsletter',
                     'submit_maintenance_report', 'finish_maintenance_report',
                     'get_ladder_share', 'get_certificate')
       or (
@@ -74,7 +75,8 @@ begin
           'complete_ladder_task', 'create_ticket', 'reply_ticket', 'set_ticket_status',
           'request_service', 'cancel_service_booking',
           'confirm_order', 'set_production_step', 'assign_job_serial', 'advance_job',
-          'place_cabinet', 'issue_ladder_certificate')
+          'place_cabinet', 'issue_ladder_certificate',
+          'accept_invitation', 'decline_invitation')
       )
     );
   if bad is not null then

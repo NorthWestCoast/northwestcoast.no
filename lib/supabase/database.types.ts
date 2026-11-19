@@ -950,6 +950,8 @@ export type Database = {
           serial_number_raw: string | null
           source: string
           title: string | null
+          verified_at: string | null
+          verified_by: string | null
           vessel_id: string | null
           vessel_name_raw: string | null
         }
@@ -968,6 +970,8 @@ export type Database = {
           serial_number_raw?: string | null
           source?: string
           title?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
           vessel_id?: string | null
           vessel_name_raw?: string | null
         }
@@ -986,6 +990,8 @@ export type Database = {
           serial_number_raw?: string | null
           source?: string
           title?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
           vessel_id?: string | null
           vessel_name_raw?: string | null
         }
@@ -1043,24 +1049,36 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          confirm_sent_at: string | null
+          confirm_token_hash: string | null
+          confirmed_at: string | null
           created_at: string
           email: string
           id: string
           source: string
+          unsubscribe_token: string
           unsubscribed_at: string | null
         }
         Insert: {
+          confirm_sent_at?: string | null
+          confirm_token_hash?: string | null
+          confirmed_at?: string | null
           created_at?: string
           email: string
           id?: string
           source?: string
+          unsubscribe_token?: string
           unsubscribed_at?: string | null
         }
         Update: {
+          confirm_sent_at?: string | null
+          confirm_token_hash?: string | null
+          confirmed_at?: string | null
           created_at?: string
           email?: string
           id?: string
           source?: string
+          unsubscribe_token?: string
           unsubscribed_at?: string | null
         }
         Relationships: []
@@ -2132,14 +2150,17 @@ export type Database = {
       }
     }
     Functions: {
+      accept_invitation: { Args: { p_invitation: string }; Returns: string }
       advance_job: { Args: { p_job: string; p_status: string; p_carrier?: string; p_tracking?: string }; Returns: undefined }
       assign_job_serial: { Args: { p_job: string; p_serial: string }; Returns: string }
       cancel_service_booking: { Args: { p_booking: string }; Returns: undefined }
       complete_ladder_task: { Args: { p_task: string; p_notes?: string; p_performed_at?: string }; Returns: string }
+      confirm_newsletter: { Args: { p_token: string }; Returns: boolean }
       confirm_order: { Args: { p_order: string; p_due_date?: string }; Returns: number }
       create_my_company: { Args: { p_name: string; p_org_number?: string; p_address?: string; p_postal_code?: string; p_city?: string; p_contact_phone?: string }; Returns: string }
       create_ticket: { Args: { p_subject: string; p_body: string; p_category?: string; p_ladder?: string; p_company?: string }; Returns: string }
       decide_ladder_access: { Args: { p_request: string; p_approve: boolean; p_role?: string; p_note?: string }; Returns: undefined }
+      decline_invitation: { Args: { p_invitation: string }; Returns: undefined }
       finish_maintenance_report: { Args: { p_log: string; p_paths?: string[] }; Returns: Json }
       get_certificate: { Args: { p_token: string }; Returns: Json }
       get_ladder_share: { Args: { p_token: string }; Returns: Json }
@@ -2160,7 +2181,8 @@ export type Database = {
       set_ticket_status: { Args: { p_ticket: string; p_status: string }; Returns: undefined }
       submit_contact_request: { Args: { payload: Json }; Returns: string }
       submit_maintenance_report: { Args: { payload: Json }; Returns: Json }
-      subscribe_newsletter: { Args: { p_email: string }; Returns: boolean }
+      subscribe_newsletter: { Args: { p_email: string }; Returns: Json }
+      unsubscribe_newsletter: { Args: { p_token: string }; Returns: boolean }
     }
     Enums: {
       company_role: "owner" | "admin" | "member"

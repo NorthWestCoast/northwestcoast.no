@@ -1,4 +1,4 @@
-import { SITE_URL } from '@/lib/site';
+import { PORTAL_URL, SITE_URL } from '@/lib/site';
 import { AUTH_TEMPLATES } from './auth-templates';
 import { CONTACT_EMAIL, MAINTENANCE_EMAIL, ORDER_EMAIL } from './config';
 import {
@@ -9,7 +9,7 @@ import {
   contactReceipt,
   maintenanceInternal,
   maintenanceReceipt,
-  newsletterNotice,
+  newsletterConfirm,
   orderConfirmed,
   orderDelivered,
   orderInternal,
@@ -47,7 +47,7 @@ const FOLLOW_UP = [
 /** Verdiene Supabase setter inn i innloggingsmalene, byttet med eksempler. */
 const fillAuth = (html: string) =>
   html
-    .replaceAll('{{ .SiteURL }}', SITE_URL)
+    .replaceAll('{{ .SiteURL }}', PORTAL_URL)
     .replaceAll('{{ .TokenHash }}', 'eksempel')
     .replaceAll('{{ .Token }}', '48392061')
     .replaceAll('{{ .Email }}', 'kari@rederi.no')
@@ -95,7 +95,7 @@ export function mailPreviews(): MailPreview[] {
         notes: 'Ønsker levering til kai i Ålesund før jul.',
         lines: LINES,
         total: 55998,
-        adminUrl: `${SITE_URL}/admin/bestillinger`,
+        adminUrl: `${PORTAL_URL}/admin/bestillinger`,
       }),
     },
     {
@@ -138,12 +138,12 @@ export function mailPreviews(): MailPreview[] {
       }),
     },
     {
-      id: 'newsletter-notice',
+      id: 'newsletter-confirm',
       group: 'Henvendelser',
-      name: 'Ny påmelding til nyhetsbrevet',
-      when: 'Noen melder seg på nyhetsbrevet.',
-      to: `NWC (${CONTACT_EMAIL})`,
-      ...newsletterNotice({ email: 'kari@rederi.no' }),
+      name: 'Bekreft påmelding til nyhetsbrevet',
+      when: 'Noen melder seg på nyhetsbrevet. Påmeldingen gjelder først når lenken er brukt. Finnes også på engelsk.',
+      to: 'Den som meldte seg på',
+      ...newsletterConfirm({ confirmUrl: `${SITE_URL}/api/newsletter/confirm?t=eksempel` }),
     },
     {
       id: 'maintenance-receipt',
@@ -174,7 +174,7 @@ export function mailPreviews(): MailPreview[] {
         notes: 'Byttet to trinn og kontrollert sidetauene. Ingen avvik.',
         photoCount: 3,
         matchedLadder: true,
-        adminUrl: `${SITE_URL}/admin/vedlikehold`,
+        adminUrl: `${PORTAL_URL}/admin/vedlikehold`,
       }),
     },
     {
@@ -188,8 +188,8 @@ export function mailPreviews(): MailPreview[] {
         serial: 'NWC-2026-0117',
         place: 'MS Nordlys',
         validUntil: '2027-11-19',
-        verifyUrl: `${SITE_URL}/sertifikat/eksempel`,
-        ladderUrl: `${SITE_URL}/minside`,
+        verifyUrl: `${PORTAL_URL}/sertifikat/eksempel`,
+        ladderUrl: `${PORTAL_URL}/minside`,
       }),
     },
     {

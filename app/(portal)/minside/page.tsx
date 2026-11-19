@@ -6,6 +6,7 @@ import {
 import { jobStatus, ladderStatus, logKind, orderStatus } from '@/lib/portal/labels';
 import type { Tone } from '@/lib/portal/labels';
 import { dato, datoTid, fristTekst, idag } from '@/lib/format';
+import Invitations from '@/components/minside/invitations';
 import Onboarding from '@/components/minside/onboarding';
 import ServiceState from '@/components/minside/service-state';
 import { addDays, daysBetween } from '@/components/minside/util';
@@ -180,6 +181,8 @@ export default async function MinSidePage() {
           </>
         }
       />
+
+      <Invitations invitations={ctx.invitations} />
 
       <Stats>
         <Stat value={ladders.length} label="Leidere" href="/minside/leidere" />

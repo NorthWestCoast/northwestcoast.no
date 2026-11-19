@@ -31,7 +31,7 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
 
   const logQuery = supabase
     .from('maintenance_logs')
-    .select('id, performed_at, created_at, kind, title, notes, reporter_name, reported_by_user_id, source')
+    .select('id, performed_at, created_at, kind, title, notes, reporter_name, reported_by_user_id, source, verified_at')
     .eq('ladder_id', id)
     .order('performed_at', { ascending: false })
     .order('created_at', { ascending: false })
@@ -158,7 +158,9 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
           log.notes,
           [
             log.reporter_name,
-            log.source === 'web' ? 'meldt via nettskjema' : log.source === 'admin' ? 'lagt inn av NorthWest Coast' : null,
+            log.source === 'web'
+              ? (log.verified_at ? 'meldt via nettskjema' : 'meldt via nettskjema, ikke bekreftet av NorthWest Coast')
+              : log.source === 'admin' ? 'lagt inn av NorthWest Coast' : null,
           ].filter(Boolean).join(' · ') || null,
         ].filter(Boolean).join('\n') || undefined,
         extra: (photos.length > 0 || canAddPhotos) ? (

@@ -7,7 +7,7 @@ import { MEDIA_HOME, staffHome } from './landing';
  * Hvem er innlogget, og hva har de tilgang til.
  *
  * Alt hentes i ett kall til portal_bootstrap(), som også oppretter profilen
- * og løser inn ventende invitasjoner. `cache` gjør at layout, side og
+ * og gir invitasjonene som venter på svar. `cache` gjør at layout, side og
  * komponenter i samme forespørsel deler ett kall.
  *
  * Rollen her styrer bare hva som vises. Det som faktisk beskytter dataene er
@@ -22,6 +22,36 @@ const isStaffRole = (value: unknown): value is NonNullable<StaffRole> =>
 
 export type PortalCompany = { id: string; name: string; role: 'owner' | 'admin' | 'member' };
 
+/** En invitasjon brukeren ikke har svart på ennå. */
+export type PortalInvitation = {
+  id: string;
+  scope: 'company' | 'vessel' | 'ladder';
+  role: string;
+  /** Navnet på selskapet eller fartøyet, eller serienummeret på leideren. */
+  target: string | null;
+  invitedByName: string | null;
+  expiresAt: string | null;
+};
+
+function parseInvitations(value: unknown): PortalInvitation[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const row = item as Record<string, unknown>;
+    if (typeof row.id !== 'string') return [];
+    const scope = row.scope === 'vessel' || row.scope === 'ladder' ? row.scope : 'company';
+    const str = (v: unknown) => (typeof v === 'string' && v ? v : null);
+    return [{
+      id: row.id,
+      scope,
+      role: str(row.role) ?? '',
+      target: str(row.target),
+      invitedByName: str(row.invited_by_name),
+      expiresAt: str(row.expires_at),
+    }];
+  });
+}
+
 export type PortalContext = {
   userId: string;
   email: string;
@@ -33,6 +63,8 @@ export type PortalContext = {
   /** Har tilgang til minst ett selskap, fartøy eller en leider. */
   hasAccess: boolean;
   unread: number;
+  /** Invitasjoner som venter på at brukeren godtar eller avslår. */
+  invitations: PortalInvitation[];
 };
 
 export const getPortalContext = cache(async (): Promise<PortalContext | null> => {
@@ -53,6 +85,7 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
       companies: [],
       hasAccess: false,
       unread: 0,
+      invitations: [],
     };
   }
 
@@ -70,6 +103,7 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
     companies: Array.isArray(ctx.companies) ? (ctx.companies as PortalCompany[]) : [],
     hasAccess: ctx.has_access === true,
     unread: typeof ctx.unread === 'number' ? ctx.unread : 0,
+    invitations: parseInvitations(ctx.invitations),
   };
 });
 

@@ -4,8 +4,7 @@ import CertificateDocument, { type CertificateData } from '@/lib/pdf/certificate
 import { createServerSupabase } from '@/lib/supabase/server';
 import { uuid } from '@/lib/portal/forms';
 import { CERTIFICATE_NAME, certificateState } from '@/lib/portal/labels';
-import { requestOrigin } from '@/lib/portal/landing';
-import { SITE_URL } from '@/lib/site';
+import { portalOrigin } from '@/lib/portal/landing';
 import { idag } from '@/lib/format';
 
 export const maxDuration = 30;
@@ -28,7 +27,7 @@ export async function GET(
   if (!ladderId || !certificateId) return notFound();
 
   const supabase = await createServerSupabase();
-  const origin = requestOrigin(request.headers, SITE_URL);
+  const origin = portalOrigin(request.headers);
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -84,7 +83,7 @@ export async function GET(
     revokedAt: certificate.revoked_at,
     revokedReason: certificate.revoked_reason,
     replacedByNumber: replacement?.certificate_number ?? null,
-    // Lenken på dokumentet peker dit siden faktisk svarer (eget domene, forhåndsvisning, localhost).
+    // Lenken på dokumentet peker på portalens adresse (se portalOrigin).
     verifyUrl: `${origin}/sertifikat/${certificate.verify_token}`,
     generatedAt: new Date(),
   };

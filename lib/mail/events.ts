@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { fmtLength } from '@/lib/pricing';
-import { SITE_URL } from '@/lib/site';
+import { PORTAL_URL } from '@/lib/site';
 import { MAINTENANCE_EMAIL, ORDER_EMAIL, sendMail } from './index';
 import { type FollowUpLine, certificateIssued, orderConfirmed, orderDelivered } from './templates';
 
@@ -162,8 +162,8 @@ export async function mailCertificateIssued(supabase: Client, certificateId: str
       serial: certificate.serial_number,
       place: certificate.vessel_name ?? certificate.project_name,
       validUntil: certificate.valid_until,
-      verifyUrl: `${SITE_URL}/sertifikat/${certificate.verify_token}`,
-      ladderUrl: `${SITE_URL}/minside/leider/${certificate.ladder_id}`,
+      verifyUrl: `${PORTAL_URL}/sertifikat/${certificate.verify_token}`,
+      ladderUrl: `${PORTAL_URL}/minside/leider/${certificate.ladder_id}`,
     });
 
     for (const profile of profiles ?? []) {
