@@ -1,0 +1,178 @@
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
+import { createClient } from '@supabase/supabase-js';
+import {
+  ARTICLES,
+  DEFAULT_ARTICLE_IMAGE,
+  localizeArticle,
+  type LocalizedArticle,
+} from './articles';
+import type { Lang } from './i18n';
+import { POSTS_TAG } from './portal/tags';
+import type { Database } from './supabase/database.types';
+import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from './supabase/config';
+
+/**
+ * Nyhetene på nettsiden.
+ *
+ * Innleggene skrives i admin og ligger i posts-tabellen. De leses uten
+ * cookies (ellers ville sidene blitt dynamiske) og mellomlagres med taggen
+ * POSTS_TAG. Når et innlegg lagres i admin kalles revalidateTag(POSTS_TAG),
+ * og sidene bygges på nytt ved neste besøk – ingen deploy nødvendig.
+ *
+ * Innleggene som fulgte med nettstedet (lib/articles.ts) flettes inn. De er
+ * også reserven: svarer ikke databasen, vises de alene.
+ */
+
+type PostRow = Pick<
+  Database['public']['Tables']['posts']['Row'],
+  | 'slug'
+  | 'title_no'
+  | 'title_en'
+  | 'excerpt_no'
+  | 'excerpt_en'
+  | 'body_no'
+  | 'body_en'
+  | 'tag_no'
+  | 'tag_en'
+  | 'cover_image_url'
+  | 'published_at'
+>;
+
+const COLUMNS =
+  'slug, title_no, title_en, excerpt_no, excerpt_en, body_no, body_en, tag_no, tag_en, cover_image_url, published_at';
+
+/** Anonym klient uten sesjon. RLS slipper bare gjennom publiserte innlegg. */
+function anonClient() {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      // Ikke la et pauset Supabase-prosjekt henge bygget eller sidevisningen.
+      fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(5000) }),
+    },
+  });
+}
+
+const cached = unstable_cache(
+  async (): Promise<PostRow[]> => {
+    if (!supabaseConfigured) throw new Error('Supabase er ikke konfigurert.');
+
+    // «Publisert nå eller tidligere» avgjøres av RLS med databasens klokke.
+    // Et filter på tidspunkt herfra kunne utelatt et helt nytt innlegg hvis
+    // serverklokka lå litt etter, og så blitt stående i mellomlageret.
+    const { data, error } = await anonClient()
+      .from('posts')
+      .select(COLUMNS)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(200);
+
+    if (error) throw new Error(`Kunne ikke lese nyhetene: ${error.message}`);
+    return data ?? [];
+  },
+  ['posts'],
+  // Kaster vi, lagres ingenting – reserven blir altså aldri mellomlagret.
+  { tags: [POSTS_TAG], revalidate: 3600 },
+);
+
+/** Én lesing per forespørsel, også når metadata og side spør hver for seg. */
+const loadPosts = cache(async (): Promise<PostRow[]> => {
+  try {
+    return await cached();
+  } catch (error) {
+    console.error('[posts] Viser bare de faste innleggene:', error instanceof Error ? error.message : error);
+    return [];
+  }
+});
+
+const filled = (value: string | null | undefined) => (value && value.trim() ? value.trim() : '');
+
+/** Engelsk tekst hvis den finnes, ellers norsk. */
+const localized = (lang: Lang, no: string | null, en: string | null) =>
+  (lang === 'en' && filled(en)) || filled(no);
+
+/** DD.MM.YYYY i norsk tid, samme format som de faste innleggene. */
+function formatDate(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('nb-NO', {
+    day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Oslo',
+  }).formatToParts(parsed);
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('day')}.${part('month')}.${part('year')}`;
+}
+
+/** Forsidebilde: en https-adresse eller en fil i /public. Alt annet får standardbildet. */
+function coverImage(value: string | null): string {
+  const url = filled(value);
+  if (/^https:\/\/[^\s]+$/i.test(url)) return url;
+  if (url.startsWith('/') && !url.startsWith('//')) return url;
+  return DEFAULT_ARTICLE_IMAGE;
+}
+
+/** Ingress når innlegget ikke har en: første avsnitt, uten formatering. */
+function summarize(body: string): string {
+  const paragraph = body
+    .replace(/\r\n?/g, '\n')
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .find((block) => block && !block.startsWith('## ') && !block.startsWith('- '));
+  if (!paragraph) return '';
+
+  const plain = paragraph
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\[([^\]\n]+)\]\([^)\s]+\)/g, '$1')
+    .replace(/\s+/g, ' ');
+  return plain.length > 200 ? `${plain.slice(0, 197).trimEnd()}…` : plain;
+}
+
+function fromRow(row: PostRow, lang: Lang): LocalizedArticle {
+  const body = localized(lang, row.body_no, row.body_en);
+  const excerpt = localized(lang, row.excerpt_no, row.excerpt_en) || summarize(body);
+
+  return {
+    slug: row.slug,
+    date: row.published_at ? formatDate(row.published_at) : '',
+    image: coverImage(row.cover_image_url),
+    tag: localized(lang, row.tag_no, row.tag_en),
+    title: localized(lang, row.title_no, row.title_en),
+    excerpt,
+    teaser: excerpt,
+    body,
+  };
+}
+
+/** «30.08.2026» → «2026-08-30», så faste innlegg kan sorteres sammen med de fra databasen. */
+function isoFromDate(date: string): string {
+  const [day, month, year] = date.split('.');
+  return year && month && day ? `${year}-${month}-${day}` : '';
+}
+
+/**
+ * Alle publiserte innlegg, nyeste først. Innlegg fra databasen og de faste
+ * flettes; finnes samme slug begge steder, gjelder den fra databasen.
+ */
+export async function getArticles(lang: Lang): Promise<LocalizedArticle[]> {
+  const rows = await loadPosts();
+  const taken = new Set(rows.map((row) => row.slug));
+
+  const merged = [
+    ...rows.map((row) => ({ key: row.published_at ?? '', article: fromRow(row, lang) })),
+    ...ARTICLES.filter((article) => !taken.has(article.slug)).map((article) => ({
+      key: isoFromDate(article.date),
+      article: localizeArticle(article, lang),
+    })),
+  ];
+
+  // ISO-tidspunkt sorterer riktig som ren tekst. Sorteringen er stabil, så
+  // rekkefølgen fra databasen beholdes der nøklene er like.
+  return merged
+    .sort((a, b) => (a.key < b.key ? 1 : a.key > b.key ? -1 : 0))
+    .map((entry) => entry.article);
+}
+
+/** Ett innlegg på slug, eller null når det ikke finnes (eller ikke er publisert). */
+export async function getArticle(slug: string, lang: Lang): Promise<LocalizedArticle | null> {
+  const articles = await getArticles(lang);
+  return articles.find((article) => article.slug === slug) ?? null;
+}

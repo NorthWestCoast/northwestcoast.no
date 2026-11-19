@@ -2,32 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-
-export const ALL_IMAGES = [
-  { src: '/images/leider_in_use.jpg',    alt: 'Leider i bruk',               label: 'Ombordstigning fra skutesiden',    tag: 'I bruk' },
-  { src: '/images/leider_m2.jpg',        alt: 'Montert fartøy',               label: 'Montert på passasjerfartøy',     tag: 'I bruk' },
-  { src: '/images/praksis.jpg',          alt: 'Livbåtleider i bruk',          label: 'Livbåtleider – testdykk',        tag: 'I bruk' },
-  { src: '/images/ladder-full.png',      alt: 'Full utfelling',               label: 'Full Utfelling',                 tag: 'Leider', contain: true },
-  { src: '/images/ladder-folded.png',    alt: 'Foldet',                       label: 'Ultrakompakt – Foldet',          tag: 'Leider', contain: true },
-  { src: '/images/leider_folded.jpg',    alt: 'Leider foldet',                label: 'Kompakt sammenfoldet',           tag: 'Leider' },
-  { src: '/images/leider_cabinet.jpg',   alt: 'Oppbevaringsskap',             label: 'Oppbevaringsskap',               tag: 'Oppbevaring' },
-  { src: '/images/leider_cabinet2.jpg',  alt: 'Åpen kasse',                   label: 'Innvendig lagringsskap',         tag: 'Oppbevaring' },
-  { src: '/images/leiderkasse.jpg',      alt: 'Kasse ombord',                 label: 'Kompakt oppbevaring ombord',     tag: 'Oppbevaring' },
-  { src: '/images/leiderkasse2.jpg',     alt: 'Argostep kasse',               label: 'Argostep kasse på dekk',         tag: 'Oppbevaring' },
-  { src: '/images/leiderkasse3.jpg',     alt: 'Kasse detalj',                 label: 'Kasse – detalj',                 tag: 'Oppbevaring' },
-  { src: '/images/leiderkasse4.jpg',     alt: 'Kasse på kai',                 label: 'Klar for bruk ved kai',          tag: 'Oppbevaring' },
-  { src: '/images/leider_m1.jpg',        alt: 'M/S Veidar',                   label: 'Plassert ombord M/S Veidar',     tag: 'Referanser' },
-  { src: '/images/tindskjaer.jpg',       alt: 'M/S Tindskjær',               label: 'M/S Tindskjær',                 tag: 'Referanser' },
-  { src: '/images/ms-skar-senior.jpeg',  alt: 'M/S Skår Senior',             label: 'M/S Skår Senior',               tag: 'Referanser' },
-  { src: '/images/ms-skar-senior2.jpeg', alt: 'M/S Skår Senior installasjon', label: 'Argostep på M/S Skår Senior',   tag: 'Referanser' },
-  { src: '/images/ms-skar-senior3.jpeg', alt: 'M/S Skår Senior detalj',      label: 'Detalj – M/S Skår Senior',      tag: 'Referanser' },
-];
-
-const TABS = ['Leider', 'Oppbevaring', 'I bruk', 'Referanser'];
+import Link from 'next/link';
+import { useLang, useT } from '@/components/lang-provider';
+import { CONTAIN_BG, GALLERY_IMAGES, GALLERY_TABS, openLightbox, type ImageTag } from '@/lib/gallery-images';
+import { localePath } from '@/lib/i18n';
 
 export default function MediaGallery() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [activeTab, setActiveTab] = useState('Leider');
+  const [activeTab, setActiveTab] = useState<ImageTag>('ladder');
+  const lang = useLang();
+  const t = useT();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -38,30 +22,22 @@ export default function MediaGallery() {
     return () => observer.disconnect();
   }, []);
 
-  const filtered = ALL_IMAGES.filter((img) => img.tag === activeTab).slice(0, 4);
-
-  const openLightbox = (src: string) => {
-    const lb = document.getElementById('lightbox') as HTMLElement | null;
-    const img = document.getElementById('lb-img') as HTMLImageElement | null;
-    if (lb && img) { img.src = src; lb.classList.add('open'); }
-  };
+  const filtered = GALLERY_IMAGES.filter((img) => img.tag === activeTab).slice(0, 4);
 
   return (
     <section className="gallery" id="produkter" ref={sectionRef}>
       <div className="reveal">
-        <div className="lbl lbl-dark">Produktgalleri</div>
-        <h2 className="stitle dark">Argostep i bilder</h2>
-        <p className="sub dark">
-          Fra produkt til praksis – se Argostep fra alle vinkler og i daglig bruk langs norskekysten.
-        </p>
+        <div className="lbl lbl-dark">{t.gallery.label}</div>
+        <h2 className="stitle dark">{t.gallery.title}</h2>
+        <p className="sub dark">{t.gallery.sub}</p>
         <div className="gallery-tabs">
-          {TABS.map((tab) => (
+          {GALLERY_TABS.map((tab) => (
             <button
               key={tab}
               className={`tab${activeTab === tab ? ' active' : ''}`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab}
+              {t.gallery.tabs[tab]}
             </button>
           ))}
         </div>
@@ -72,24 +48,26 @@ export default function MediaGallery() {
           <div
             key={img.src}
             className="mg-card"
-            onClick={() => openLightbox(img.src)}
+            onClick={() => openLightbox(img.src, img.contain)}
           >
             <Image
               src={img.src}
-              alt={img.alt}
-              fill
+              alt={t.gallery.images[img.key].alt}
+              fill sizes="(max-width: 900px) 50vw, 25vw"
               style={{
                 objectFit: img.contain ? 'contain' : 'cover',
-                background: img.contain ? '#e8e0d4' : undefined,
+                background: img.contain ? CONTAIN_BG : undefined,
               }}
             />
-            <div className="g-label">{img.label}</div>
+            <div className="g-label">{t.gallery.images[img.key].label}</div>
           </div>
         ))}
       </div>
 
       <div className="gallery-footer">
-        <a href="/galleri" className="news-link">Se alle bilder →</a>
+        <Link href={localePath(lang, '/galleri')} className="news-link">
+          {t.gallery.seeAll}
+        </Link>
       </div>
     </section>
   );

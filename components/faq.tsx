@@ -1,57 +1,16 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useLang, useT } from '@/components/lang-provider';
+import { localePath } from '@/lib/i18n';
+import { FAQ_ITEMS } from '@/lib/faq-items';
 
-export const FAQS = [
-  {
-    q: 'Er stigen godkjent for norske skip?',
-    a: 'Ja, Argostep Entrings- og Livbåtleider er testet og godkjent etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy.',
-    category: 'Sertifisering',
-  },
-  {
-    q: 'Hvilke lengder er tilgjengelige?',
-    a: 'Argostep Livbåtleider leveres som standard lengder fra 2 - 15 meter. Ta kontakt ved andre behov så skreddersyr vi en pakke for deg.',
-    category: 'Produkt',
-  },
-  {
-    q: 'Hvor lenge varer en leider?',
-    a: 'Designet for lang levetid med utskiftbare komponenter. Ved oppbevaring i skap fra Northwestcoast vil levetiden øke betraktlig.',
-    category: 'Produkt',
-  },
-  {
-    q: 'Hvordan monterer jeg leideren?',
-    a: 'Argostep er designet for enkel montering og demontering uten spesialverktøy. Leideren monteres på samme måte som den tradisjonelle leideren.',
-    category: 'Montering',
-  },
-  {
-    q: 'Hva er leveringstiden for Argostep?',
-    a: 'Leveringstiden varierer avhengig av spesifikasjoner. Kontakt oss for et nøyaktig tilbud og estimert leveringstid for ditt fartøy.',
-    category: 'Leveranse',
-  },
-  {
-    q: 'Av hvilket materiale er leideren laget?',
-    a: 'Trinnene og festene er laget av sprøytestøpt glassfiberarmert plast – et materiale som kombinerer lav vekt, høy styrke og utmerket korrosjonsbestandighet i saltvannsmiljø.',
-    category: 'Produkt',
-  },
-  {
-    q: 'Hva veier en standard Argostep?',
-    a: 'Alle vektene for Argostep leider finner du under Bestill nå.',
-    category: 'Produkt',
-  },
-  {
-    q: 'Kan jeg montere leideren selv?',
-    a: 'Ja, Argostep er konstruert for selvmontering. Medfølgende monteringsveiledning og klikk-koblingssystemet gjør det mulig å montere leideren uten fagfolk.',
-    category: 'Montering',
-  },
-  {
-    q: 'Tilbyr dere reservedeler og service?',
-    a: 'Ja. Et av hovedfordelene med Argostep er det modulære systemet – enkelttrinn og komponenter kan bestilles separat. Kontakt oss for reservedeler eller serviceavtale.',
-    category: 'Leveranse',
-  },
-];
 
 export default function Faq() {
   const sectionRef = useRef<HTMLElement>(null);
+  const lang = useLang();
+  const t = useT();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -66,31 +25,32 @@ export default function Faq() {
     <section className="faq" id="faq" ref={sectionRef}>
       <div className="faq-layout">
         <div className="reveal">
-          <div className="lbl">Spørsmål &amp; Svar</div>
-          <h2 className="stitle">Ofte stilte spørsmål</h2>
-          <p className="sub" style={{ marginBottom: '2rem' }}>
-            Ikke funnet svaret? Kontakt oss direkte – vi hjelper gjerne.
-          </p>
+          <div className="lbl">{t.faq.label}</div>
+          <h2 className="stitle">{t.faq.title}</h2>
+          <p className="sub" style={{ marginBottom: '2rem' }}>{t.faq.sub}</p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <a href="#kontakt" className="btn-primary" style={{ display: 'inline-flex' }}>
-              Ta kontakt →
+              {t.faq.contactCta}
             </a>
-            <a href="/faq" className="btn-ghost" style={{ display: 'inline-flex' }}>
-              Se alle spørsmål →
-            </a>
+            <Link href={localePath(lang, '/faq')} className="btn-ghost" style={{ display: 'inline-flex' }}>
+              {t.faq.allCta}
+            </Link>
           </div>
         </div>
 
         <div className="faq-list reveal">
-          {FAQS.slice(0, 4).map((faq) => (
-            <details className="fi" key={faq.q}>
-              <summary className="fq">
-                {faq.q}
-                <span className="fi-icon">+</span>
-              </summary>
-              <p className="fa">{faq.a}</p>
-            </details>
-          ))}
+          {FAQ_ITEMS.slice(0, 4).map(({ key }) => {
+            const item = t.faq.items[key];
+            return (
+              <details className="fi" key={key}>
+                <summary className="fq">
+                  {item.q}
+                  <span className="fi-icon">+</span>
+                </summary>
+                <p className="fa">{item.a}</p>
+              </details>
+            );
+          })}
         </div>
       </div>
     </section>

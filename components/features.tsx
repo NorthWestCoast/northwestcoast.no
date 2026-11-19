@@ -2,32 +2,20 @@
 
 import { useEffect, useRef } from 'react';
 import { Feather, Package, Shield, SlidersHorizontal } from 'lucide-react';
+import { useT } from '@/components/lang-provider';
 
-const FEATURES = [
-  {
-    Icon: Feather,
-    title: 'Enkel Håndtering',
-    desc: 'Betydelig lettere enn treleidere. Klikk-kobling gjør utsetting og innhenting raskt.',
-  },
-  {
-    Icon: Package,
-    title: 'Kompakt Lagring',
-    desc: 'Lagres i eget værbestandig skap – beskytt mot slitasje, spar dekksplass.',
-  },
-  {
-    Icon: Shield,
-    title: 'Lang Levetid',
-    desc: 'Utskiftbare komponenter av armert plast – bytt ett trinn, ikke hele leideren.',
-  },
-  {
-    Icon: SlidersHorizontal,
-    title: 'Skreddersydd',
-    desc: 'Tilpasset dine spesifikasjoner. Fleksibel løsning fra 2 til 15 meter.',
-  },
-];
+const ICONS = [Feather, Package, Shield, SlidersHorizontal];
 
 export default function Features() {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT();
+
+  const features = [
+    t.features.handling,
+    t.features.storage,
+    t.features.lifetime,
+    t.features.custom,
+  ];
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -47,19 +35,22 @@ export default function Features() {
 
   return (
     <div className="features" ref={ref}>
-      {FEATURES.map((f, i) => (
-        <div
-          className="feat reveal"
-          key={f.title}
-          style={{ transitionDelay: `${i * 0.1}s` }}
-        >
-          <div className="feat-icon">
-            <f.Icon size={30} strokeWidth={1.5} />
+      {features.map((f, i) => {
+        const Icon = ICONS[i];
+        return (
+          <div
+            className="feat reveal"
+            key={f.title}
+            style={{ transitionDelay: `${i * 0.1}s` }}
+          >
+            <div className="feat-icon">
+              <Icon size={30} strokeWidth={1.5} />
+            </div>
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
           </div>
-          <h3>{f.title}</h3>
-          <p>{f.desc}</p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

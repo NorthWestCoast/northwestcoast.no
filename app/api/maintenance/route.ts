@@ -1,58 +1,125 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clean, clientIp, isBot, isEmail, rateLimit, langOf, tr } from '@/lib/api-guard';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { SUPPORT_PHONE } from '@/lib/mail';
+import { MAINTENANCE_BUCKET, finishMaintenance } from './notify';
 
-type ImagePayload = { name: string; type: string; dataUrl: string };
+// E-postutsendingen (når rapporten er uten bilder) kan ta noen sekunder.
+export const maxDuration = 20;
+
+/**
+ * Trinn 1 av vedlikeholdsinnsending: lagre teksten, og fortell klienten hvor
+ * bildene skal lastes opp.
+ *
+ * Bildebytes går ALDRI gjennom denne ruten. Nettleseren laster opp direkte
+ * til Supabase Storage, i en mappe med rapportens id. En lagringspolicy åpner
+ * den mappen for opplasting i 30 minutter, til rapporten er avsluttet. Ruten
+ * kjører med besøkerens egen (anonyme) sesjon, uten service-role.
+ */
+
+type PhotoRequest = { name?: string; type?: string };
+
+const MAX_IMAGES = 10;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+
+/** Gjør filnavnet trygt som storage-sti uten å miste gjenkjennelighet. */
+function safeName(name: string, index: number): string {
+  const cleaned = clean(name, 80)
+    .toLowerCase()
+    .replace(/[^\w.\-]/g, '_')
+    .replace(/_+/g, '_');
+  return cleaned || `bilde-${index + 1}.jpg`;
+}
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { name, boat, imo, serial, notes, images } = body as {
-    name?: string;
-    boat?: string;
-    imo?: string;
-    serial?: string;
-    notes?: string;
-    images?: ImagePayload[];
-  };
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const lang = langOf(body);
 
-  if (!name || !boat || !serial) {
+  if (isBot(body)) return NextResponse.json({ ok: true, uploads: [] });
+
+  if (!rateLimit(`maintenance:${clientIp(req)}`)) {
     return NextResponse.json(
-      { error: 'Navn, navn på båt og serienummer er påkrevd' },
-      { status: 400 },
+      { error: tr(lang, 'For mange forsøk. Prøv igjen om noen minutter.', 'Too many attempts. Please try again in a few minutes.') },
+      { status: 429 },
     );
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const toEmail = 'arve@astep.no';
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'noreply@northwestcoast.no';
+  const name = clean(body.name, 120);
+  const boat = clean(body.boat, 160);
+  const imo = clean(body.imo, 20);
+  const serial = clean(body.serial, 60);
+  const email = clean(body.email, 160);
+  const notes = clean(body.notes, 4000);
+  const photos = (Array.isArray(body.photos) ? body.photos : []).slice(
+    0,
+    MAX_IMAGES,
+  ) as (PhotoRequest | null)[];
 
-  if (apiKey) {
-    const { Resend } = await import('resend');
-    const resend = new Resend(apiKey);
-
-    const attachments = (images ?? [])
-      .filter((img) => typeof img.dataUrl === 'string' && img.dataUrl.includes(','))
-      .map((img) => ({
-        filename: img.name,
-        content: img.dataUrl.split(',')[1], // base64 uten data-URL-prefiks
-      }));
-
-    await resend.emails.send({
-      from: fromEmail,
-      to: toEmail,
-      subject: `Vedlikehold registrert – ${boat} (${serial})`,
-      text: [
-        `Navn: ${name}`,
-        `Navn på båt: ${boat}`,
-        `IMO nr: ${imo || '–'}`,
-        `Serienummer på leider: ${serial}`,
-        ``,
-        `Kommentar:`,
-        notes || '–',
-        ``,
-        `Antall vedlagte bilder: ${attachments.length}`,
-      ].join('\n'),
-      attachments: attachments.length > 0 ? attachments : undefined,
-    });
+  if (!name || !boat || !serial) {
+    return NextResponse.json(
+      { error: tr(lang, 'Navn, navn på båt og serienummer er påkrevd', 'Name, vessel name and serial number are required') },
+      { status: 400 },
+    );
+  }
+  if (email && !isEmail(email)) {
+    return NextResponse.json({ error: tr(lang, 'E-postadressen ser ikke gyldig ut.', 'The email address does not look valid.') }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true });
+  const failed = tr(
+    lang,
+    `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.`,
+    `We could not save the report right now. Please call us on ${SUPPORT_PHONE}.`,
+  );
+
+  let supabase: Awaited<ReturnType<typeof createServerSupabase>>;
+  try {
+    supabase = await createServerSupabase();
+  } catch (error) {
+    console.error('[maintenance] Supabase er ikke konfigurert – rapport tapt:', error);
+    return NextResponse.json({ error: failed }, { status: 500 });
+  }
+
+  // submit_maintenance_report() prøver å koble serienummeret til en registrert
+  // leider. Treffer den ikke, lagres rapporten likevel med råteksten – en
+  // rapport skal aldri gå tapt fordi oppslaget bommet.
+  const { data, error } = await supabase.rpc('submit_maintenance_report', {
+    payload: { name, boat, imo, serial, email, notes },
+  });
+
+  if (error?.code === 'P0001') {
+    // Databasens egne avslag (manglende felt, for mange rapporter).
+    return NextResponse.json({ error: tr(lang, error.message, failed) }, { status: 400 });
+  }
+
+  const result = data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+  const logId = typeof result?.log_id === 'string' ? result.log_id : null;
+
+  if (error || !logId) {
+    console.error('[maintenance] Kunne ikke lagre rapport:', error?.code, error?.message);
+    return NextResponse.json({ error: failed }, { status: 500 });
+  }
+
+  // ── Hvor bildene skal lastes opp ────────────────────────────────────────
+  // `index` peker tilbake på klientens photos-array. Uten den ville et bilde
+  // som filtreres bort her forskyve alle de påfølgende, og filene havne på
+  // feil sti.
+  const uploads: { index: number; path: string }[] = [];
+
+  for (const [index, photo] of photos.entries()) {
+    if (!ALLOWED_TYPES.includes(clean(photo?.type, 80))) continue;
+    uploads.push({ index, path: `${logId}/${index + 1}-${safeName(photo?.name ?? '', index)}` });
+  }
+
+  // Uten bilder er rapporten komplett med én gang – avslutt og varsle nå.
+  if (uploads.length === 0) {
+    await finishMaintenance(supabase, logId, [], lang);
+  }
+
+  return NextResponse.json({
+    ok: true,
+    logId,
+    bucket: MAINTENANCE_BUCKET,
+    matchedLadder: result?.matched === true,
+    uploads,
+  });
 }

@@ -1,48 +1,100 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useLang, useT } from '@/components/lang-provider';
+import { track } from '@/lib/analytics';
+import { prepareImage, type PreparedImage } from '@/lib/images';
+import { createClient } from '@/lib/supabase/client';
 
-type ImageFile = { name: string; type: string; dataUrl: string };
+/**
+ * Vedlikeholdsskjema.
+ *
+ * Bildene lastes opp DIREKTE fra nettleseren til Supabase Storage. De går
+ * aldri gjennom vår egen server – som base64 i en JSON-body ble ett 5 MB-bilde
+ * til 6,7 MB, godt over Vercels 4,5 MB grense.
+ *
+ * Flyten er derfor i tre steg:
+ *   1. POST /api/maintenance  – lagrer teksten, returnerer stiene bildene skal til
+ *   2. opplasting til Storage – ett kall per bilde, direkte. Rapportens mappe
+ *      er åpen for opplasting i 30 minutter, uten innlogging
+ *   3. POST /api/maintenance/complete – melder hvilke bilder som kom fram,
+ *      og varsler NWC
+ *
+ * Stopper det opp etter steg 1, er rapporten likevel lagret.
+ */
+
+const MAX_IMAGES = 10;
+/** Originalen kan være stor – vi komprimerer før opplasting uansett. */
+const MAX_ORIGINAL_BYTES = 25 * 1024 * 1024;
+
+type Attachment = PreparedImage & { id: number };
+
+let nextId = 1;
+
+const formatBytes = (bytes: number) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.round(bytes / 1024)} kB`;
 
 export default function MaintenanceForm() {
-  const [images, setImages] = useState<ImageFile[]>([]);
+  const lang = useLang();
+  const t = useT();
+  const [images, setImages] = useState<Attachment[]>([]);
+  const [preparing, setPreparing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [partial, setPartial] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFiles(files: FileList | null) {
     if (!files) return;
-    const accepted: ImageFile[] = [];
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) continue;
-      if (file.size > 5 * 1024 * 1024) {
-        setError(`Bildet "${file.name}" er for stort (maks 5 MB).`);
-        continue;
+    setError(null);
+    setPreparing(true);
+
+    try {
+      const accepted: Attachment[] = [];
+
+      for (const file of Array.from(files)) {
+        if (images.length + accepted.length >= MAX_IMAGES) {
+          setError(t.maintenance.maxImages(MAX_IMAGES));
+          break;
+        }
+        if (!file.type.startsWith('image/')) continue;
+        if (file.size > MAX_ORIGINAL_BYTES) {
+          setError(t.maintenance.tooLarge25(file.name));
+          continue;
+        }
+
+        const prepared = await prepareImage(file);
+        accepted.push({ ...prepared, id: nextId++ });
       }
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      accepted.push({ name: file.name, type: file.type, dataUrl });
+
+      setImages((prev) => [...prev, ...accepted]);
+    } finally {
+      setPreparing(false);
+      // La samme fil kunne velges på nytt etter at den er fjernet.
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-    setImages((prev) => [...prev, ...accepted]);
   }
 
-  function removeImage(index: number) {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+  function removeImage(id: number) {
+    setImages((prev) => prev.filter((img) => img.id !== id));
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const form = e.currentTarget;
-    const data = Object.fromEntries(new FormData(form)) as Record<string, string>;
+    setPartial(false);
+
+    const data = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
 
     try {
+      // ── 1. Lagre teksten og få vite hvor bildene skal lastes opp ───────
+      setProgress(t.maintenance.saving);
+
       const res = await fetch('/api/maintenance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,19 +103,74 @@ export default function MaintenanceForm() {
           boat: data.boat,
           imo: data.imo,
           serial: data.serial,
+          email: data.email,
           notes: data.notes,
-          images,
+          company_website: data.company_website, // honeypot
+          lang,
+          photos: images.map((img) => ({
+            name: img.file.name,
+            type: img.file.type,
+          })),
         }),
       });
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? 'Noe gikk galt. Prøv igjen.');
+        throw new Error(body.error ?? t.errors.generic);
       }
+
+      const { logId, bucket, uploads = [] } = (await res.json()) as {
+        logId?: string;
+        bucket?: string;
+        uploads?: { index: number; path: string }[];
+      };
+
+      // ── 2. Last opp bildene direkte til Storage ────────────────────────
+      const uploadedPaths: string[] = [];
+
+      if (logId && bucket && uploads.length > 0) {
+        const supabase = createClient();
+
+        for (const [position, upload] of uploads.entries()) {
+          // upload.index viser til klientens photos-array, ikke posisjonen
+          // her – serveren kan ha hoppet over bilder den ikke godtok.
+          const image = images[upload.index];
+          if (!image) continue;
+
+          setProgress(t.maintenance.uploadingImage(position + 1, uploads.length));
+
+          const { error: uploadError } = await supabase.storage
+            .from(bucket)
+            .upload(upload.path, image.file, { contentType: image.file.type, upsert: false });
+
+          if (uploadError) {
+            console.error('Opplasting feilet:', uploadError);
+            continue;
+          }
+          uploadedPaths.push(upload.path);
+        }
+
+        // ── 3. Meld fra hvilke bilder som kom fram, og varsle NWC ────────
+        setProgress(t.maintenance.finishing);
+        await fetch('/api/maintenance/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ logId, lang, paths: uploadedPaths }),
+        }).catch(() => {
+          // Rapporten er lagret uansett. Ikke vis dette som en feil for
+          // mannskapet.
+        });
+      }
+
+      const uploaded = uploadedPaths.length;
+      track('Service: Maintenance logged', { props: { photos: uploaded } });
+      setPartial(uploaded < uploads.length);
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Noe gikk galt. Prøv igjen.');
+      setError(err instanceof Error ? err.message : t.errors.generic);
     } finally {
       setLoading(false);
+      setProgress(null);
     }
   }
 
@@ -71,8 +178,14 @@ export default function MaintenanceForm() {
     return (
       <div className="mnt-success">
         <div className="mnt-success-icon" aria-hidden="true">✓</div>
-        <h3>Vedlikehold registrert</h3>
-        <p>Takk! Rapporten er sendt til NorthWest Coast. Vi tar kontakt ved behov.</p>
+        <h3>{t.maintenance.successTitle}</h3>
+        <p>{t.maintenance.successBody}</p>
+        {partial && (
+          <p className="mnt-warning">
+            {t.maintenance.partialWarning}{' '}
+            <a href="mailto:arve@astep.no">arve@astep.no</a>.
+          </p>
+        )}
       </div>
     );
   }
@@ -80,37 +193,47 @@ export default function MaintenanceForm() {
   return (
     <form className="mnt-form" onSubmit={handleSubmit}>
       <div className="mnt-form-head">
-        <h2>Registrer vedlikehold</h2>
-        <p>Fyll inn opplysningene under og legg gjerne ved bilder av leideren.</p>
+        <h2>{t.maintenance.formTitle}</h2>
+        <p>{t.maintenance.formSub}</p>
       </div>
 
       <div className="mnt-table">
         <div className="mnt-row">
-          <label htmlFor="name">Navn *</label>
-          <input id="name" name="name" type="text" placeholder="Ditt navn" required />
+          <label htmlFor="name">{t.maintenance.name}</label>
+          <input id="name" name="name" type="text" placeholder={t.maintenance.namePlaceholder} required />
         </div>
         <div className="mnt-row">
-          <label htmlFor="boat">Navn på båt *</label>
-          <input id="boat" name="boat" type="text" placeholder="F.eks. MS Havbris" required />
+          <label htmlFor="boat">{t.maintenance.boat}</label>
+          <input id="boat" name="boat" type="text" placeholder={t.maintenance.boatPlaceholder} required />
         </div>
         <div className="mnt-row">
-          <label htmlFor="imo">IMO nr</label>
-          <input id="imo" name="imo" type="text" placeholder="F.eks. 9074729" />
+          <label htmlFor="imo">{t.maintenance.imo}</label>
+          <input id="imo" name="imo" type="text" placeholder={t.maintenance.imoPlaceholder} />
         </div>
         <div className="mnt-row">
-          <label htmlFor="serial">Serienummer på leider *</label>
-          <input id="serial" name="serial" type="text" placeholder="F.eks. ARG-2024-0142" required />
+          <label htmlFor="serial">{t.maintenance.serial}</label>
+          <input id="serial" name="serial" type="text" placeholder={t.maintenance.serialPlaceholder} required />
         </div>
         <div className="mnt-row">
-          <label htmlFor="notes">Kommentar</label>
+          <label htmlFor="email">{t.maintenance.email}</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder={t.maintenance.emailPlaceholderReceipt}
+            autoComplete="email"
+          />
+        </div>
+        <div className="mnt-row">
+          <label htmlFor="notes">{t.maintenance.notes}</label>
           <textarea
             id="notes"
             name="notes"
-            placeholder="Beskriv utført vedlikehold, tilstand eller avvik (valgfritt)"
+            placeholder={t.maintenance.notesPlaceholder}
           />
         </div>
         <div className="mnt-row mnt-row-files">
-          <label htmlFor="images">Bilder</label>
+          <label htmlFor="images">{t.maintenance.images}</label>
           <div className="mnt-files">
             <input
               id="images"
@@ -125,19 +248,26 @@ export default function MaintenanceForm() {
               type="button"
               className="mnt-file-btn"
               onClick={() => fileInputRef.current?.click()}
+              disabled={preparing || images.length >= MAX_IMAGES}
             >
-              + Legg ved bilder
+              {preparing ? t.maintenance.processing : t.maintenance.addImages}
             </button>
+
             {images.length > 0 && (
               <ul className="mnt-file-list">
-                {images.map((img, i) => (
-                  <li key={`${img.name}-${i}`}>
-                    <span className="mnt-file-name">{img.name}</span>
+                {images.map((img) => (
+                  <li key={img.id}>
+                    <span className="mnt-file-name">{img.file.name}</span>
+                    <span className="mnt-file-size">
+                      {img.bytes < img.originalBytes
+                        ? `${formatBytes(img.originalBytes)} → ${formatBytes(img.bytes)}`
+                        : formatBytes(img.bytes)}
+                    </span>
                     <button
                       type="button"
                       className="mnt-file-remove"
-                      onClick={() => removeImage(i)}
-                      aria-label={`Fjern ${img.name}`}
+                      onClick={() => removeImage(img.id)}
+                      aria-label={`${t.maintenance.removeImage} ${img.file.name}`}
                     >
                       ✕
                     </button>
@@ -145,14 +275,28 @@ export default function MaintenanceForm() {
                 ))}
               </ul>
             )}
+
+            <p className="mnt-file-hint">
+              {t.maintenance.compressHint}
+            </p>
           </div>
         </div>
       </div>
 
+      {/* Honeypot – skjult for mennesker, fylles ut av bots */}
+      <input
+        type="text"
+        name="company_website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hp-field"
+      />
+
       {error && <p className="mnt-error">{error}</p>}
 
-      <button type="submit" className="btn-primary mnt-submit" disabled={loading}>
-        {loading ? 'Sender…' : 'Send inn vedlikehold →'}
+      <button type="submit" className="btn-primary mnt-submit" disabled={loading || preparing}>
+        {loading ? (progress ?? t.maintenance.sending) : t.maintenance.submit}
       </button>
     </form>
   );
