@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { PRICE_TABLE, type PriceRow, type PriceTable } from './pricing';
-import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from './supabase/config';
+import { SUPABASE_ANON_KEY, SUPABASE_URL, noteSupabaseMissing, supabaseConfigured } from './supabase/config';
 
 /**
  * Leser prislista fra products-tabellen.
@@ -95,6 +95,11 @@ const cached = unstable_cache(
 
 /** Prislista til sidene. Faller tilbake på den statiske lista ved feil. */
 export async function getPriceTable(): Promise<PriceTable> {
+  // Uten Supabase er den faste lista det forventede svaret, ikke en feil.
+  if (!supabaseConfigured) {
+    noteSupabaseMissing();
+    return PRICE_TABLE;
+  }
   try {
     return await cached();
   } catch (error) {

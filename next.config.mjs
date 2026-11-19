@@ -46,6 +46,22 @@ const nextConfig = {
       rules.push({ source: `/no/${from}`, destination: no, permanent: true });
       rules.push({ source: `/en/${from}`, destination: en, permanent: true });
     }
+    // Innloggingslenke som lander på forsiden. Det skjer når adressen appen ba
+    // om ikke er godkjent i Supabase (Authentication → URL Configuration): da
+    // sender Supabase brukeren til Site URL med koden hengende på. Uten disse
+    // reglene vises bare forsiden, og ingen blir logget inn.
+    rules.push({
+      source: '/',
+      has: [{ type: 'query', key: 'code' }],
+      destination: '/auth/callback',
+      permanent: false,
+    });
+    rules.push({
+      source: '/',
+      has: [{ type: 'query', key: 'error_code' }],
+      destination: '/logg-inn?feil=ugyldig-lenke',
+      permanent: false,
+    });
     // Én kanonisk adresse per side: norsk ligger på rot, ikke under /no.
     rules.push({ source: '/no', destination: '/', permanent: true });
     rules.push({ source: '/no/:path*', destination: '/:path*', permanent: true });

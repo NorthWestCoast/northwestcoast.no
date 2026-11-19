@@ -10,7 +10,7 @@ import {
 import type { Lang } from './i18n';
 import { POSTS_TAG } from './portal/tags';
 import type { Database } from './supabase/database.types';
-import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from './supabase/config';
+import { SUPABASE_ANON_KEY, SUPABASE_URL, noteSupabaseMissing, supabaseConfigured } from './supabase/config';
 
 /**
  * Nyhetene på nettsiden.
@@ -77,6 +77,11 @@ const cached = unstable_cache(
 
 /** Én lesing per forespørsel, også når metadata og side spør hver for seg. */
 const loadPosts = cache(async (): Promise<PostRow[]> => {
+  // Uten Supabase er de faste innleggene det forventede svaret, ikke en feil.
+  if (!supabaseConfigured) {
+    noteSupabaseMissing();
+    return [];
+  }
   try {
     return await cached();
   } catch (error) {
