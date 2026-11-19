@@ -3,11 +3,14 @@
 # Verifiserer migrasjonene uten å røre noen ekte database:
 #   1. kjører alle filer i supabase/migrations på en tom, midlertidig Postgres
 #   2. sjekker sikkerhetsreglene i assertions.sql
-#   3. sammenligner strukturen med expected-fingerprint.txt
+#   3. kjører flyttestene i flows.sql (hvem får gjøre hva)
+#   4. sammenligner strukturen med expected-fingerprint.txt
 #
 #   npm run db:verify              kjør og sammenlign
 #   npm run db:verify -- --update  skriv nytt fingeravtrykk (etter en
 #                                  bevisst skjemaendring)
+#   npm run db:types               generer lib/supabase/database.types.ts
+#                                  fra samme midlertidige database
 #
 # expected-fingerprint.txt er fingeravtrykket av produksjon på det tidspunktet
 # det ble skrevet. Etter en ny migrasjon: kjør --update, kjør
@@ -60,6 +63,16 @@ done
 echo "OK: $count migrasjoner kjørte fra scratch."
 
 run_sql -d nwc -f supabase/verify/assertions.sql
+
+# Flyttestene simulerer kunde, utenforstående, admin og produksjon gjennom
+# hele løpet fra bestilling til deling med los. Ruller tilbake etter seg.
+run_sql -d nwc -f supabase/verify/flows.sql
+
+if [ "${1:-}" = "--types" ]; then
+  PGHOST=127.0.0.1 PGPORT="$PORT" PGUSER=postgres PGDATABASE=nwc \
+    node supabase/verify/gen-types.mjs lib/supabase/database.types.ts
+  exit 0
+fi
 
 actual="$(run_sql -d nwc -At -F ' | ' -f supabase/verify/fingerprint.sql)"
 expected_file="supabase/verify/expected-fingerprint.txt"

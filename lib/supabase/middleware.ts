@@ -10,7 +10,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from './config';
  * hele tatt, slik at uinnloggede havner på innloggingssiden framfor en
  * redirect-runde via /minside.
  */
-const PROTECTED = ['/minside', '/admin'];
+const PROTECTED = ['/minside', '/admin', '/produksjon'];
 
 /**
  * Oppdaterer Supabase-sesjonen på hver request og vokter /minside.

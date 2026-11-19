@@ -53,10 +53,10 @@ export default function LoginForm() {
   if (sent) {
     return (
       <div className="auth-card">
-        <div className="auth-success-icon" aria-hidden="true">✉️</div>
         <h2>Sjekk e-posten din</h2>
         <p>
-          Vi har sendt en innloggingslenke til <strong>{email}</strong>.
+          Vi har sendt en lenke til <strong>{email}</strong>. Klikk på den for
+          å logge inn. Har du ikke konto fra før, opprettes den samtidig.
           Lenken virker i 60 minutter.
         </p>
         <p className="auth-hint">
@@ -89,12 +89,17 @@ export default function LoginForm() {
       {error && <p className="config-error">{error}</p>}
 
       <button type="submit" className="btn-primary auth-submit" disabled={loading}>
-        {loading ? 'Sender…' : 'Send innloggingslenke →'}
+        {loading ? 'Sender…' : 'Send lenke på e-post →'}
       </button>
 
       <p className="auth-hint">
-        Min side er for kunder med registrerte Argostep-leidere. Har du ikke
-        tilgang? <Link href="/#kontakt">Ta kontakt</Link>.
+        Samme skjema for innlogging og ny konto: er adressen ny, får du en
+        konto automatisk med den første lenken.
+      </p>
+      <p className="auth-hint">
+        Alle kan opprette konto. På Min side registrerer du selskapet ditt og
+        legger til leiderne dine med produksjonsnummeret som står på leideren.
+        Spørsmål? <Link href="/#kontakt">Ta kontakt</Link>.
       </p>
     </form>
   );

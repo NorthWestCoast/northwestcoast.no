@@ -1,121 +1,187 @@
+import Link from 'next/link';
 import { requireStaff } from '@/lib/supabase/staff';
-import ActionForm from '@/components/action-form';
+import { Badge, Card, Disclosure, Empty, PageHeader, Tabs, Td } from '@/components/portal/ui';
+import { PortalForm } from '@/components/portal/forms';
+import { Input, SearchForm, Select, Textarea } from '@/components/admin/fields';
+import { ladderStatus, serviceState } from '@/lib/portal/labels';
+import { dato } from '@/lib/format';
+import type { Enums } from '@/lib/supabase/database.types';
 import { assignLadder, registerLadders } from '../actions';
+import { searchTerm } from '../_lib/search';
 
-export default async function LeiderePage() {
+const STATUSES: Enums<'ladder_lifecycle_status'>[] = ['in_production', 'delivered', 'installed', 'retired'];
+
+function href(status: string | undefined, q: string) {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (q) params.set('q', q);
+  const query = params.toString();
+  return query ? `/admin/leidere?${query}` : '/admin/leidere';
+}
+
+/**
+ * Alle leidere. Hver leider åpnes på leidersiden på Min side, der
+ * administratorer også finner verktøyene for service, flytting og status.
+ */
+export default async function LeiderePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const params = await searchParams;
+  const q = searchTerm(params.q);
+  const status = STATUSES.find((value) => value === params.status);
   const { supabase } = await requireStaff();
 
-  const [{ data: products }, { data: ladders }, { data: vessels }] = await Promise.all([
-    supabase
-      .from('products')
-      .select('id, product_number, name')
-      .eq('kind', 'ladder')
-      .eq('active', true)
-      .order('product_number'),
-    supabase
-      .from('ladder_status')
-      .select('ladder_id, serial_number, product_name, status, vessel_name, next_service_due')
-      .order('serial_number')
-      .limit(200),
-    supabase.from('vessels').select('id, name').order('name'),
-  ]);
+  let query = supabase
+    .from('ladder_status')
+    .select('ladder_id, serial_number, product_name, status, company_name, vessel_name, next_service_due, service_state')
+    .order('serial_number')
+    .limit(500);
+  if (status) query = query.eq('status', status);
+  if (q) query = query.ilike('serial_number', `%${q}%`);
 
-  const unassigned = (ladders ?? []).filter((l) => !l.vessel_name);
+  const [{ data: ladders }, { data: products }, { data: companies }, { data: vessels }, { data: allLadders }] =
+    await Promise.all([
+      query,
+      supabase
+        .from('products')
+        .select('id, product_number, name')
+        .eq('kind', 'ladder')
+        .eq('active', true)
+        .order('length_m'),
+      supabase.from('companies').select('id, name').order('name'),
+      supabase.from('vessels').select('id, name, companies(name)').order('name'),
+      supabase
+        .from('ladder_status')
+        .select('ladder_id, serial_number, product_name, company_name, vessel_name')
+        .order('serial_number')
+        .limit(1000),
+    ]);
 
   return (
     <>
-      <h1>Leidere</h1>
+      <PageHeader
+        title="Leidere"
+        description="Alle leidere med produksjonsnummer. Leidere fra produksjonen opprettes av seg selv når nummeret registreres på jobben."
+      />
 
-      <section className="adm-section">
-        <h2>Registrer produserte leidere</h2>
-        <p className="adm-hint">
-          Produksjon skjer i serier, så serienumrene limes inn – ett per linje.
-          Finnes ett av dem fra før, avvises hele partiet og ingenting lagres.
-        </p>
-        <ActionForm action={registerLadders} submitLabel="Registrer parti">
-          <div className="adm-grid">
-            <label>
-              Produkt *
-              <select name="product_id" required defaultValue="">
-                <option value="" disabled>Velg produkt…</option>
-                {products?.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.product_number} · {p.name}
-                  </option>
+      <Card flush>
+        <Disclosure summary="Registrer leidere">
+          <PortalForm action={registerLadders} submitLabel="Registrer leidere">
+            <div className="pt-form-row pt-form-row-3">
+              <Select scope="register" name="product_id" label="Produkt" required defaultValue="">
+                <option value="" disabled>Velg produkt</option>
+                {products?.map((product) => (
+                  <option key={product.id} value={product.id}>{product.product_number} · {product.name}</option>
                 ))}
-              </select>
-            </label>
-            <label>Produsert<input name="produced_at" type="date" /></label>
-          </div>
-          <label className="adm-wide">
-            Serienumre *
-            <textarea
+              </Select>
+              <Input scope="register" name="produced_at" label="Produsert dato" type="date" />
+              <Select scope="register" name="company_id" label="Kunde (valgfritt)" defaultValue="">
+                <option value="">Ingen ennå</option>
+                {companies?.map((company) => (
+                  <option key={company.id} value={company.id}>{company.name}</option>
+                ))}
+              </Select>
+            </div>
+            <Textarea
+              scope="register"
               name="serial_numbers"
+              label="Produksjonsnumre"
               required
-              rows={6}
-              placeholder={'ARG-2026-0101\nARG-2026-0102\nARG-2026-0103'}
+              rows={5}
+              placeholder={'NWC-2026-0101\nNWC-2026-0102\nNWC-2026-0103'}
+              hint="Ett nummer per linje. Finnes ett av dem fra før, lagres ingen."
             />
-          </label>
-        </ActionForm>
-      </section>
+          </PortalForm>
+        </Disclosure>
 
-      <section className="adm-section">
-        <h2>Koble leider til fartøy</h2>
-        <p className="adm-hint">
-          {unassigned.length} leider(e) på lager uten fartøy. Settes
-          installasjonsdato, regnes leideren som installert og
-          servicefristen begynner å løpe.
-        </p>
-        <ActionForm action={assignLadder} submitLabel="Koble til fartøy">
-          <div className="adm-grid">
-            <label>
-              Leider *
-              <select name="ladder_id" required defaultValue="">
-                <option value="" disabled>Velg leider…</option>
-                {unassigned.map((l) => (
-                  <option key={l.ladder_id} value={l.ladder_id ?? ''}>
-                    {l.serial_number} · {l.product_name}
+        <Disclosure summary="Knytt til kunde">
+          <PortalForm action={assignLadder} submitLabel="Knytt til kunde">
+            <Select scope="assign" name="ladder_id" label="Leider" required defaultValue="">
+              <option value="" disabled>Velg leider</option>
+              {allLadders?.map((ladder) => (
+                <option key={ladder.ladder_id} value={ladder.ladder_id ?? ''}>
+                  {ladder.serial_number} · {ladder.product_name}
+                  {ladder.company_name ? ` · ${ladder.company_name}` : ' · ingen kunde'}
+                  {ladder.vessel_name ? ` · ${ladder.vessel_name}` : ''}
+                </option>
+              ))}
+            </Select>
+            <div className="pt-form-row pt-form-row-3">
+              <Select scope="assign" name="company_id" label="Selskap" defaultValue="">
+                <option value="">Ikke valgt</option>
+                {companies?.map((company) => (
+                  <option key={company.id} value={company.id}>{company.name}</option>
+                ))}
+              </Select>
+              <Select scope="assign" name="vessel_id" label="Fartøy" defaultValue="">
+                <option value="">Ikke valgt</option>
+                {vessels?.map((vessel) => (
+                  <option key={vessel.id} value={vessel.id}>
+                    {vessel.name}{vessel.companies ? ` (${vessel.companies.name})` : ''}
                   </option>
                 ))}
-              </select>
-            </label>
-            <label>
-              Fartøy *
-              <select name="vessel_id" required defaultValue="">
-                <option value="" disabled>Velg fartøy…</option>
-                {vessels?.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
-                ))}
-              </select>
-            </label>
-            <label>Installert<input name="installed_at" type="date" /></label>
-          </div>
-        </ActionForm>
-      </section>
+              </Select>
+              <Input scope="assign" name="installed_at" label="Montert dato" type="date" />
+            </div>
+            <p className="pt-hint">
+              Velg selskap, fartøy eller begge. Med fartøy og montert dato regnes leideren som i bruk, og
+              servicefristen begynner å løpe. Med fartøy uten dato er den levert, men ikke montert.
+            </p>
+          </PortalForm>
+        </Disclosure>
+      </Card>
 
-      <section className="adm-section">
-        <h2>Registrerte ({ladders?.length ?? 0})</h2>
+      <Tabs
+        current={href(status, q)}
+        items={[
+          { href: href(undefined, q), label: 'Alle' },
+          ...STATUSES.map((value) => ({ href: href(value, q), label: ladderStatus(value).label })),
+        ]}
+      />
+
+      <Card
+        title={q ? `Treff på «${q}» (${ladders?.length ?? 0})` : `Leidere (${ladders?.length ?? 0})`}
+        actions={
+          <SearchForm action="/admin/leidere" q={q} placeholder="Søk på produksjonsnummer" keep={{ status }} />
+        }
+        flush
+      >
         {ladders?.length ? (
-          <table className="adm-table">
+          <table className="pt-table">
             <thead>
-              <tr><th>Serienr</th><th>Produkt</th><th>Status</th><th>Fartøy</th><th>Neste service</th></tr>
+              <tr><th>Produksjonsnr.</th><th>Produkt</th><th>Kunde</th><th>Fartøy</th><th>Status</th><th>Neste service</th></tr>
             </thead>
             <tbody>
-              {ladders.map((l) => (
-                <tr key={l.ladder_id}>
-                  <td>{l.serial_number}</td>
-                  <td>{l.product_name}</td>
-                  <td>{l.status}</td>
-                  <td>{l.vessel_name ?? <span className="adm-muted">på lager</span>}</td>
-                  <td>{l.next_service_due ?? '–'}</td>
-                </tr>
-              ))}
+              {ladders.map((ladder) => {
+                const state = ladderStatus(ladder.status);
+                const service = serviceState(ladder.service_state);
+                return (
+                  <tr key={ladder.ladder_id}>
+                    <Td label="Produksjonsnr." className="pt-table-strong">
+                      <Link href={`/minside/leider/${ladder.ladder_id}`}>{ladder.serial_number}</Link>
+                    </Td>
+                    <Td label="Produkt">{ladder.product_name}</Td>
+                    <Td label="Kunde">{ladder.company_name ?? '–'}</Td>
+                    <Td label="Fartøy">{ladder.vessel_name ?? '–'}</Td>
+                    <Td label="Status"><Badge tone={state.tone}>{state.label}</Badge></Td>
+                    <Td label="Neste service">
+                      {ladder.next_service_due
+                        ? <span>{dato(ladder.next_service_due)} <Badge tone={service.tone}>{service.label}</Badge></span>
+                        : '–'}
+                    </Td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         ) : (
-          <p className="adm-empty">Ingen leidere registrert ennå.</p>
+          <Empty title={q || status ? 'Ingen leidere passer med utvalget' : 'Ingen leidere registrert ennå'}>
+            {(q || status) && <Link href="/admin/leidere" className="pt-link">Vis alle</Link>}
+          </Empty>
         )}
-      </section>
+      </Card>
     </>
   );
 }

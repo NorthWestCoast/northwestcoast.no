@@ -7,8 +7,8 @@ import { pageMetadata } from '@/lib/site';
 
 export const metadata: Metadata = {
   ...pageMetadata({
-    title: 'Logg inn',
-    description: 'Logg inn på Min side for å se fartøy, leidere, service og vedlikeholdslogg.',
+    title: 'Logg inn eller opprett konto',
+    description: 'Logg inn eller opprett konto på Min side for å registrere selskapet ditt og følge opp leidere, service og vedlikeholdslogg.',
     path: '/logg-inn',
   }),
   // Innloggingssiden skal ikke indekseres.
@@ -22,9 +22,10 @@ export default function LoggInnPage() {
 
       <div className="subpage-header">
         <div className="lbl lbl-center" style={{ marginBottom: '1rem' }}>Min side</div>
-        <h1>Logg inn</h1>
+        <h1>Logg inn eller opprett konto</h1>
         <p>
-          Vi sender deg en innloggingslenke på e-post. Ingen passord å huske.
+          Vi sender deg en lenke på e-post. Er du ny, får du en konto
+          automatisk med den første lenken. Ingen passord å huske.
         </p>
       </div>
 

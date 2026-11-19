@@ -9,15 +9,16 @@ import { createClient } from '@/lib/supabase/client';
 /**
  * Vedlikeholdsskjema.
  *
- * Bildene lastes opp DIREKTE fra nettleseren til Supabase Storage med
- * signerte URL-er. De går aldri gjennom vår egen server – tidligere ble de
- * sendt som base64 i JSON-bodyen, og ett 5 MB-bilde ble 6,7 MB, godt over
- * Vercels 4,5 MB grense.
+ * Bildene lastes opp DIREKTE fra nettleseren til Supabase Storage. De går
+ * aldri gjennom vår egen server – som base64 i en JSON-body ble ett 5 MB-bilde
+ * til 6,7 MB, godt over Vercels 4,5 MB grense.
  *
  * Flyten er derfor i tre steg:
- *   1. POST /api/maintenance  – lagrer teksten, returnerer signerte URL-er
- *   2. opplasting til Storage – ett kall per bilde, direkte
- *   3. POST /api/maintenance/complete – varsler NWC når bildene ligger der
+ *   1. POST /api/maintenance  – lagrer teksten, returnerer stiene bildene skal til
+ *   2. opplasting til Storage – ett kall per bilde, direkte. Rapportens mappe
+ *      er åpen for opplasting i 30 minutter, uten innlogging
+ *   3. POST /api/maintenance/complete – melder hvilke bilder som kom fram,
+ *      og varsler NWC
  *
  * Stopper det opp etter steg 1, er rapporten likevel lagret.
  */
@@ -91,7 +92,7 @@ export default function MaintenanceForm() {
     const data = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
 
     try {
-      // ── 1. Lagre teksten og hent signerte opplastings-URL-er ───────────
+      // ── 1. Lagre teksten og få vite hvor bildene skal lastes opp ───────
       setProgress(t.maintenance.saving);
 
       const res = await fetch('/api/maintenance', {
@@ -109,7 +110,6 @@ export default function MaintenanceForm() {
           photos: images.map((img) => ({
             name: img.file.name,
             type: img.file.type,
-            capturedAt: img.capturedAt,
           })),
         }),
       });
@@ -119,16 +119,16 @@ export default function MaintenanceForm() {
         throw new Error(body.error ?? t.errors.generic);
       }
 
-      const { logId, bucket, uploads } = (await res.json()) as {
-        logId: string;
-        bucket: string;
-        uploads: { index: number; path: string; token: string }[];
+      const { logId, bucket, uploads = [] } = (await res.json()) as {
+        logId?: string;
+        bucket?: string;
+        uploads?: { index: number; path: string }[];
       };
 
       // ── 2. Last opp bildene direkte til Storage ────────────────────────
-      let uploaded = 0;
+      const uploadedPaths: string[] = [];
 
-      if (uploads.length > 0) {
+      if (logId && bucket && uploads.length > 0) {
         const supabase = createClient();
 
         for (const [position, upload] of uploads.entries()) {
@@ -141,27 +141,28 @@ export default function MaintenanceForm() {
 
           const { error: uploadError } = await supabase.storage
             .from(bucket)
-            .uploadToSignedUrl(upload.path, upload.token, image.file);
+            .upload(upload.path, image.file, { contentType: image.file.type, upsert: false });
 
           if (uploadError) {
             console.error('Opplasting feilet:', uploadError);
             continue;
           }
-          uploaded += 1;
+          uploadedPaths.push(upload.path);
         }
 
-        // ── 3. Varsle NWC ────────────────────────────────────────────────
+        // ── 3. Meld fra hvilke bilder som kom fram, og varsle NWC ────────
         setProgress(t.maintenance.finishing);
         await fetch('/api/maintenance/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ logId, lang }),
+          body: JSON.stringify({ logId, lang, paths: uploadedPaths }),
         }).catch(() => {
-          // Rapporten er lagret uansett; varselet kan tas av en
-          // opprydningsjobb. Ikke vis dette som en feil for mannskapet.
+          // Rapporten er lagret uansett. Ikke vis dette som en feil for
+          // mannskapet.
         });
       }
 
+      const uploaded = uploadedPaths.length;
       track('Service: Maintenance logged', { props: { photos: uploaded } });
       setPartial(uploaded < uploads.length);
       setSubmitted(true);

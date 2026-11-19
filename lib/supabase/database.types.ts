@@ -1,13 +1,10 @@
 /**
- * GENERERT FRA DATABASEN – ikke rediger for hånd.
+ * GENERERT – ikke rediger for hånd.
  *
  * Regenerer etter hver skjemaendring (migrasjon):
  *   npm run db:types
- * (krever Supabase CLI og SUPABASE_PROJECT_ID i miljøet), eller via Supabase
- * MCP-verktøyet generate_typescript_types.
- *
- * Sist generert 2026-11-18 mot prosjektet «northwestcoast», etter migrasjon
- * 20261118223552_harden_price_history_and_order_number_grants.
+ * Typene leses fra en midlertidig database bygget fra supabase/migrations,
+ * så de følger migrasjonene nøyaktig. Se supabase/verify/gen-types.mjs.
  */
 export type Json =
   | string
@@ -18,17 +15,95 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  // Lar createClient velge riktig PostgREST-versjon for typeinferensen.
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
+      access_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          company_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          invited_by_name: string | null
+          ladder_id: string | null
+          message: string | null
+          revoked_at: string | null
+          role: string
+          scope: string
+          vessel_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          company_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          invited_by_name?: string | null
+          ladder_id?: string | null
+          message?: string | null
+          revoked_at?: string | null
+          role: string
+          scope: string
+          vessel_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          company_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          invited_by_name?: string | null
+          ladder_id?: string | null
+          message?: string | null
+          revoked_at?: string | null
+          role?: string
+          scope?: string
+          vessel_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_invitations_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_invitations_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "vessels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
           city: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           country: string
           created_at: string
           id: string
@@ -40,6 +115,9 @@ export type Database = {
         Insert: {
           address?: string | null
           city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           country?: string
           created_at?: string
           id?: string
@@ -51,6 +129,9 @@ export type Database = {
         Update: {
           address?: string | null
           city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           country?: string
           created_at?: string
           id?: string
@@ -60,47 +141,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      company_invitations: {
-        Row: {
-          accepted_at: string | null
-          company_id: string
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          invited_by: string | null
-          role: Database["public"]["Enums"]["company_role"]
-        }
-        Insert: {
-          accepted_at?: string | null
-          company_id: string
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          invited_by?: string | null
-          role?: Database["public"]["Enums"]["company_role"]
-        }
-        Update: {
-          accepted_at?: string | null
-          company_id?: string
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          invited_by?: string | null
-          role?: Database["public"]["Enums"]["company_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_invitations_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       company_members: {
         Row: {
@@ -176,6 +216,7 @@ export type Database = {
           created_at: string
           delivered_at: string | null
           id: string
+          job_id: string | null
           notes: string | null
           order_id: string
           shipped_at: string | null
@@ -186,6 +227,7 @@ export type Database = {
           created_at?: string
           delivered_at?: string | null
           id?: string
+          job_id?: string | null
           notes?: string | null
           order_id: string
           shipped_at?: string | null
@@ -196,12 +238,20 @@ export type Database = {
           created_at?: string
           delivered_at?: string | null
           id?: string
+          job_id?: string | null
           notes?: string | null
           order_id?: string
           shipped_at?: string | null
           tracking_reference?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "deliveries_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deliveries_order_id_fkey"
             columns: ["order_id"]
@@ -256,6 +306,94 @@ export type Database = {
         }
         Relationships: []
       }
+      ladder_access_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          granted_role: string | null
+          id: string
+          ladder_id: string
+          message: string | null
+          requester_email: string | null
+          requester_id: string
+          requester_name: string | null
+          serial_number: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          granted_role?: string | null
+          id?: string
+          ladder_id: string
+          message?: string | null
+          requester_email?: string | null
+          requester_id: string
+          requester_name?: string | null
+          serial_number?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          granted_role?: string | null
+          id?: string
+          ladder_id?: string
+          message?: string | null
+          requester_email?: string | null
+          requester_id?: string
+          requester_name?: string | null
+          serial_number?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladder_access_requests_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ladder_members: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          ladder_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          ladder_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          ladder_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladder_members_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ladder_state_photos: {
         Row: {
           caption: string | null
@@ -296,52 +434,57 @@ export type Database = {
       }
       ladder_state_shares: {
         Row: {
+          checklist: Json
           created_at: string
           created_by: string | null
+          created_by_name: string | null
           expires_at: string
           id: string
           ladder_id: string
           last_viewed_at: string | null
           note: string | null
+          recipient: string | null
           revoked_at: string | null
+          title: string | null
           token_hash: string
           vessel_id: string | null
           view_count: number
         }
         Insert: {
+          checklist?: Json
           created_at?: string
           created_by?: string | null
+          created_by_name?: string | null
           expires_at?: string
           id?: string
           ladder_id: string
           last_viewed_at?: string | null
           note?: string | null
+          recipient?: string | null
           revoked_at?: string | null
+          title?: string | null
           token_hash: string
           vessel_id?: string | null
           view_count?: number
         }
         Update: {
+          checklist?: Json
           created_at?: string
           created_by?: string | null
+          created_by_name?: string | null
           expires_at?: string
           id?: string
           ladder_id?: string
           last_viewed_at?: string | null
           note?: string | null
+          recipient?: string | null
           revoked_at?: string | null
+          title?: string | null
           token_hash?: string
           vessel_id?: string | null
           view_count?: number
         }
         Relationships: [
-          {
-            foreignKeyName: "ladder_state_shares_ladder_id_fkey"
-            columns: ["ladder_id"]
-            isOneToOne: false
-            referencedRelation: "ladder_status"
-            referencedColumns: ["ladder_id"]
-          },
           {
             foreignKeyName: "ladder_state_shares_ladder_id_fkey"
             columns: ["ladder_id"]
@@ -358,8 +501,72 @@ export type Database = {
           },
         ]
       }
+      ladder_tasks: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          completed_log_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string
+          id: string
+          kind: Database["public"]["Enums"]["log_kind"]
+          ladder_id: string
+          recurrence_months: number | null
+          status: string
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          completed_log_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          kind?: Database["public"]["Enums"]["log_kind"]
+          ladder_id: string
+          recurrence_months?: number | null
+          status?: string
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          completed_log_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["log_kind"]
+          ladder_id?: string
+          recurrence_months?: number | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ladder_tasks_completed_log_id_fkey"
+            columns: ["completed_log_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ladder_tasks_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ladders: {
         Row: {
+          company_id: string | null
           created_at: string
           id: string
           installed_at: string | null
@@ -374,6 +581,7 @@ export type Database = {
           vessel_id: string | null
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           id?: string
           installed_at?: string | null
@@ -388,6 +596,7 @@ export type Database = {
           vessel_id?: string | null
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           id?: string
           installed_at?: string | null
@@ -402,6 +611,13 @@ export type Database = {
           vessel_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "ladders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ladders_product_id_fkey"
             columns: ["product_id"]
@@ -471,6 +687,7 @@ export type Database = {
           created_at: string
           id: string
           imo_raw: string | null
+          kind: Database["public"]["Enums"]["log_kind"]
           ladder_id: string | null
           notes: string | null
           notified_at: string | null
@@ -480,6 +697,7 @@ export type Database = {
           reporter_name: string | null
           serial_number_raw: string | null
           source: string
+          title: string | null
           vessel_id: string | null
           vessel_name_raw: string | null
         }
@@ -487,6 +705,7 @@ export type Database = {
           created_at?: string
           id?: string
           imo_raw?: string | null
+          kind?: Database["public"]["Enums"]["log_kind"]
           ladder_id?: string | null
           notes?: string | null
           notified_at?: string | null
@@ -496,6 +715,7 @@ export type Database = {
           reporter_name?: string | null
           serial_number_raw?: string | null
           source?: string
+          title?: string | null
           vessel_id?: string | null
           vessel_name_raw?: string | null
         }
@@ -503,6 +723,7 @@ export type Database = {
           created_at?: string
           id?: string
           imo_raw?: string | null
+          kind?: Database["public"]["Enums"]["log_kind"]
           ladder_id?: string | null
           notes?: string | null
           notified_at?: string | null
@@ -512,17 +733,11 @@ export type Database = {
           reporter_name?: string | null
           serial_number_raw?: string | null
           source?: string
+          title?: string | null
           vessel_id?: string | null
           vessel_name_raw?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "maintenance_logs_ladder_id_fkey"
-            columns: ["ladder_id"]
-            isOneToOne: false
-            referencedRelation: "ladder_status"
-            referencedColumns: ["ladder_id"]
-          },
           {
             foreignKeyName: "maintenance_logs_ladder_id_fkey"
             columns: ["ladder_id"]
@@ -598,11 +813,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_lines: {
         Row: {
           cabinet_price_nok: number
           id: string
           line_total_nok: number
+          on_request: boolean
           order_id: string
           product_id: string
           qty: number
@@ -613,6 +862,7 @@ export type Database = {
           cabinet_price_nok?: number
           id?: string
           line_total_nok: number
+          on_request?: boolean
           order_id: string
           product_id: string
           qty: number
@@ -623,6 +873,7 @@ export type Database = {
           cabinet_price_nok?: number
           id?: string
           line_total_nok?: number
+          on_request?: boolean
           order_id?: string
           product_id?: string
           qty?: number
@@ -649,11 +900,16 @@ export type Database = {
       orders: {
         Row: {
           company_id: string | null
+          confirmed_at: string | null
           contact_email: string
           contact_name: string
           contact_phone: string | null
           created_at: string
+          created_by: string | null
+          delivery_address: string | null
+          expected_delivery: string | null
           id: string
+          imo: string | null
           notes: string | null
           order_number: string
           source: string
@@ -664,11 +920,16 @@ export type Database = {
         }
         Insert: {
           company_id?: string | null
+          confirmed_at?: string | null
           contact_email: string
           contact_name: string
           contact_phone?: string | null
           created_at?: string
+          created_by?: string | null
+          delivery_address?: string | null
+          expected_delivery?: string | null
           id?: string
+          imo?: string | null
           notes?: string | null
           order_number?: string
           source?: string
@@ -679,11 +940,16 @@ export type Database = {
         }
         Update: {
           company_id?: string | null
+          confirmed_at?: string | null
           contact_email?: string
           contact_name?: string
           contact_phone?: string | null
           created_at?: string
+          created_by?: string | null
+          delivery_address?: string | null
+          expected_delivery?: string | null
           id?: string
+          imo?: string | null
           notes?: string | null
           order_number?: string
           source?: string
@@ -701,6 +967,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      posts: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          body_en: string | null
+          body_no: string
+          cover_image_url: string | null
+          created_at: string
+          excerpt_en: string | null
+          excerpt_no: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          status: string
+          tag_en: string
+          tag_no: string
+          title_en: string | null
+          title_no: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          body_en?: string | null
+          body_no?: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt_en?: string | null
+          excerpt_no?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          status?: string
+          tag_en?: string
+          tag_no?: string
+          title_en?: string | null
+          title_no: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          body_en?: string | null
+          body_no?: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt_en?: string | null
+          excerpt_no?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          status?: string
+          tag_en?: string
+          tag_no?: string
+          title_en?: string | null
+          title_no?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_price_history: {
         Row: {
@@ -743,18 +1069,208 @@ export type Database = {
           },
         ]
       }
+      production_job_steps: {
+        Row: {
+          description: string | null
+          done_at: string | null
+          done_by: string | null
+          done_by_name: string | null
+          id: string
+          job_id: string
+          note: string | null
+          position: number
+          title: string
+        }
+        Insert: {
+          description?: string | null
+          done_at?: string | null
+          done_by?: string | null
+          done_by_name?: string | null
+          id?: string
+          job_id: string
+          note?: string | null
+          position: number
+          title: string
+        }
+        Update: {
+          description?: string | null
+          done_at?: string | null
+          done_by?: string | null
+          done_by_name?: string | null
+          id?: string
+          job_id?: string
+          note?: string | null
+          position?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_job_steps_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_jobs: {
+        Row: {
+          cabinet_name: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_label: string | null
+          delivered_at: string | null
+          due_date: string | null
+          id: string
+          job_number: string
+          ladder_id: string | null
+          length_m: number | null
+          order_id: string | null
+          order_line_id: string | null
+          order_number: string | null
+          product_id: string
+          product_name: string
+          product_number: string
+          serial_number: string | null
+          shipped_at: string | null
+          spec_notes: string | null
+          started_at: string | null
+          status: string
+          steps: number | null
+          updated_at: string
+          vessel_name: string | null
+          with_cabinet: boolean
+        }
+        Insert: {
+          cabinet_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_label?: string | null
+          delivered_at?: string | null
+          due_date?: string | null
+          id?: string
+          job_number?: string
+          ladder_id?: string | null
+          length_m?: number | null
+          order_id?: string | null
+          order_line_id?: string | null
+          order_number?: string | null
+          product_id: string
+          product_name: string
+          product_number: string
+          serial_number?: string | null
+          shipped_at?: string | null
+          spec_notes?: string | null
+          started_at?: string | null
+          status?: string
+          steps?: number | null
+          updated_at?: string
+          vessel_name?: string | null
+          with_cabinet?: boolean
+        }
+        Update: {
+          cabinet_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_label?: string | null
+          delivered_at?: string | null
+          due_date?: string | null
+          id?: string
+          job_number?: string
+          ladder_id?: string | null
+          length_m?: number | null
+          order_id?: string | null
+          order_line_id?: string | null
+          order_number?: string | null
+          product_id?: string
+          product_name?: string
+          product_number?: string
+          serial_number?: string | null
+          shipped_at?: string | null
+          spec_notes?: string | null
+          started_at?: string | null
+          status?: string
+          steps?: number | null
+          updated_at?: string
+          vessel_name?: string | null
+          with_cabinet?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_jobs_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_jobs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_jobs_order_line_id_fkey"
+            columns: ["order_line_id"]
+            isOneToOne: false
+            referencedRelation: "order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_jobs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_step_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          position: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean
           cabinet_product_id: string | null
           created_at: string
+          description: string | null
           id: string
+          image_url: string | null
           kind: Database["public"]["Enums"]["product_kind"]
           length_m: number | null
           name: string
           price_nok: number
           price_on_request: boolean
           product_number: string
+          sort_order: number
           steps: number | null
           updated_at: string
         }
@@ -762,13 +1278,16 @@ export type Database = {
           active?: boolean
           cabinet_product_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          image_url?: string | null
           kind: Database["public"]["Enums"]["product_kind"]
           length_m?: number | null
           name: string
           price_nok: number
           price_on_request?: boolean
           product_number: string
+          sort_order?: number
           steps?: number | null
           updated_at?: string
         }
@@ -776,13 +1295,16 @@ export type Database = {
           active?: boolean
           cabinet_product_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          image_url?: string | null
           kind?: Database["public"]["Enums"]["product_kind"]
           length_m?: number | null
           name?: string
           price_nok?: number
           price_on_request?: boolean
           product_number?: string
+          sort_order?: number
           steps?: number | null
           updated_at?: string
         }
@@ -792,6 +1314,164 @@ export type Database = {
             columns: ["cabinet_product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          last_seen_at: string | null
+          notify_email: boolean
+          phone: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          last_seen_at?: string | null
+          notify_email?: boolean
+          phone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          last_seen_at?: string | null
+          notify_email?: boolean
+          phone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      service_agreements: {
+        Row: {
+          company_id: string
+          covers: string | null
+          created_at: string
+          created_by: string | null
+          ends_on: string | null
+          id: string
+          interval_months: number
+          notes: string | null
+          price_nok: number | null
+          starts_on: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          covers?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          id?: string
+          interval_months?: number
+          notes?: string | null
+          price_nok?: number | null
+          starts_on: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          covers?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          id?: string
+          interval_months?: number
+          notes?: string | null
+          price_nok?: number | null
+          starts_on?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_agreements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_bookings: {
+        Row: {
+          created_at: string
+          id: string
+          ladder_id: string
+          location: string | null
+          notes: string | null
+          preferred_date: string | null
+          requested_by: string | null
+          requester_name: string | null
+          scheduled_date: string | null
+          service_report_id: string | null
+          staff_note: string | null
+          status: string
+          technician: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ladder_id: string
+          location?: string | null
+          notes?: string | null
+          preferred_date?: string | null
+          requested_by?: string | null
+          requester_name?: string | null
+          scheduled_date?: string | null
+          service_report_id?: string | null
+          staff_note?: string | null
+          status?: string
+          technician?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ladder_id?: string
+          location?: string | null
+          notes?: string | null
+          preferred_date?: string | null
+          requested_by?: string | null
+          requester_name?: string | null
+          scheduled_date?: string | null
+          service_report_id?: string | null
+          staff_note?: string | null
+          status?: string
+          technician?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_bookings_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_bookings_service_report_id_fkey"
+            columns: ["service_report_id"]
+            isOneToOne: false
+            referencedRelation: "service_reports"
             referencedColumns: ["id"]
           },
         ]
@@ -841,14 +1521,138 @@ export type Database = {
             foreignKeyName: "service_reports_ladder_id_fkey"
             columns: ["ladder_id"]
             isOneToOne: false
-            referencedRelation: "ladder_status"
-            referencedColumns: ["ladder_id"]
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_members: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          category: string
+          closed_at: string | null
+          company_id: string | null
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ladder_id: string | null
+          last_message_at: string
+          priority: string
+          status: string
+          subject: string
+          ticket_number: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          closed_at?: string | null
+          company_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ladder_id?: string | null
+          last_message_at?: string
+          priority?: string
+          status?: string
+          subject: string
+          ticket_number?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          closed_at?: string | null
+          company_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ladder_id?: string | null
+          last_message_at?: string
+          priority?: string
+          status?: string
+          subject?: string
+          ticket_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "service_reports_ladder_id_fkey"
+            foreignKeyName: "support_tickets_ladder_id_fkey"
             columns: ["ladder_id"]
             isOneToOne: false
             referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          body: string
+          created_at: string
+          from_staff: boolean
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          body: string
+          created_at?: string
+          from_staff?: boolean
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          from_staff?: boolean
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -933,71 +1737,73 @@ export type Database = {
     Views: {
       ladder_status: {
         Row: {
+          booked_service_date: string | null
           company_id: string | null
+          company_name: string | null
           days_until_service: number | null
           imo: string | null
           installed_at: string | null
           ladder_id: string | null
           last_maintenance_at: string | null
           last_service_at: string | null
-          last_service_result:
-            | Database["public"]["Enums"]["service_result"]
-            | null
+          last_service_result: Database["public"]["Enums"]["service_result"] | null
           length_m: number | null
           next_service_due: string | null
+          next_task_due: string | null
+          open_tasks: number | null
           produced_at: string | null
           product_name: string | null
           product_number: string | null
           public_code: string | null
           serial_number: string | null
+          service_interval_months: number | null
           service_state: string | null
           status: Database["public"]["Enums"]["ladder_lifecycle_status"] | null
           steps: number | null
           vessel_id: string | null
           vessel_name: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "ladders_vessel_id_fkey"
-            columns: ["vessel_id"]
-            isOneToOne: false
-            referencedRelation: "vessels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vessels_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
+      advance_job: { Args: { p_job: string; p_status: string; p_carrier?: string; p_tracking?: string }; Returns: undefined }
+      assign_job_serial: { Args: { p_job: string; p_serial: string }; Returns: string }
+      cancel_service_booking: { Args: { p_booking: string }; Returns: undefined }
+      complete_ladder_task: { Args: { p_task: string; p_notes?: string; p_performed_at?: string }; Returns: string }
+      confirm_order: { Args: { p_order: string; p_due_date?: string }; Returns: number }
+      create_my_company: { Args: { p_name: string; p_org_number?: string; p_address?: string; p_postal_code?: string; p_city?: string; p_contact_phone?: string }; Returns: string }
+      create_ticket: { Args: { p_subject: string; p_body: string; p_category?: string; p_ladder?: string; p_company?: string }; Returns: string }
+      decide_ladder_access: { Args: { p_request: string; p_approve: boolean; p_role?: string; p_note?: string }; Returns: undefined }
+      finish_maintenance_report: { Args: { p_log: string; p_paths?: string[] }; Returns: Json }
+      get_ladder_share: { Args: { p_token: string }; Returns: Json }
+      install_ladder: { Args: { p_ladder: string; p_vessel: string; p_installed_at?: string }; Returns: undefined }
       is_valid_imo: { Args: { value: string }; Returns: boolean }
       is_valid_org_number: { Args: { value: string }; Returns: boolean }
+      mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number }
       next_order_number: { Args: never; Returns: string }
+      place_order: { Args: { payload: Json }; Returns: Json }
+      portal_bootstrap: { Args: never; Returns: Json }
       purge_expired_shares: { Args: { retain_days?: number }; Returns: number }
+      reply_ticket: { Args: { p_ticket: string; p_body: string }; Returns: undefined }
+      request_ladder_access: { Args: { p_serial: string; p_message?: string }; Returns: Json }
+      request_service: { Args: { p_ladder: string; p_preferred_date?: string; p_location?: string; p_notes?: string }; Returns: string }
+      set_production_step: { Args: { p_step: string; p_done: boolean; p_note?: string }; Returns: Json }
+      set_ticket_status: { Args: { p_ticket: string; p_status: string }; Returns: undefined }
+      submit_contact_request: { Args: { payload: Json }; Returns: string }
+      submit_maintenance_report: { Args: { payload: Json }; Returns: Json }
+      subscribe_newsletter: { Args: { p_email: string }; Returns: boolean }
     }
     Enums: {
       company_role: "owner" | "admin" | "member"
       email_status: "queued" | "sent" | "failed"
-      ladder_lifecycle_status:
-        | "in_production"
-        | "delivered"
-        | "installed"
-        | "retired"
+      ladder_lifecycle_status: "in_production" | "delivered" | "installed" | "retired"
       ladder_photo_kind: "ladder" | "attachment_point" | "overview" | "other"
-      order_status:
-        | "new"
-        | "quoted"
-        | "confirmed"
-        | "in_production"
-        | "delivered"
-        | "cancelled"
+      log_kind: "maintenance" | "inspection" | "test" | "usage" | "repair" | "note"
+      order_status: "new" | "quoted" | "confirmed" | "in_production" | "delivered" | "cancelled"
       product_kind: "ladder" | "cabinet" | "spare_part"
       service_result: "ok" | "ok_with_remarks" | "failed"
+      staff_role: "admin" | "production"
       vessel_role: "master" | "crew" | "viewer"
     }
     CompositeTypes: {
@@ -1006,146 +1812,17 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type PublicSchema = Database["public"]
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
+/** Radtypen til en tabell eller et view: Tables<'ladders'>. */
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+  T extends keyof (PublicSchema["Tables"] & PublicSchema["Views"]),
+> = (PublicSchema["Tables"] & PublicSchema["Views"])[T] extends { Row: infer R } ? R : never
 
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+export type TablesInsert<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T]["Insert"]
 
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+export type TablesUpdate<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T]["Update"]
 
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      company_role: ["owner", "admin", "member"],
-      email_status: ["queued", "sent", "failed"],
-      ladder_lifecycle_status: [
-        "in_production",
-        "delivered",
-        "installed",
-        "retired",
-      ],
-      ladder_photo_kind: ["ladder", "attachment_point", "overview", "other"],
-      order_status: [
-        "new",
-        "quoted",
-        "confirmed",
-        "in_production",
-        "delivered",
-        "cancelled",
-      ],
-      product_kind: ["ladder", "cabinet", "spare_part"],
-      service_result: ["ok", "ok_with_remarks", "failed"],
-      vessel_role: ["master", "crew", "viewer"],
-    },
-  },
-} as const
+export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][T]

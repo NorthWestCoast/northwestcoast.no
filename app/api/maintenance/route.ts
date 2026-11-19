@@ -1,27 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clean, clientIp, isBot, isEmail, rateLimit, langOf, tr } from '@/lib/api-guard';
-import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { SUPPORT_PHONE } from '@/lib/mail';
-import { notifyMaintenance } from './notify';
+import { MAINTENANCE_BUCKET, finishMaintenance } from './notify';
 
-// Signering av opplastings-URL-er og e-postutsending kan ta noen
-// sekunder; standardgrensen er knapp når flere bilder er med.
+// E-postutsendingen (når rapporten er uten bilder) kan ta noen sekunder.
 export const maxDuration = 20;
 
 /**
- * Trinn 1 av vedlikeholdsinnsending: lagre teksten, og gi klienten signerte
- * opplastings-URL-er for bildene.
+ * Trinn 1 av vedlikeholdsinnsending: lagre teksten, og fortell klienten hvor
+ * bildene skal lastes opp.
  *
- * Bildebytes går ALDRI gjennom denne ruten. Tidligere kom de som base64 i
- * JSON-bodyen, og ett eneste 5 MB-bilde ble 6,7 MB – godt over Vercels
- * 4,5 MB grense for serverless-funksjoner. Nå laster nettleseren opp direkte
- * til Supabase Storage, og ruten håndterer bare metadata.
+ * Bildebytes går ALDRI gjennom denne ruten. Nettleseren laster opp direkte
+ * til Supabase Storage, i en mappe med rapportens id. En lagringspolicy åpner
+ * den mappen for opplasting i 30 minutter, til rapporten er avsluttet. Ruten
+ * kjører med besøkerens egen (anonyme) sesjon, uten service-role.
  */
 
-type PhotoRequest = { name?: string; type?: string; capturedAt?: string | null };
+type PhotoRequest = { name?: string; type?: string };
 
 const MAX_IMAGES = 10;
-const BUCKET = 'maintenance-photos';
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 
 /** Gjør filnavnet trygt som storage-sti uten å miste gjenkjennelighet. */
@@ -55,7 +53,7 @@ export async function POST(req: NextRequest) {
   const photos = (Array.isArray(body.photos) ? body.photos : []).slice(
     0,
     MAX_IMAGES,
-  ) as PhotoRequest[];
+  ) as (PhotoRequest | null)[];
 
   if (!name || !boat || !serial) {
     return NextResponse.json(
@@ -67,90 +65,61 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: tr(lang, 'E-postadressen ser ikke gyldig ut.', 'The email address does not look valid.') }, { status: 400 });
   }
 
-  if (!hasServiceRole()) {
-    console.error('[maintenance] Supabase er ikke konfigurert – rapport tapt.');
-    return NextResponse.json(
-      { error: tr(lang, `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.`, `We could not save the report right now. Please call us on ${SUPPORT_PHONE}.`) },
-      { status: 500 },
-    );
+  const failed = tr(
+    lang,
+    `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.`,
+    `We could not save the report right now. Please call us on ${SUPPORT_PHONE}.`,
+  );
+
+  let supabase: Awaited<ReturnType<typeof createServerSupabase>>;
+  try {
+    supabase = await createServerSupabase();
+  } catch (error) {
+    console.error('[maintenance] Supabase er ikke konfigurert – rapport tapt:', error);
+    return NextResponse.json({ error: failed }, { status: 500 });
   }
 
-  const supabase = createServiceSupabase();
+  // submit_maintenance_report() prøver å koble serienummeret til en registrert
+  // leider. Treffer den ikke, lagres rapporten likevel med råteksten – en
+  // rapport skal aldri gå tapt fordi oppslaget bommet.
+  const { data, error } = await supabase.rpc('submit_maintenance_report', {
+    payload: { name, boat, imo, serial, email, notes },
+  });
 
-  // Prøv å koble serienummeret til en registrert leider. Treffer vi ikke,
-  // lagres innsendingen likevel med råteksten – en rapport skal aldri gå tapt
-  // fordi oppslaget bommet.
-  const { data: ladder } = await supabase
-    .from('ladders')
-    .select('id, vessel_id')
-    .eq('serial_number', serial)
-    .maybeSingle();
-
-  const { data: log, error: logError } = await supabase
-    .from('maintenance_logs')
-    .insert({
-      ladder_id: ladder?.id ?? null,
-      vessel_id: ladder?.vessel_id ?? null,
-      serial_number_raw: serial,
-      vessel_name_raw: boat,
-      imo_raw: imo || null,
-      reporter_name: name,
-      reporter_email: email || null,
-      notes: notes || null,
-      source: 'web',
-    })
-    .select('id')
-    .single();
-
-  if (logError || !log) {
-    console.error('[maintenance] Kunne ikke lagre rapport:', logError);
-    return NextResponse.json(
-      { error: tr(lang, `Vi klarte ikke å lagre rapporten nå. Ring oss på ${SUPPORT_PHONE}.`, `We could not save the report right now. Please call us on ${SUPPORT_PHONE}.`) },
-      { status: 500 },
-    );
+  if (error?.code === 'P0001') {
+    // Databasens egne avslag (manglende felt, for mange rapporter).
+    return NextResponse.json({ error: tr(lang, error.message, failed) }, { status: 400 });
   }
 
-  // ── Signerte opplastings-URL-er ─────────────────────────────────────────
-  // `index` peker tilbake på klientens photos-array. Uten den ville et
-  // bilde som filtreres bort her forskyve alle de påfølgende, og filene
-  // havne på feil sti.
-  const uploads: { index: number; path: string; token: string }[] = [];
+  const result = data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+  const logId = typeof result?.log_id === 'string' ? result.log_id : null;
+
+  if (error || !logId) {
+    console.error('[maintenance] Kunne ikke lagre rapport:', error?.code, error?.message);
+    return NextResponse.json({ error: failed }, { status: 500 });
+  }
+
+  // ── Hvor bildene skal lastes opp ────────────────────────────────────────
+  // `index` peker tilbake på klientens photos-array. Uten den ville et bilde
+  // som filtreres bort her forskyve alle de påfølgende, og filene havne på
+  // feil sti.
+  const uploads: { index: number; path: string }[] = [];
 
   for (const [index, photo] of photos.entries()) {
-    const type = clean(photo.type, 80);
-    if (!ALLOWED_TYPES.includes(type)) continue;
-
-    const path = `${log.id}/${index + 1}-${safeName(photo.name ?? '', index)}`;
-
-    const { data: signed, error: signError } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUploadUrl(path);
-
-    if (signError || !signed) {
-      console.error('[maintenance] Kunne ikke signere opplasting:', signError);
-      continue;
-    }
-
-    // Raden opprettes nå; fullfør-steget rydder bort de som aldri ble lastet opp.
-    await supabase.from('maintenance_photos').insert({
-      maintenance_log_id: log.id,
-      storage_path: path,
-      captured_at: typeof photo.capturedAt === 'string' ? photo.capturedAt : null,
-    });
-
-    uploads.push({ index, path, token: signed.token });
+    if (!ALLOWED_TYPES.includes(clean(photo?.type, 80))) continue;
+    uploads.push({ index, path: `${logId}/${index + 1}-${safeName(photo?.name ?? '', index)}` });
   }
 
-  // Uten bilder er rapporten komplett med én gang – varsle nå.
+  // Uten bilder er rapporten komplett med én gang – avslutt og varsle nå.
   if (uploads.length === 0) {
-    await notifyMaintenance(log.id);
+    await finishMaintenance(supabase, logId, [], lang);
   }
 
   return NextResponse.json({
     ok: true,
-    logId: log.id,
-    bucket: BUCKET,
+    logId,
+    bucket: MAINTENANCE_BUCKET,
+    matchedLadder: result?.matched === true,
     uploads,
-    matchedLadder: Boolean(ladder),
   });
 }

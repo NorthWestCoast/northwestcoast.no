@@ -27,7 +27,7 @@ export type MailResult =
   | { ok: false; error: string };
 
 export interface MailProvider {
-  /** Kort navn, lagres i email_log.provider for sporbarhet. */
+  /** Kort navn på leverandøren, til logger og feilsøking. */
   readonly name: string;
   send(message: MailMessage): Promise<MailResult>;
 }

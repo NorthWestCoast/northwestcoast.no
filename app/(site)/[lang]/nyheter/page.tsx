@@ -5,8 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
-import { ARTICLES, localizeArticle } from '@/lib/articles';
+import { canOptimizeImage } from '@/lib/articles';
+import { getArticles } from '@/lib/posts';
 import { DEFAULT_LANG, getDict, isLang, localePath, pageMetadata } from '@/lib/i18n';
+
+// Lista følger nyhetene i databasen: den bygges på nytt når admin kaller
+// revalidateTag(POSTS_TAG), og senest etter en time.
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -25,7 +30,7 @@ export default async function NyheterPage({
   const { lang: raw } = await params;
   const lang = isLang(raw) ? raw : DEFAULT_LANG;
   const t = getDict(lang);
-  const articles = ARTICLES.map((a) => localizeArticle(a, lang));
+  const articles = await getArticles(lang);
 
   return (
     <>
@@ -53,6 +58,7 @@ export default async function NyheterPage({
                   alt={article.title}
                   fill sizes="(max-width: 960px) 100vw, 50vw"
                   style={{ objectFit: 'cover' }}
+                  unoptimized={!canOptimizeImage(article.image)}
                 />
               </div>
               <div className="nyheter-card-body">

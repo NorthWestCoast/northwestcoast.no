@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, DM_Sans, DM_Mono } from 'next/font/google';
 import '../globals.css'; // Global styles
+import './portal.css';
 import Analytics from '@/components/analytics';
 import { SITE_URL } from '@/lib/site';
 

@@ -1,102 +1,153 @@
-import { createServerSupabase } from '@/lib/supabase/server';
-import ActionForm from '@/components/action-form';
-import { inviteColleague } from '../actions';
-import { dato } from '@/lib/format';
+import type { Metadata } from 'next';
+import { requireUser } from '@/lib/portal/context';
+import { Badge, Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
+import { ActionButton, PortalForm } from '@/components/portal/forms';
+import { COMPANY_ROLES } from '@/lib/portal/labels';
+import { InviteForm } from '@/components/minside/forms';
+import InvitationList from '@/components/minside/invitation-list';
+import { loadPeople, personName } from '@/components/minside/people';
+import { changeMemberRole, inviteToCompany, removeCompanyMember } from './actions';
 
-/**
- * Personer med tilgang.
- *
- * Invitasjonsskjemaet vises for alle, men RLS avgjør om innsendingen går
- * gjennom – bare administratorer og eiere får lov. Å skjule skjemaet for
- * andre ville krevd et rollekall til, og feilmeldingen fra serveren er
- * tydeligere enn et manglende skjema.
- */
+export const metadata: Metadata = { title: 'Personer' };
+
+/** Hvem som er med i selskapene, og invitasjoner til nye kolleger. */
 export default async function PersonerPage() {
-  const supabase = await createServerSupabase();
+  const { supabase, ctx } = await requireUser('/minside/personer');
 
-  const { data: companies } = await supabase.from('companies').select('id, name');
-  const company = companies?.[0];
-
-  if (!company) {
-    return (
-      <>
-        <h1>Personer</h1>
-        <p className="ms-muted">Kontoen din er ikke knyttet til et rederi ennå.</p>
-      </>
-    );
-  }
+  const companyIds = ctx.companies.map((company) => company.id);
+  const managedIds = ctx.companies.filter((c) => c.role === 'owner' || c.role === 'admin').map((c) => c.id);
 
   const [{ data: members }, { data: invitations }] = await Promise.all([
-    supabase.from('company_members').select('user_id, role, created_at').eq('company_id', company.id),
-    supabase
-      .from('company_invitations')
-      .select('id, email, role, accepted_at, expires_at')
-      .eq('company_id', company.id)
-      .order('created_at', { ascending: false }),
+    companyIds.length
+      ? supabase.from('company_members').select('company_id, user_id, role, created_at').in('company_id', companyIds).order('created_at')
+      : Promise.resolve({ data: [] }),
+    managedIds.length
+      ? supabase
+          .from('access_invitations')
+          .select('id, company_id, email, role, created_at, expires_at, accepted_at, revoked_at')
+          .eq('scope', 'company')
+          .in('company_id', managedIds)
+          .is('accepted_at', null)
+          .is('revoked_at', null)
+          .order('created_at', { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
 
-  const ROLE_LABEL: Record<string, string> = {
-    owner: 'Eier',
-    admin: 'Administrator',
-    member: 'Medlem',
-  };
+  const people = await loadPeople(supabase, (members ?? []).map((m) => m.user_id));
 
   return (
     <>
-      <h1>Personer</h1>
-      <p className="ms-muted ms-hint">
-        {members?.length ?? 0} person(er) har tilgang til {company.name}.
-      </p>
+      <PageHeader
+        title="Personer"
+        description="Alle i selskapet ser selskapets fartøy og leidere. Eiere og administratorer kan invitere, endre roller og gi tilgang videre."
+      />
 
-      <section className="ms-section">
-        <h2>Tilganger</h2>
-        {invitations?.length ? (
-          <table className="ms-table">
-            <thead><tr><th>E-post</th><th>Rolle</th><th>Status</th><th>Utløper</th></tr></thead>
-            <tbody>
-              {invitations.map((inv) => (
-                <tr key={inv.id}>
-                  <td>{inv.email}</td>
-                  <td>{ROLE_LABEL[inv.role] ?? inv.role}</td>
-                  <td>
-                    {inv.accepted_at ? (
-                      <span className="ms-badge ms-badge-ok">Aktiv</span>
-                    ) : new Date(inv.expires_at) < new Date() ? (
-                      <span className="ms-badge ms-badge-overdue">Utløpt</span>
-                    ) : (
-                      <span className="ms-badge ms-badge-due_soon">Venter</span>
-                    )}
-                  </td>
-                  <td>{inv.accepted_at ? '–' : dato(inv.expires_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="ms-muted">Ingen invitasjoner sendt ennå.</p>
-        )}
-      </section>
+      {ctx.companies.length === 0 && (
+        <Card>
+          <Empty title="Du er ikke med i noe selskap" action={{ href: '/minside/profil', label: 'Registrer et selskap' }}>
+            Tilgang til enkeltfartøy og enkeltleidere styres på fartøyets og leiderens egen side.
+          </Empty>
+        </Card>
+      )}
 
-      <section className="ms-section">
-        <h2>Inviter en kollega</h2>
-        <p className="ms-muted ms-hint">
-          Personen får en e-post og logger inn med adressen sin. Ingen passord
-          å dele. Bare administratorer og eiere kan invitere.
-        </p>
-        <ActionForm action={inviteColleague} submitLabel="Send invitasjon">
-          <input type="hidden" name="company_id" value={company.id} />
-          <div className="adm-grid">
-            <label>E-post *<input name="email" type="email" required placeholder="kollega@rederi.no" /></label>
-            <label>
-              Rolle
-              <select name="role" defaultValue="member">
-                <option value="member">Medlem – kan se alt</option>
-                <option value="admin">Administrator – kan også invitere</option>
-              </select>
-            </label>
+      {ctx.companies.map((company) => {
+        const canManage = company.role === 'owner' || company.role === 'admin';
+        const isOwner = company.role === 'owner';
+        const companyMembers = (members ?? []).filter((m) => m.company_id === company.id);
+        const owners = companyMembers.filter((m) => m.role === 'owner').length;
+        const pending = (invitations ?? []).filter((i) => i.company_id === company.id);
+        // Bare eiere kan dele ut eierrollen.
+        const roles = isOwner
+          ? COMPANY_ROLES
+          : Object.fromEntries(Object.entries(COMPANY_ROLES).filter(([value]) => value !== 'owner'));
+
+        return (
+          <div key={company.id}>
+            <Card
+              title={company.name}
+              description={`Din rolle: ${COMPANY_ROLES[company.role] ?? company.role}`}
+              flush
+            >
+              <table className="pt-table">
+                <thead>
+                  <tr>
+                    <th>Navn</th>
+                    <th>E-post</th>
+                    <th>Rolle</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {companyMembers.map((member) => {
+                    const person = people.get(member.user_id);
+                    const self = member.user_id === ctx.userId;
+                    const lastOwner = member.role === 'owner' && owners <= 1;
+                    // Administratorer kan ikke røre eiere, og den siste eieren står fast.
+                    const editable = canManage && !lastOwner && (isOwner || member.role !== 'owner');
+                    return (
+                      <tr key={member.user_id}>
+                        <Td label="Navn" className="pt-table-strong">{personName(person)}{self ? ' (deg)' : ''}</Td>
+                        <Td label="E-post">{person?.email ?? '–'}</Td>
+                        <Td label="Rolle">
+                          {editable ? (
+                            <PortalForm action={changeMemberRole} submitLabel="Lagre rolle" resetOnSuccess={false}>
+                              <input type="hidden" name="company_id" value={company.id} />
+                              <input type="hidden" name="user_id" value={member.user_id} />
+                              <div className="pt-field">
+                                <select name="role" defaultValue={member.role} aria-label={`Rolle for ${personName(person)}`}>
+                                  {Object.entries(roles).map(([value, label]) => (
+                                    <option key={value} value={value}>{label}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </PortalForm>
+                          ) : (
+                            <div><Badge tone={member.role === 'owner' ? 'info' : 'neutral'}>{COMPANY_ROLES[member.role] ?? member.role}</Badge></div>
+                          )}
+                        </Td>
+                        <Td>
+                          {editable && (
+                            <ActionButton
+                              action={removeCompanyMember}
+                              fields={{ company_id: company.id, user_id: member.user_id }}
+                              label={self ? 'Forlat selskapet' : 'Fjern'}
+                              tone="danger"
+                              confirm={
+                                self
+                                  ? `Forlate ${company.name}? Du mister tilgangen til selskapets fartøy og leidere.`
+                                  : `Fjerne ${personName(person)} fra ${company.name}?`
+                              }
+                            />
+                          )}
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {canManage && (
+                <Disclosure summary="Inviter en kollega">
+                  <InviteForm
+                    action={inviteToCompany}
+                    fields={{ company_id: company.id }}
+                    roles={roles}
+                    defaultRole="member"
+                    idPrefix={`invite-${company.id}`}
+                    submitLabel="Send invitasjon"
+                  />
+                </Disclosure>
+              )}
+            </Card>
+
+            {canManage && pending.length > 0 && (
+              <Card title={`Invitasjoner som venter – ${company.name}`} flush>
+                <InvitationList invitations={pending} roles={COMPANY_ROLES} />
+              </Card>
+            )}
           </div>
-        </ActionForm>
-      </section>
+        );
+      })}
     </>
   );
 }

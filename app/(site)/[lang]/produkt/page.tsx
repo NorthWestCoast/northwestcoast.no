@@ -102,6 +102,9 @@ export default async function ProduktPage({
           <div>
             <h2 id="answer-what">{t.product.answerTitle}</h2>
             <p>{t.product.answerBody}</p>
+            <Link href={localePath(lang, '/3d-leider')} className="news-link">
+              {t.products.ladder.view3d}
+            </Link>
           </div>
           <div>
             <h2>{t.product.lengthTitle}</h2>

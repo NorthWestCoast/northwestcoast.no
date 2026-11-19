@@ -56,6 +56,21 @@ export const en: Dict = {
       description:
         'Order your Argostep Lifeboat Ladder. Choose a length between 2 and 15 metres plus accessories – and see the ladder in 3D as you configure it.',
     },
+    omOss: {
+      title: 'About us | NorthWest Coast',
+      description:
+        'Innovation from Ålesund. NorthWest Coast develops maritime safety products, made locally in Sunnmøre, Norway.',
+    },
+    produkter: {
+      title: 'Products | NorthWest Coast',
+      description:
+        'Explore our range of maritime ladders and storage solutions: the Argostep embarkation and lifeboat ladder, storage cabinets, spare parts and service.',
+    },
+    leider3d: {
+      title: 'Argostep in 3D – interactive model | NorthWest Coast',
+      description:
+        'Interactive 3D model of the Argostep ladder. Rotate, zoom and explore it in detail – and view it in AR on your phone.',
+    },
   },
 
   nav: {
@@ -571,5 +586,171 @@ export const en: Dict = {
 
   errors: {
     generic: 'Something went wrong. Please try again.',
+  },
+
+  // ── About us, Products and the 3D page ──
+
+  account: {
+    navLabel: 'Log in',
+    title: 'Log in to Min side, the customer portal (in Norwegian)',
+  },
+
+  about: {
+    navLabel: 'About us',
+    label: 'About NorthWest Coast',
+    title: 'Innovation from Ålesund',
+    intro:
+      'NorthWest Coast was founded by three entrepreneurs from Ålesund. With support from local investors and organisations such as Innovation Norway and the Municipality of Ålesund, we have developed a ladder that sets new standards for safety and efficiency.',
+    production: {
+      label: 'Made in Sunnmøre',
+      title: 'Local production',
+      sub: 'Our ladders are proudly made in Sunnmøre, with components from local suppliers. This ensures high quality and supports local business.',
+      chain:
+        'Step and strap fittings are supplied by Pla-Mek, the extenders are made by Rempro, the blocks come from Mesterplast and the straps are sewn at Sula Bedriftstjeneste, before everything is assembled at Haram Industrier.',
+      suppliersLabel: 'Our suppliers',
+      roles: {
+        plaMek: 'Step and strap fittings',
+        rempro: 'Extenders',
+        mesterplast: 'Blocks',
+        sula: 'Straps',
+        haram: 'Assembly',
+      },
+      visit: (name: string) => `Visit the ${name} website`,
+      imageAlt: 'The Argostep ladder folded',
+    },
+    founders: {
+      label: 'The founders',
+      title: 'Over 80 years of combined experience',
+      sub: 'With more than 80 years of combined maritime experience, our team brings a deep understanding of life at sea and a passion for improving it. Based in Ålesund, we continue our journey towards innovation and safety.',
+      role: 'Founder',
+    },
+    supporters: {
+      label: 'Supporters',
+      title: 'Backed by leading organisations',
+      sub: 'Our development has been made possible by support from Innovation Norway and the Municipality of Ålesund, together with local investors who share our vision of safer and more efficient maritime operations.',
+      names: ['Innovation Norway', 'Municipality of Ålesund'],
+    },
+  },
+
+  products: {
+    navLabel: 'Products',
+    overview: 'Product overview',
+    label: 'Range',
+    title: 'Our products',
+    sub: 'Innovative maritime solutions for safe boarding and practical storage.',
+    anchors: {
+      ladders: 'Ladders',
+      storage: 'Storage',
+      parts: 'Spare parts and service',
+    },
+    ladder: {
+      label: 'Ladders',
+      title: 'Argostep embarkation and lifeboat ladder',
+      desc: 'The ultimate modular ladder for both embarkation and lifeboat use. Ultra-compact when folded, robust and safe when deployed.',
+      features: [
+        'Modular construction from 2 to 15 metres',
+        'Approved by the Norwegian Maritime Authority',
+        'Folds ultra-compact',
+        'Considerably lighter than traditional wooden ladders',
+        'Weather-resistant materials',
+        'Easy to mount and store',
+      ],
+      more: 'See product details →',
+      view3d: 'See the ladder in 3D →',
+    },
+    range: {
+      label: 'Lengths and prices',
+      title: 'Find the length that fits',
+      sub: (min: number, max: number) =>
+        `Argostep comes in standard lengths from ${min} to ${max} metres. Get in touch if you need something else and we will put together a package for you.`,
+      caption: 'Standard lengths, number of steps and indicative prices for Argostep',
+      price: 'Price excl. VAT',
+    },
+    storage: {
+      label: 'Storage',
+      title: 'Storage cabinet',
+      desc: 'A compact, robust storage solution designed specifically for Argostep ladders. Protects the equipment from wind and weather.',
+      features: [
+        'Weatherproof construction',
+        'Easy to mount on a bulkhead or on deck',
+        'Compact design',
+        'Lockable for security',
+      ],
+      caption: 'Cabinet models, the ladder lengths they fit and indicative prices',
+      model: 'Model',
+      fits: 'Fits ladder',
+      fitsRange: (min: number, max: number) => (min === max ? `${min} m` : `${min}–${max} m`),
+      from: 'from',
+      order: 'Order a ladder with cabinet →',
+      alts: {
+        closed: 'Closed storage cabinet mounted on a bulkhead on board',
+        deck: 'Storage cabinet mounted by the rail on deck',
+        open: 'Open cabinet with the folded Argostep ladder inside',
+      },
+    },
+    parts: {
+      label: 'Spare parts and service',
+      title: 'Replace a part, not the whole ladder',
+      sub: 'Argostep is modular. Individual steps and components can be ordered separately, so you replace what is worn instead of the whole ladder.',
+      cards: {
+        parts: {
+          title: 'Spare parts',
+          desc: 'Individual steps and components are supplied separately. Get in touch and we will find the right parts for your ladder.',
+          cta: 'Contact us →',
+        },
+        service: {
+          title: 'Service and maintenance',
+          desc: 'Contact us about a service agreement, and log completed maintenance for your vessel – with an email receipt as documentation at inspection.',
+          cta: 'Log maintenance →',
+        },
+        customer: {
+          title: 'Already a customer?',
+          desc: 'On Min side, our customer portal (in Norwegian), you can order spare parts and service for your ladders.',
+          cta: 'Log in to Min side →',
+        },
+      },
+    },
+    help: {
+      title: 'Need help choosing the right product?',
+      sub: 'Contact us for a no-obligation chat about your needs.',
+      cta: 'Contact us →',
+    },
+  },
+
+  viewerPage: {
+    navLabel: '3D model',
+    label: '3D and AR',
+    title: 'Argostep in 3D',
+    sub: 'Use your mouse to rotate the ladder. On a phone you can also view it in AR.',
+    howLabel: 'How to use the model',
+    howTitle: 'Rotate, zoom and take a closer look',
+    hints: {
+      rotate: {
+        title: 'Rotate',
+        desc: 'Click and drag with the mouse, or drag with one finger on a phone.',
+      },
+      zoom: {
+        title: 'Zoom',
+        desc: 'Scroll with the mouse, or pinch with two fingers on a phone.',
+      },
+      fullscreen: {
+        title: 'Full screen',
+        desc: 'The button at the top right of the viewer lets the model fill the whole screen.',
+      },
+      ar: {
+        title: 'AR on your phone',
+        desc: 'On phones and tablets that support AR, an AR button appears in the viewer. Tap it to place the ladder in the room in front of you.',
+      },
+    },
+    specsLabel: 'Specifications',
+    specsTitle: 'Technical details',
+    specsSub: 'Technical details for the Argostep maritime ladder.',
+    specs: {
+      stepWeight: { key: 'Weight per step', val: '1.2 kg' },
+      width: { key: 'Width', val: '45 cm' },
+    },
+    modularTitle: 'Modular construction',
+    modularBody:
+      'Argostep is modular and adapted to your vessel, with standard lengths from 2 to 15 metres. Get in touch if you need something else.',
   },
 };

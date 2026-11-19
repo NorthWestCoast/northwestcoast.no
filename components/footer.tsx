@@ -56,7 +56,10 @@ export default function Footer() {
         <div className="fcol">
           <h4>{t.footer.products}</h4>
           <ul>
+            <li><Link href={localePath(lang, '/produkter')}>{t.products.overview}</Link></li>
             <li><Link href={localePath(lang, '/produkt')}>{t.footer.ladder}</Link></li>
+            <li><Link href={localePath(lang, '/3d-leider')}>{t.viewerPage.navLabel}</Link></li>
+            <li><Link href={`${localePath(lang, '/produkter')}#reservedeler`}>{t.footer.parts}</Link></li>
             <li><Link href={localePath(lang, '/kalkulator')}>{t.calculator.navLabel}</Link></li>
             <li><Link href={localePath(lang, '/bestill')}>{t.footer.orderList}</Link></li>
             <li><Link href={localePath(lang, '/vedlikehold')}>{t.footer.maintenance}</Link></li>
@@ -66,6 +69,7 @@ export default function Footer() {
         <div className="fcol">
           <h4>{t.footer.company}</h4>
           <ul>
+            <li><Link href={localePath(lang, '/om-oss')}>{t.footer.about}</Link></li>
             <li><Link href={`${localePath(lang, '/')}#sertifisering`}>{t.footer.certifications}</Link></li>
             <li><Link href={`${localePath(lang, '/')}#kontakt`}>{t.footer.contact}</Link></li>
             <li><Link href={localePath(lang, '/faq')}>{t.footer.faq}</Link></li>

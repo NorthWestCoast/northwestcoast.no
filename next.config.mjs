@@ -13,6 +13,15 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Forsidebilder til nyheter lastes opp i admin og ligger i den offentlige
+    // bøtta i Supabase Storage. Bare den stien slippes gjennom next/image.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
 
   // Gamle URL-er fra dagens live-nettsted, slik at lenker og søkerangering
@@ -21,10 +30,10 @@ const nextConfig = {
     // [gammel sti, ny sti på norsk, ny sti på engelsk]
     const map = [
       ['news', '/nyheter', '/en/nyheter'],
-      ['products', '/produkt', '/en/produkt'],
+      ['products', '/produkter', '/en/produkter'],
       // Kontakt var egen side; skjemaet ligger nå nederst på forsiden.
       ['contact-us', '/#kontakt', '/en#kontakt'],
-      ['about-us', '/', '/en'],
+      ['about-us', '/om-oss', '/en/om-oss'],
       // Innlogging finnes fortsatt, nå som innloggingslenke på e-post.
       ['login', '/logg-inn', '/logg-inn'],
       ['register', '/logg-inn', '/logg-inn'],
@@ -49,7 +58,7 @@ const nextConfig = {
   // (sitemap, robots, llms.txt, /api, /og) vinner før språkreglene kjører.
   async rewrites() {
     // Innloggede områder og tekniske stier hører ikke til språkskallet.
-    const skip = 'no|en|api|og|minside|admin|logg-inn|auth|los|personvern|_next';
+    const skip = 'no|en|api|og|minside|admin|produksjon|logg-inn|auth|los|personvern|_next';
     return {
       beforeFiles: [],
       afterFiles: [

@@ -53,6 +53,21 @@ export const no = {
       description:
         'Bestill din Argostep Livbåtleider. Velg lengde mellom 2 og 15 meter og tilbehør – og se leideren i 3D mens du konfigurerer.',
     },
+    omOss: {
+      title: 'Om oss | NorthWest Coast',
+      description:
+        'Innovasjon fra Ålesund. NorthWest Coast utvikler maritime sikkerhetsprodukter med lokal produksjon på Sunnmøre.',
+    },
+    produkter: {
+      title: 'Produkter | NorthWest Coast',
+      description:
+        'Utforsk vårt sortiment av maritime leidere og oppbevaringsløsninger: Argostep entrings- og livbåtleider, oppbevaringsskap, reservedeler og service.',
+    },
+    leider3d: {
+      title: 'Argostep i 3D – interaktiv modell | NorthWest Coast',
+      description:
+        'Interaktiv 3D-modell av Argostep-leideren. Roter, zoom og utforsk i detalj – og se den i AR på mobil.',
+    },
   },
 
   nav: {
@@ -564,6 +579,174 @@ export const no = {
 
   errors: {
     generic: 'Noe gikk galt. Prøv igjen.',
+  },
+
+  // ── Om oss, Produkter og 3D-siden ──
+  // Blokkene under ligger sist i ordboken med vilje. Teksten bygger på
+  // prototypens sider og på opplysninger som allerede står på nettstedet.
+
+  account: {
+    navLabel: 'Min side',
+    title: 'Logg inn på Min side',
+  },
+
+  about: {
+    navLabel: 'Om oss',
+    label: 'Om NorthWest Coast',
+    title: 'Innovasjon fra Ålesund',
+    intro:
+      'NorthWest Coast ble etablert av tre gründere fra Ålesund. Med støtte fra lokale investorer og organisasjoner som Innovasjon Norge og Ålesund kommune har vi utviklet en leider som setter nye standarder for sikkerhet og effektivitet.',
+    production: {
+      label: 'Produsert på Sunnmøre',
+      title: 'Lokal produksjon',
+      sub: 'Våre leidere er produsert med stolthet på Sunnmøre, med komponenter fra lokale leverandører. Dette sikrer høy kvalitet og støtter lokalt næringsliv.',
+      chain:
+        'Trinn- og stroppefester leveres av Pla-Mek, forlengerne produseres av Rempro, klossene kommer fra Mesterplast, og stroppene sys hos Sula Bedriftstjeneste, før alt settes sammen hos Haram Industrier.',
+      suppliersLabel: 'Leverandørene våre',
+      roles: {
+        plaMek: 'Trinn- og stroppefester',
+        rempro: 'Forlengere',
+        mesterplast: 'Klosser',
+        sula: 'Stropper',
+        haram: 'Montering',
+      },
+      visit: (name: string) => `Besøk nettstedet til ${name}`,
+      imageAlt: 'Argostep-leideren brettet sammen',
+    },
+    founders: {
+      label: 'Gründerne',
+      title: 'Over 80 års samlet erfaring',
+      sub: 'Med over 80 års samlet maritim erfaring bringer vårt team en dyp forståelse og lidenskap for å forbedre livet til sjøs. Med base i Ålesund fortsetter vi vår reise mot innovasjon og sikkerhet.',
+      role: 'Grunnlegger',
+    },
+    supporters: {
+      label: 'Støttespillere',
+      title: 'Støttet av ledende organisasjoner',
+      sub: 'Vår utvikling har vært muliggjort gjennom støtte fra Innovasjon Norge og Ålesund kommune, sammen med lokale investorer som deler vår visjon om tryggere og mer effektive maritime operasjoner.',
+      names: ['Innovasjon Norge', 'Ålesund kommune'],
+    },
+  },
+
+  products: {
+    navLabel: 'Produkter',
+    overview: 'Produktoversikt',
+    label: 'Sortiment',
+    title: 'Våre produkter',
+    sub: 'Innovative maritime løsninger for sikker entring og praktisk lagring.',
+    anchors: {
+      ladders: 'Leidere',
+      storage: 'Oppbevaring',
+      parts: 'Reservedeler og service',
+    },
+    ladder: {
+      label: 'Leidere',
+      title: 'Argostep entrings- og livbåtleider',
+      desc: 'Den ultimate modulære leideren for både entring og livbåt. Ultrakompakt når den er brettet sammen, robust og trygg når den er foldet ut.',
+      features: [
+        'Modulær konstruksjon fra 2 til 15 meter',
+        'Godkjent av Sjøfartsdirektoratet',
+        'Ultrakompakt sammenlegging',
+        'Betydelig lettere enn tradisjonelle treleidere',
+        'Værbestandige materialer',
+        'Enkel montering og lagring',
+      ],
+      more: 'Se produktdetaljer →',
+      view3d: 'Se leideren i 3D →',
+    },
+    range: {
+      label: 'Lengder og priser',
+      title: 'Finn lengden som passer',
+      sub: (min: number, max: number) =>
+        `Argostep leveres i standardlengder fra ${min} til ${max} meter. Ta kontakt ved andre behov, så skreddersyr vi en pakke for deg.`,
+      caption: 'Standardlengder, antall trinn og veiledende priser for Argostep',
+      price: 'Pris eks. mva.',
+    },
+    storage: {
+      label: 'Oppbevaring',
+      title: 'Oppbevaringsskap',
+      desc: 'Kompakt og robust oppbevaringsløsning designet spesielt for Argostep-leidere. Beskytter utstyret mot vær og vind.',
+      features: [
+        'Værbestandig konstruksjon',
+        'Enkel vegg- og dekkmontering',
+        'Kompakt design',
+        'Låsbar for sikkerhet',
+      ],
+      caption: 'Skapmodeller, hvilke leiderlengder de passer til og veiledende priser',
+      model: 'Modell',
+      fits: 'Passer leider',
+      fitsRange: (min: number, max: number) => (min === max ? `${min} m` : `${min}–${max} m`),
+      from: 'fra',
+      order: 'Bestill leider med skap →',
+      alts: {
+        closed: 'Lukket oppbevaringsskap montert på vegg om bord',
+        deck: 'Oppbevaringsskap montert ved rekka på dekk',
+        open: 'Åpent skap med Argostep-leideren brettet sammen inni',
+      },
+    },
+    parts: {
+      label: 'Reservedeler og service',
+      title: 'Bytt en del, ikke hele leideren',
+      sub: 'Argostep er modulært bygget. Enkelttrinn og komponenter kan bestilles separat, så du bytter det som er slitt i stedet for hele leideren.',
+      cards: {
+        parts: {
+          title: 'Reservedeler',
+          desc: 'Enkelttrinn og komponenter leveres separat. Ta kontakt, så finner vi riktige deler til leideren din.',
+          cta: 'Kontakt oss →',
+        },
+        service: {
+          title: 'Service og vedlikehold',
+          desc: 'Ta kontakt for serviceavtale, og registrer utført vedlikehold for fartøyet – med kvittering på e-post som dokumentasjon ved tilsyn.',
+          cta: 'Registrer vedlikehold →',
+        },
+        customer: {
+          title: 'Allerede kunde?',
+          desc: 'På Min side kan du bestille reservedeler og service til leiderne dine.',
+          cta: 'Logg inn på Min side →',
+        },
+      },
+    },
+    help: {
+      title: 'Trenger du hjelp med å velge riktig produkt?',
+      sub: 'Kontakt oss for en uforpliktende samtale om dine behov.',
+      cta: 'Kontakt oss →',
+    },
+  },
+
+  viewerPage: {
+    navLabel: '3D-modell',
+    label: '3D og AR',
+    title: 'Argostep i 3D',
+    sub: 'Bruk musen til å rotere leideren. På mobil kan du også se den i AR.',
+    howLabel: 'Slik bruker du modellen',
+    howTitle: 'Roter, zoom og se nærmere',
+    hints: {
+      rotate: {
+        title: 'Roter',
+        desc: 'Klikk og dra med musen, eller dra med én finger på mobil.',
+      },
+      zoom: {
+        title: 'Zoom',
+        desc: 'Skroll med musen, eller knip med to fingre på mobil.',
+      },
+      fullscreen: {
+        title: 'Fullskjerm',
+        desc: 'Knappen øverst til høyre i visningen lar modellen fylle hele skjermen.',
+      },
+      ar: {
+        title: 'AR på mobil',
+        desc: 'På mobiler og nettbrett som støtter AR, vises en AR-knapp i visningen. Trykk på den for å plassere leideren i rommet foran deg.',
+      },
+    },
+    specsLabel: 'Spesifikasjoner',
+    specsTitle: 'Tekniske detaljer',
+    specsSub: 'Tekniske detaljer for Argostep maritime leider.',
+    specs: {
+      stepWeight: { key: 'Vekt per trinn', val: '1,2 kg' },
+      width: { key: 'Bredde', val: '45 cm' },
+    },
+    modularTitle: 'Modulær konstruksjon',
+    modularBody:
+      'Argostep er modulær og tilpasses fartøyet, med standardlengder fra 2 til 15 meter. Ta kontakt ved andre behov.',
   },
 };
 

@@ -4,20 +4,28 @@ import MaintenanceLogDocument, {
   type MaintenanceLogData,
   type PdfPhoto,
 } from '@/lib/pdf/maintenance-log';
-import { createServerSupabase, createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { uuid } from '@/lib/portal/forms';
+import { logKind } from '@/lib/portal/labels';
+import { BUCKETS } from '@/lib/portal/storage';
 
 // Henting av bilder fra Storage og PDF-rendering tar noen sekunder.
 export const maxDuration = 60;
 
-const BUCKET = 'maintenance-photos';
+const BUCKET = BUCKETS.logs;
 /** Flere enn dette gjør dokumentet tungt uten å tilføre dokumentasjonsverdi. */
 const MAX_PHOTOS = 12;
+const PDF_IMAGE_TYPES = ['image/jpeg', 'image/png'];
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = uuid(rawId);
+  if (!id) {
+    return NextResponse.json({ error: 'Fant ikke leideren.' }, { status: 404 });
+  }
 
   // ── Autorisasjon: brukerens EGEN sesjon, filtrert av RLS ────────────────
   // Er leideren et annet rederis, finnes den ikke for denne brukeren, og
@@ -26,12 +34,14 @@ export async function GET(
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.redirect(new URL('/logg-inn?neste=/minside', _request.nextUrl.origin));
+    return NextResponse.redirect(
+      new URL(`/logg-inn?neste=${encodeURIComponent(`/minside/leider/${id}`)}`, _request.nextUrl.origin),
+    );
   }
 
   const { data: ladder } = await supabase
     .from('ladder_status')
-    .select('ladder_id, serial_number, product_name, product_number, length_m, steps, produced_at, installed_at, next_service_due, vessel_id, vessel_name, imo, company_id')
+    .select('ladder_id, serial_number, product_name, product_number, length_m, steps, produced_at, installed_at, next_service_due, vessel_id, vessel_name, imo, company_name')
     .eq('ladder_id', id)
     .maybeSingle();
 
@@ -39,7 +49,7 @@ export async function GET(
     return NextResponse.json({ error: 'Fant ikke leideren.' }, { status: 404 });
   }
 
-  const [{ data: services }, { data: logs }, { data: company }] = await Promise.all([
+  const [{ data: services }, { data: logs }] = await Promise.all([
     supabase
       .from('service_reports')
       .select('performed_at, performed_by, result, findings, next_service_due')
@@ -47,12 +57,9 @@ export async function GET(
       .order('performed_at', { ascending: false }),
     supabase
       .from('maintenance_logs')
-      .select('id, performed_at, reporter_name, notes')
+      .select('id, performed_at, reporter_name, notes, kind, title')
       .eq('ladder_id', id)
       .order('performed_at', { ascending: false }),
-    ladder.company_id
-      ? supabase.from('companies').select('name').eq('id', ladder.company_id).maybeSingle()
-      : Promise.resolve({ data: null }),
   ]);
 
   const logIds = (logs ?? []).map((l) => l.id);
@@ -76,22 +83,23 @@ export async function GET(
   }
 
   // ── Bildebytes ──────────────────────────────────────────────────────────
-  // Storage-bøttene er private uten policyer, så nedlastingen krever
-  // service-role. Den er trygg her fordi stiene kommer fra rader RLS allerede
-  // har filtrert: vi henter kun filer brukeren nettopp beviste at hun ser.
+  // Bildene hentes med brukerens egen sesjon. Lagringspolicyene gir tilgang
+  // til bilder på leidere hun ser; et bilde som ikke lar seg hente (eller har
+  // et format PDF-en ikke kan vise) utelates, og dokumentet sier hvor mange.
   const selected = (photoRows ?? []).slice(0, MAX_PHOTOS);
   const photos: PdfPhoto[] = [];
 
-  if (selected.length > 0 && hasServiceRole()) {
-    const service = createServiceSupabase();
+  if (selected.length > 0) {
     const logDateById = new Map((logs ?? []).map((l) => [l.id, l.performed_at]));
 
     for (const row of selected) {
-      const { data: blob, error } = await service.storage.from(BUCKET).download(row.storage_path);
+      const { data: blob, error } = await supabase.storage.from(BUCKET).download(row.storage_path);
       if (error || !blob) {
-        console.error('[pdf] Kunne ikke hente bilde:', row.storage_path, error);
+        console.error('[pdf] Kunne ikke hente bilde:', row.storage_path, error?.message);
         continue;
       }
+      // @react-pdf viser bare JPEG og PNG.
+      if (blob.type && !PDF_IMAGE_TYPES.includes(blob.type)) continue;
 
       const buffer = Buffer.from(await blob.arrayBuffer());
       photos.push({
@@ -123,13 +131,15 @@ export async function GET(
       next_service_due: ladder.next_service_due,
     },
     vessel: ladder.vessel_name
-      ? { name: ladder.vessel_name, imo: ladder.imo, company: company?.name ?? null }
+      ? { name: ladder.vessel_name, imo: ladder.imo, company: ladder.company_name }
       : null,
     services: services ?? [],
     maintenance: (logs ?? []).map((l) => ({
       performed_at: l.performed_at,
       reporter_name: l.reporter_name,
-      notes: l.notes,
+      // Typen (inspeksjon, test, reparasjon …) og tittelen står først i notatet,
+      // så PDF-oppsettet kan være uendret.
+      notes: [l.title ? `${logKind(l.kind)}: ${l.title}` : logKind(l.kind), l.notes].filter(Boolean).join('\n'),
       photoCount: photoCountByLog.get(l.id) ?? 0,
     })),
     photos,

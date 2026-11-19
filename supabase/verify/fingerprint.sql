@@ -14,7 +14,7 @@ with items as (
   select 'indexes', indexdef from pg_indexes where schemaname='public'
   union all
   select 'policies', tablename||'.'||policyname||':'||cmd||':'||array_to_string(roles,',')||':'||coalesce(qual,'')||':'||coalesce(with_check,'')
-  from pg_policies where schemaname='public'
+  from pg_policies where schemaname='public' or (schemaname='storage' and policyname like 'nwc\_%')
   union all
   select 'functions', p.oid::regprocedure::text||':'||p.prosecdef||':'||p.provolatile::text||':'||coalesce(p.proconfig::text,'')||':'||coalesce(p.proacl::text,'')||':'||md5(pg_get_functiondef(p.oid))
   from pg_proc p where pronamespace in ('public'::regnamespace,'app'::regnamespace)
@@ -29,7 +29,7 @@ with items as (
   from pg_type t join pg_enum e on e.enumtypid=t.oid where t.typnamespace='public'::regnamespace group by t.typname
   union all
   select 'rel_acl_rls', relname||':'||relkind::text||':'||relrowsecurity||':'||relforcerowsecurity||':'||coalesce(relacl::text,'')
-  from pg_class where relnamespace='public'::regnamespace and relkind in ('r','v','S')
+  from pg_class where relnamespace in ('public'::regnamespace,'app'::regnamespace) and relkind in ('r','v','S')
   union all
   select 'comments', c.relname||'.'||coalesce(a.attname,'')||':'||d.description
   from pg_description d join pg_class c on c.oid=d.objoid and d.classoid='pg_class'::regclass

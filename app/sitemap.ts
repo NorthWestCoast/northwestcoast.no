@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { ARTICLES } from '@/lib/articles';
+import { getArticles } from '@/lib/posts';
 import { SITE_URL } from '@/lib/site';
 import { localePath } from '@/lib/i18n';
 
@@ -13,6 +13,9 @@ function parseNorwegianDate(date: string): Date {
 const PAGES: { path: string; priority: number; changeFrequency: 'weekly' | 'monthly' }[] = [
   { path: '/', priority: 1, changeFrequency: 'monthly' },
   { path: '/produkt', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/produkter', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/3d-leider', priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/om-oss', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/kalkulator', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/bestill', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/faq', priority: 0.7, changeFrequency: 'monthly' },
@@ -42,10 +45,16 @@ function entry(
   };
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+// Nyheter redigeres i admin. Sitemapet bygges på nytt hver time, og med en
+// gang når et innlegg lagres (getArticles er tagget med POSTS_TAG).
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const articles = await getArticles('no');
+
   return [
     ...PAGES.map((p) => entry(p.path, p.priority, p.changeFrequency)),
-    ...ARTICLES.map((a) =>
+    ...articles.map((a) =>
       entry(`/nyheter/${a.slug}`, 0.5, 'yearly', parseNorwegianDate(a.date)),
     ),
     // Personvernerklæringen finnes bare på norsk.

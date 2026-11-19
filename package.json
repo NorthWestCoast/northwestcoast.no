@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > lib/supabase/database.types.ts",
+    "db:types": "bash supabase/verify/run.sh --types",
     "db:push": "supabase db push",
     "db:verify": "bash supabase/verify/run.sh",
     "test:prices": "node tests/price-plan.test.mts"
@@ -34,5 +34,11 @@
     "eslint-config-next": "^15.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "^8.5.33",
+    "minimatch@3": {
+      "brace-expansion": "^1.1.21"
+    }
   }
 }

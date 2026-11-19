@@ -4,14 +4,29 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, User, X } from 'lucide-react';
 import LangFlag from '@/components/lang-flag';
 import { useLang, useT } from '@/components/lang-provider';
 import { LANGS, localePath, stripLangPrefix, type Lang } from '@/lib/i18n';
 
+/**
+ * Fra denne bredden vises lenkene i selve navigasjonslinja; under den tar
+ * hamburgermenyen over. Må følge @media (max-width: 1180px) i blokken
+ * «OM OSS / PRODUKTER / 3D» i globals.css.
+ */
+const DESKTOP_MIN = 1181;
+
+type NavLink = {
+  href: string;
+  label: string;
+  /** Undersider. `drawer: false` holder mobilmenyen kort. */
+  sub?: { href: string; label: string; drawer?: boolean }[];
+};
+
 export default function Nav() {
   const navRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
+  const [subOpen, setSubOpen] = useState(false);
   const lang = useLang();
   const t = useT();
   const pathname = usePathname() ?? '/';
@@ -19,37 +34,45 @@ export default function Nav() {
   // Innlogget område og personvern finnes bare på norsk – ingen språkvelger der.
   const norwegianOnly = /^\/(minside|admin|logg-inn|personvern)(\/|$)/.test(basePath);
 
-  const navLinks = [
-    { href: '/produkt', label: t.nav.produkt },
+  const navLinks: NavLink[] = [
+    {
+      href: '/produkter',
+      label: t.products.navLabel,
+      sub: [
+        { href: '/produkt', label: t.footer.ladder },
+        { href: '/3d-leider', label: t.viewerPage.navLabel },
+        { href: '/produkter#oppbevaring', label: t.order.cabinet, drawer: false },
+        { href: '/produkter#reservedeler', label: t.products.anchors.parts, drawer: false },
+      ],
+    },
     { href: '/galleri', label: t.nav.galleri },
     { href: '/nyheter', label: t.nav.nyheter },
     { href: '/kalkulator', label: t.calculator.navLabel },
     { href: '/vedlikehold', label: t.nav.vedlikehold },
     { href: '/faq', label: t.nav.faq },
+    { href: '/om-oss', label: t.about.navLabel },
   ];
 
   useEffect(() => {
-    const isDesktop = () => window.innerWidth >= 960;
+    // Bare høyde og bakgrunn styres herfra. Sidemargene følger brekkpunktene
+    // i CSS, så de ikke kommer i utakt med når hamburgermenyen tar over.
     const updateNav = () => {
       const nav = navRef.current;
       if (!nav) return;
       const scrolled = window.scrollY > 60;
-      const horiz = isDesktop() ? '4rem' : '1.5rem';
-      nav.style.padding = scrolled ? `0.7rem ${horiz}` : `1.1rem ${horiz}`;
+      const vertical = scrolled ? '0.7rem' : '1.1rem';
+      nav.style.paddingTop = vertical;
+      nav.style.paddingBottom = vertical;
       nav.style.background = scrolled ? 'rgba(10,22,40,0.98)' : 'rgba(10,22,40,0.85)';
     };
 
     updateNav();
     window.addEventListener('scroll', updateNav, { passive: true });
-    window.addEventListener('resize', updateNav);
-    return () => {
-      window.removeEventListener('scroll', updateNav);
-      window.removeEventListener('resize', updateNav);
-    };
+    return () => window.removeEventListener('scroll', updateNav);
   }, []);
 
   useEffect(() => {
-    const onResize = () => { if (window.innerWidth >= 960) setOpen(false); };
+    const onResize = () => { if (window.innerWidth >= DESKTOP_MIN) setOpen(false); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -90,14 +113,53 @@ export default function Nav() {
         </Link>
 
         <ul className="nav-links">
-          {navLinks.map((l) => (
-            <li key={l.href}>
-              <Link href={localePath(lang, l.href)}>{l.label}</Link>
-            </li>
-          ))}
+          {navLinks.map((l) =>
+            l.sub ? (
+              // Undermenyen åpnes ved hover og tastaturfokus. Lenken selv går
+              // til oversikten, så menyen er aldri eneste vei inn (berøring).
+              <li
+                key={l.href}
+                className={`nav-has-sub${subOpen ? ' open' : ''}`}
+                onMouseEnter={() => setSubOpen(true)}
+                onMouseLeave={() => setSubOpen(false)}
+                onFocus={() => setSubOpen(true)}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setSubOpen(false);
+                }}
+                onKeyDown={(e) => { if (e.key === 'Escape') setSubOpen(false); }}
+              >
+                <Link
+                  href={localePath(lang, l.href)}
+                  aria-expanded={subOpen}
+                  onClick={() => setSubOpen(false)}
+                >
+                  {l.label}
+                  <ChevronDown className="nav-caret" size={13} strokeWidth={2} aria-hidden="true" />
+                </Link>
+                <ul className="nav-sub">
+                  {l.sub.map((s) => (
+                    <li key={s.href}>
+                      <Link href={localePath(lang, s.href)} onClick={() => setSubOpen(false)}>
+                        {s.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ) : (
+              <li key={l.href}>
+                <Link href={localePath(lang, l.href)}>{l.label}</Link>
+              </li>
+            ),
+          )}
         </ul>
 
         <div className="nav-right">
+          {/* Min side finnes bare på norsk, derfor ingen språkprefiks. */}
+          <Link href="/logg-inn" className="nav-account nav-account-desktop" title={t.account.title}>
+            <User size={16} strokeWidth={1.8} aria-hidden="true" />
+            <span>{t.account.navLabel}</span>
+          </Link>
           {!norwegianOnly && (
             <div className="nav-lang nav-lang-desktop">{LANGS.map(langSwitch)}</div>
           )}
@@ -116,13 +178,32 @@ export default function Nav() {
       {/* Mobile drawer */}
       <div className={`nav-drawer${open ? ' open' : ''}`}>
         <ul>
-          {navLinks.map((l) => (
+          {navLinks.flatMap((l) => [
             <li key={l.href}>
               <Link href={localePath(lang, l.href)} onClick={() => setOpen(false)}>
                 {l.label}
               </Link>
-            </li>
-          ))}
+            </li>,
+            ...(l.sub ?? [])
+              .filter((s) => s.drawer !== false)
+              .map((s) => (
+                <li key={s.href}>
+                  <Link
+                    href={localePath(lang, s.href)}
+                    className="nav-drawer-sub"
+                    onClick={() => setOpen(false)}
+                  >
+                    {s.label}
+                  </Link>
+                </li>
+              )),
+          ])}
+          <li>
+            <Link href="/logg-inn" className="nav-drawer-account" onClick={() => setOpen(false)}>
+              <User size={17} strokeWidth={1.8} aria-hidden="true" />
+              {t.account.navLabel}
+            </Link>
+          </li>
           <li>
             <Link
               href={localePath(lang, '/bestill')}

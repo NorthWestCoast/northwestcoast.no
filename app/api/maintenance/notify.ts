@@ -1,122 +1,116 @@
-import { createServiceSupabase } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
 import { MAINTENANCE_EMAIL, sendMail } from '@/lib/mail';
 import { maintenanceReceipt, maintenanceReport } from '@/lib/mail/templates';
+import { SITE_URL } from '@/lib/site';
 
-const BUCKET = 'maintenance-photos';
+export const MAINTENANCE_BUCKET = 'maintenance-photos';
+
+/** Svaret fra finish_maintenance_report(). */
+type Finished = {
+  ok?: boolean;
+  already?: boolean;
+  photos?: number;
+  serial?: string | null;
+  vessel?: string | null;
+  imo?: string | null;
+  reporter?: string | null;
+  reporter_email?: string | null;
+  notes?: string | null;
+  matched?: boolean;
+};
+
+export type FinishResult = { ok: boolean; photos: number };
+
 /**
- * Lenkene i e-posten må overleve at noen arkiverer meldingen og finner den
- * fram igjen måneder senere. Bildene ligger permanent i Storage uansett;
- * dette er bare hvor lenge selve lenken virker.
- */
-const LINK_TTL_SECONDS = 60 * 60 * 24 * 90; // 90 dager
-
-/**
- * Sender varsel om en vedlikeholdsrapport, én gang.
+ * Avslutter en vedlikeholdsrapport fra det åpne skjemaet, og varsler.
  *
- * Idempotent via notified_at: kalles fullfør-steget to ganger (dobbeltklikk,
- * retry etter dårlig dekning), sendes e-posten likevel bare én gang.
+ * finish_maintenance_report() knytter bildene som faktisk ligger i lagringen
+ * til rapporten, legger et varsel til administratorene i portalen og stempler
+ * rapporten som avsluttet. Den er idempotent: kalles den to ganger
+ * (dobbeltklikk, nytt forsøk etter dårlig dekning), svarer den `already`, og
+ * e-posten sendes ikke på nytt.
  *
- * Rydder samtidig bort bilderader der opplastingen aldri kom fram, slik at
- * loggen viser det som faktisk finnes.
+ * Klienten er besøkerens egen (anonyme) sesjon. Rapportens id er en tilfeldig
+ * UUID som bare den som nettopp sendte inn kjenner, og funksjonen tar bare
+ * imot rapporter fra skjemaet de siste to timene.
+ *
+ * E-posten er et tillegg: feiler den, er rapporten likevel lagret og varslet
+ * i portalen.
  */
-export async function notifyMaintenance(logId: string, lang: 'no' | 'en' = 'no'): Promise<boolean> {
-  const supabase = createServiceSupabase();
-
-  const { data: log } = await supabase
-    .from('maintenance_logs')
-    .select(
-      'id, notified_at, ladder_id, serial_number_raw, vessel_name_raw, imo_raw, reporter_name, reporter_email, notes',
-    )
-    .eq('id', logId)
-    .maybeSingle();
-
-  if (!log) return false;
-  if (log.notified_at) return true; // allerede varslet
-
-  const { data: photos } = await supabase
-    .from('maintenance_photos')
-    .select('id, storage_path')
-    .eq('maintenance_log_id', logId);
-
-  // Verifiser mot Storage: rader uten fil er opplastinger som aldri ble
-  // fullført, og skal ikke telle med i rapporten.
-  const links: string[] = [];
-  const orphans: string[] = [];
-
-  for (const photo of photos ?? []) {
-    const { data: signed } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(photo.storage_path, LINK_TTL_SECONDS);
-
-    if (signed?.signedUrl) {
-      links.push(signed.signedUrl);
-    } else {
-      orphans.push(photo.id);
-    }
-  }
-
-  if (orphans.length > 0) {
-    await supabase.from('maintenance_photos').delete().in('id', orphans);
-  }
-
-  const name = log.reporter_name ?? 'Ukjent';
-  const boat = log.vessel_name_raw ?? '–';
-  const serial = log.serial_number_raw ?? '–';
-
-  const report = maintenanceReport({
-    name,
-    boat,
-    imo: log.imo_raw ?? undefined,
-    serial,
-    email: log.reporter_email ?? undefined,
-    notes: log.notes ?? undefined,
-    photoCount: links.length,
-    matchedLadder: Boolean(log.ladder_id),
+export async function finishMaintenance(
+  supabase: SupabaseClient<Database>,
+  logId: string,
+  paths: string[],
+  lang: 'no' | 'en' = 'no',
+): Promise<FinishResult> {
+  const { data, error } = await supabase.rpc('finish_maintenance_report', {
+    p_log: logId,
+    p_paths: paths,
   });
 
-  const withLinks =
-    links.length > 0
-      ? `${report}\n\nBilder (lenkene virker i 90 dager):\n${links
-          .map((url, i) => `${i + 1}. ${url}`)
-          .join('\n')}`
-      : report;
-
-  await sendMail(
-    {
-      to: MAINTENANCE_EMAIL,
-      replyTo: log.reporter_email ?? undefined,
-      subject: `Vedlikehold registrert – ${boat} (${serial})`,
-      text: withLinks,
-    },
-    { template: 'maintenance_internal', relatedType: 'maintenance_log', relatedId: log.id },
-  );
-
-  if (log.reporter_email) {
-    // Kvitteringen til fartøyet er dokumentasjon ved tilsyn, så den skal
-    // inneholde selve rapporten – men ikke bildelenkene, som er interne.
-    // Kvitteringen skrives på kundens språk; den interne rapporten er alltid norsk.
-    const customerReport = maintenanceReport({
-      name,
-      boat,
-      imo: log.imo_raw ?? undefined,
-      serial,
-      email: log.reporter_email ?? undefined,
-      notes: log.notes ?? undefined,
-      photoCount: links.length,
-      matchedLadder: Boolean(log.ladder_id),
-      lang,
-    });
-    const receipt = maintenanceReceipt({ name, boat, serial, report: customerReport, lang });
-    await sendMail(
-      { to: log.reporter_email, replyTo: MAINTENANCE_EMAIL, ...receipt },
-      { template: 'maintenance_receipt', relatedType: 'maintenance_log', relatedId: log.id },
-    );
+  if (error || !data || typeof data !== 'object' || Array.isArray(data)) {
+    // P0001 er «Fant ikke rapporten» (ukjent id eller for gammel).
+    if (error && error.code !== 'P0001') {
+      console.error('[maintenance] Kunne ikke avslutte rapporten:', error.code, error.message);
+    }
+    return { ok: false, photos: 0 };
   }
 
-  await supabase
-    .from('maintenance_logs')
-    .update({ notified_at: new Date().toISOString() })
-    .eq('id', logId);
+  const report = data as Finished;
+  const photos = typeof report.photos === 'number' ? report.photos : 0;
+  if (report.already) return { ok: true, photos };
 
-  return true;
+  try {
+    const name = report.reporter ?? 'Ukjent';
+    const boat = report.vessel ?? '–';
+    const serial = report.serial ?? '–';
+    const common = {
+      name,
+      boat,
+      imo: report.imo ?? undefined,
+      serial,
+      email: report.reporter_email ?? undefined,
+      notes: report.notes ?? undefined,
+      photoCount: photos,
+      matchedLadder: report.matched === true,
+    };
+
+    // Bildene ligger i en privat bøtte og vises i admin; e-posten lenker dit
+    // i stedet for til selve filene.
+    const where = photos > 0
+      ? `${photos === 1 ? 'Bildet' : `De ${photos} bildene`} som ble lastet opp, ligger i admin under «Vedlikeholdsrapporter»:`
+      : 'Ingen bilder ble lastet opp. Rapporten ligger i admin under «Vedlikeholdsrapporter»:';
+
+    await sendMail(
+      {
+        to: MAINTENANCE_EMAIL,
+        replyTo: report.reporter_email ?? undefined,
+        subject: `Vedlikehold registrert – ${boat} (${serial})`,
+        text: `${maintenanceReport(common)}\n\n${where}\n${SITE_URL}/admin/vedlikehold`,
+      },
+      { template: 'maintenance_internal', relatedType: 'maintenance_log', relatedId: logId },
+    );
+
+    if (report.reporter_email) {
+      // Kvitteringen til fartøyet er dokumentasjon ved tilsyn, så den skal
+      // inneholde selve rapporten. Den skrives på kundens språk; den interne
+      // rapporten er alltid norsk.
+      const receipt = maintenanceReceipt({
+        name,
+        boat,
+        serial,
+        report: maintenanceReport({ ...common, lang }),
+        lang,
+      });
+      await sendMail(
+        { to: report.reporter_email, replyTo: MAINTENANCE_EMAIL, ...receipt },
+        { template: 'maintenance_receipt', relatedType: 'maintenance_log', relatedId: logId },
+      );
+    }
+  } catch (mailError) {
+    console.error('[maintenance] E-post feilet for rapport', logId, mailError);
+  }
+
+  return { ok: true, photos };
 }

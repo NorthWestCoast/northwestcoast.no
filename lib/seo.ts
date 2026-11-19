@@ -1,4 +1,4 @@
-import { ARTICLES, localizeArticle } from './articles';
+import type { LocalizedArticle } from './articles';
 import { FAQ_ITEMS } from './faq-items';
 import { getDict, localePath, SITE_URL, type Lang } from './i18n';
 import type { PriceTable } from './pricing';
@@ -159,22 +159,116 @@ export function calculatorLd(lang: Lang) {
   };
 }
 
-export function articleLd(lang: Lang, slug: string) {
-  const found = ARTICLES.find((a) => a.slug === slug);
-  if (!found) return null;
-  const a = localizeArticle(found, lang);
+/** Om oss: peker på organisasjonen som allerede er beskrevet i organizationLd(). */
+export function aboutLd(lang: Lang) {
+  const t = getDict(lang);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: t.meta.omOss.title,
+    description: t.meta.omOss.description,
+    url: abs(localePath(lang, '/om-oss')),
+    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    isPartOf: { '@id': SITE_ID },
+    about: { '@id': ORG_ID },
+    mainEntity: { '@id': ORG_ID },
+  };
+}
+
+/**
+ * Oppbevaringsskapene som eget produkt. Prisene kommer fra prislista; finnes
+ * det ingen skap der, returneres null og markupen utelates.
+ */
+export function cabinetLd(lang: Lang, table: PriceTable) {
+  const t = getDict(lang);
+  const withCabinet = table.filter((r) => !r.onRequest && r.cabinetName);
+  if (withCabinet.length === 0) return null;
+  const prices = withCabinet.map((r) => r.cabinetPrice);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': `${SITE_URL}/#oppbevaringsskap`,
+    name: `Argostep ${t.products.storage.title}`,
+    description: t.products.storage.desc,
+    image: [abs('/images/leider_cabinet.jpg'), abs('/images/leider_cabinet2.jpg')],
+    brand: { '@type': 'Brand', name: 'Argostep' },
+    manufacturer: { '@id': ORG_ID },
+    url: abs(`${localePath(lang, '/produkter')}#oppbevaring`),
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'NOK',
+      lowPrice: Math.min(...prices),
+      highPrice: Math.max(...prices),
+      offerCount: new Set(withCabinet.map((r) => r.cabinetName)).size,
+      seller: { '@id': ORG_ID },
+    },
+  };
+}
+
+/** Produktoversikten som liste: leideren og (når den finnes i prislista) skapet. */
+export function productListLd(lang: Lang, table: PriceTable) {
+  const t = getDict(lang);
+  const hasCabinet = table.some((r) => !r.onRequest && r.cabinetName);
+  const items = [
+    { name: t.product.title, url: abs(localePath(lang, '/produkt')) },
+    ...(hasCabinet
+      ? [{ name: `Argostep ${t.products.storage.title}`, url: abs(`${localePath(lang, '/produkter')}#oppbevaring`) }]
+      : []),
+  ];
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: t.products.title,
+    url: abs(localePath(lang, '/produkter')),
+    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      url: item.url,
+    })),
+  };
+}
+
+/** 3D-modellen på /3d-leider (samme fil som visningen laster). */
+export function model3dLd(lang: Lang) {
+  const t = getDict(lang);
+  return {
+    '@context': 'https://schema.org',
+    '@type': '3DModel',
+    name: t.viewer.modelAlt,
+    description: t.meta.leider3d.description,
+    url: abs(localePath(lang, '/3d-leider')),
+    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    encoding: [
+      {
+        '@type': 'MediaObject',
+        contentUrl: abs('/3d-models/leider-compressed-v2.glb'),
+        encodingFormat: 'model/gltf-binary',
+      },
+    ],
+    isPartOf: { '@id': SITE_ID },
+    creator: { '@id': ORG_ID },
+  };
+}
+
+/** Strukturert data for ett innlegg (fra lib/posts.ts). */
+export function articleLd(lang: Lang, a: LocalizedArticle) {
   const [d, m, y] = a.date.split('.');
-  const iso = `${y}-${m}-${d}`;
+  const iso = y && m && d ? `${y}-${m}-${d}` : undefined;
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: a.title,
     description: a.excerpt,
-    image: abs(a.image),
+    // Forsidebilder fra admin er fulle adresser; de faste ligger i /public.
+    image: /^https?:\/\//i.test(a.image) ? a.image : abs(a.image),
     datePublished: iso,
     dateModified: iso,
     inLanguage: lang === 'no' ? 'nb-NO' : 'en',
-    mainEntityOfPage: abs(localePath(lang, `/nyheter/${slug}`)),
+    mainEntityOfPage: abs(localePath(lang, `/nyheter/${a.slug}`)),
     author: { '@id': ORG_ID },
     publisher: { '@id': ORG_ID },
   };

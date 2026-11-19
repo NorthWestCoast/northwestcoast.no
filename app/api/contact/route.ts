@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clean, clientIp, isBot, isEmail, langOf, rateLimit, tr } from '@/lib/api-guard';
-import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { CONTACT_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
 import { contactInternal } from '@/lib/mail/templates';
 
@@ -32,32 +32,33 @@ export async function POST(req: NextRequest) {
   }
 
   // Lagre først. En henvendelse som ligger i databasen er ikke tapt selv om
-  // e-postleverandøren er nede.
+  // e-postleverandøren er nede. Lagringen går gjennom submit_contact_request()
+  // med besøkerens egen (anonyme) sesjon; funksjonen varsler også admin.
   let requestId: string | undefined;
   let stored = false;
 
-  if (hasServiceRole()) {
-    const supabase = createServiceSupabase();
-    const { data, error } = await supabase
-      .from('contact_requests')
-      .insert({
-        name,
-        email,
-        phone: phone || null,
-        company_name: company || null,
-        product: product || null,
-        message: message || null,
-        source: 'web',
-      })
-      .select('id')
-      .single();
+  try {
+    const supabase = await createServerSupabase();
+    const { data, error } = await supabase.rpc('submit_contact_request', {
+      payload: { name, email, phone, company, product, message },
+    });
 
+    if (error?.code === 'P0001') {
+      // Databasens egne avslag (for mange henvendelser, ugyldig e-post).
+      return NextResponse.json(
+        { error: tr(lang, error.message, `We could not send your message right now. Please try again later, or call us on ${SUPPORT_PHONE}.`) },
+        { status: 400 },
+      );
+    }
     if (error) {
-      console.error('[contact] Kunne ikke lagre henvendelse:', error);
+      console.error('[contact] Kunne ikke lagre henvendelse:', error.code, error.message);
     } else {
       stored = true;
-      requestId = data.id;
+      requestId = data ?? undefined;
     }
+  } catch (error) {
+    // Supabase er ikke konfigurert eller svarer ikke: e-posten under er reserven.
+    console.error('[contact] Kunne ikke lagre henvendelse:', error);
   }
 
   const mail = contactInternal({ name, email, phone, company, product, message });

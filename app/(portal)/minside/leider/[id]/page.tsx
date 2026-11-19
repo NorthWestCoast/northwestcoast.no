@@ -1,147 +1,103 @@
-import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { createServerSupabase } from '@/lib/supabase/server';
-import ServiceBadge from '@/components/minside/service-badge';
-import { dato } from '@/lib/format';
+import { managedCompanies, requireUser } from '@/lib/portal/context';
+import { Badge, PageHeader, Tabs } from '@/components/portal/ui';
+import { uuid } from '@/lib/portal/forms';
+import { ladderStatus, serviceState } from '@/lib/portal/labels';
+import type { LadderView } from '@/components/minside/util';
+import Oversikt from './_sections/oversikt';
+import Historikk from './_sections/historikk';
+import Plan from './_sections/plan';
+import Deling from './_sections/deling';
+import Tilgang from './_sections/tilgang';
 
-const RESULT_LABEL: Record<string, string> = {
-  ok: 'Godkjent',
-  ok_with_remarks: 'Godkjent med anmerkning',
-  failed: 'Ikke godkjent',
-};
+export const metadata: Metadata = { title: 'Leider' };
+
+const FANER = ['oversikt', 'historikk', 'plan', 'deling', 'tilgang'] as const;
+type Fane = (typeof FANER)[number];
+
+const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 /**
- * Leiderside: alt som gjelder én fysisk leider.
- *
- * Service og mannskapets vedlikehold vises hver for seg, ikke i én felles
- * liste. Ved tilsyn er det forskjell på en fagmessig godkjenning og en
- * egenrapportering, og siden skal ikke viske ut den forskjellen.
+ * Leidersiden: alt som gjelder én fysisk leider, delt i faner. Hver fane er
+ * en egen URL (?fane=), så lenker fra varsler og oversikten treffer riktig.
  */
-export default async function LeiderPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const supabase = await createServerSupabase();
+export default async function LeiderPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ fane?: string | string[]; type?: string | string[] }>;
+}) {
+  const { id: rawId } = await params;
+  const query = await searchParams;
 
-  const { data: ladder } = await supabase
-    .from('ladder_status')
-    .select('*')
-    .eq('ladder_id', id)
-    .maybeSingle();
+  const id = uuid(rawId);
+  if (!id) notFound();
 
-  if (!ladder) notFound();
+  const { supabase, ctx } = await requireUser(`/minside/leider/${id}`);
 
-  const [{ data: services }, { data: maintenance }] = await Promise.all([
-    supabase
-      .from('service_reports')
-      .select('id, performed_at, performed_by, result, findings, next_service_due')
-      .eq('ladder_id', id)
-      .order('performed_at', { ascending: false }),
-    supabase
-      .from('maintenance_logs')
-      .select('id, performed_at, reporter_name, notes')
-      .eq('ladder_id', id)
-      .order('performed_at', { ascending: false }),
+  // RLS: en leider brukeren ikke har tilgang til finnes ikke for henne.
+  const { data: row } = await supabase.from('ladder_status').select('*').eq('ladder_id', id).maybeSingle();
+  if (!row?.ladder_id) notFound();
+  const ladder: LadderView = { ...row, ladder_id: row.ladder_id };
+
+  const [{ data: vesselRole }, { data: ladderRole }] = await Promise.all([
+    ladder.vessel_id
+      ? supabase.from('vessel_members').select('role').eq('vessel_id', ladder.vessel_id).eq('user_id', ctx.userId).maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase.from('ladder_members').select('role').eq('ladder_id', id).eq('user_id', ctx.userId).maybeSingle(),
   ]);
+
+  // Styrer bare hva som vises. Databasen gjør den samme vurderingen selv.
+  const canManage =
+    ctx.staffRole === 'admin' ||
+    managedCompanies(ctx).some((company) => company.id === ladder.company_id) ||
+    vesselRole?.role === 'master' ||
+    ladderRole?.role === 'manager';
+
+  const requested = first(query.fane);
+  const fane: Fane = FANER.find((f) => f === requested) ?? 'oversikt';
+
+  const base = `/minside/leider/${id}`;
+  const href = (f: Fane) => (f === 'oversikt' ? base : `${base}?fane=${f}`);
+  const status = ladderStatus(ladder.status);
+  const service = serviceState(ladder.service_state);
+  const props = { supabase, ctx, ladder, canManage };
 
   return (
     <>
-      <p className="ms-crumb">
-        {ladder.vessel_id ? (
-          <Link href={`/minside/fartoy/${ladder.vessel_id}`}>← {ladder.vessel_name}</Link>
-        ) : (
-          <Link href="/minside">← Oversikt</Link>
-        )}
-      </p>
+      <PageHeader
+        title={`Leider ${ladder.serial_number ?? ''}`}
+        description={[ladder.product_name, ladder.vessel_name ?? ladder.company_name].filter(Boolean).join(' · ') || undefined}
+        crumbs={[
+          { href: '/minside/leidere', label: 'Leidere' },
+          { label: ladder.serial_number ?? 'Leider' },
+        ]}
+        badge={
+          <>
+            <Badge tone={status.tone}>{status.label}</Badge>
+            {ladder.status === 'installed' && <Badge tone={service.tone}>{service.label}</Badge>}
+          </>
+        }
+      />
 
-      <div className="ms-title-row">
-        <h1>{ladder.serial_number}</h1>
-        <ServiceBadge state={ladder.service_state} days={ladder.days_until_service} />
-        {/* Dokumentet fartøyet viser ved tilsyn. Vanlig lenke, ikke fetch –
-            nettleseren håndterer nedlastingen selv. */}
-        <a href={`/minside/leider/${id}/pdf`} className="ms-download">
-          Last ned vedlikeholdslogg (PDF)
-        </a>
-      </div>
+      <Tabs
+        current={href(fane)}
+        items={[
+          { href: href('oversikt'), label: 'Oversikt' },
+          { href: href('historikk'), label: 'Historikk' },
+          { href: href('plan'), label: 'Service og oppgaver' },
+          { href: href('deling'), label: 'Deling' },
+          { href: href('tilgang'), label: 'Tilgang' },
+        ]}
+      />
 
-      <section className="ms-section">
-        <dl className="ms-kv ms-kv-wide">
-          <div><dt>Produkt</dt><dd>{ladder.product_name}</dd></div>
-          <div><dt>Produktnr.</dt><dd>{ladder.product_number}</dd></div>
-          <div><dt>Lengde</dt><dd>{ladder.length_m ? `${ladder.length_m} m` : '–'}</dd></div>
-          <div><dt>Trinn</dt><dd>{ladder.steps ?? '–'}</dd></div>
-          <div><dt>Produsert</dt><dd>{dato(ladder.produced_at)}</dd></div>
-          <div><dt>Installert</dt><dd>{dato(ladder.installed_at)}</dd></div>
-          <div><dt>Fartøy</dt><dd>{ladder.vessel_name ?? '–'}</dd></div>
-          <div><dt>Neste service</dt><dd>{dato(ladder.next_service_due)}</dd></div>
-        </dl>
-        <p className="ms-cert">
-          Sertifisert etter ISO 799-1:2019 · Godkjent av Sjøfartsdirektoratet
-        </p>
-      </section>
-
-      <section className="ms-section">
-        <h2>Servicehistorikk</h2>
-        <p className="ms-muted ms-hint">
-          Fagmessig kontroll utført av NorthWest Coast. Dette er dokumentasjonen
-          som gjelder ved tilsyn.
-        </p>
-        {services?.length ? (
-          <table className="ms-table">
-            <thead>
-              <tr><th>Dato</th><th>Utført av</th><th>Resultat</th><th>Neste frist</th><th>Funn</th></tr>
-            </thead>
-            <tbody>
-              {services.map((s) => (
-                <tr key={s.id}>
-                  <td>{dato(s.performed_at)}</td>
-                  <td>{s.performed_by}</td>
-                  <td>
-                    <span
-                      className={`ms-badge ms-badge-${
-                        s.result === 'failed' ? 'overdue' : s.result === 'ok_with_remarks' ? 'due_soon' : 'ok'
-                      }`}
-                    >
-                      {RESULT_LABEL[s.result]}
-                    </span>
-                  </td>
-                  <td>{dato(s.next_service_due)}</td>
-                  <td>{s.findings ?? '–'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="ms-muted">
-            Ingen service registrert ennå. Neste frist er beregnet fra
-            installasjonsdato.
-          </p>
-        )}
-      </section>
-
-      <section className="ms-section">
-        <h2>Vedlikeholdslogg</h2>
-        <p className="ms-muted ms-hint">
-          Registrert av mannskapet om bord.
-        </p>
-        {maintenance?.length ? (
-          <table className="ms-table">
-            <thead><tr><th>Dato</th><th>Utført av</th><th>Kommentar</th></tr></thead>
-            <tbody>
-              {maintenance.map((m) => (
-                <tr key={m.id}>
-                  <td>{dato(m.performed_at)}</td>
-                  <td>{m.reporter_name ?? '–'}</td>
-                  <td>{m.notes ?? '–'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="ms-muted">
-            Ingen egenrapportering registrert.{' '}
-            <Link href="/vedlikehold">Registrer vedlikehold →</Link>
-          </p>
-        )}
-      </section>
+      {fane === 'oversikt' && <Oversikt {...props} />}
+      {fane === 'historikk' && <Historikk {...props} type={first(query.type)} />}
+      {fane === 'plan' && <Plan {...props} />}
+      {fane === 'deling' && <Deling {...props} />}
+      {fane === 'tilgang' && <Tilgang {...props} />}
     </>
   );
 }

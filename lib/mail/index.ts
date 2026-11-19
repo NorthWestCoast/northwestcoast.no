@@ -1,7 +1,6 @@
 import { ConsoleProvider } from './console';
 import { ResendProvider } from './resend';
 import type { MailMessage, MailProvider, MailResult } from './types';
-import { createServiceSupabase, hasServiceRole } from '@/lib/supabase/server';
 
 export type { MailMessage, MailProvider, MailResult } from './types';
 
@@ -38,17 +37,19 @@ function selectProvider(): MailProvider | null {
 }
 
 type SendOptions = {
-  /** Navn på malen. Lagres i email_log for statistikk og feilsøking. */
+  /** Navn på malen. Står i feilloggen, så en feilet utsending kan spores. */
   template: string;
+  /** Hva e-posten gjelder (f.eks. 'order' og ordrens id). Kun til feilsøking. */
   relatedType?: string;
   relatedId?: string;
 };
 
 /**
- * Sender en e-post og logger forsøket i email_log.
+ * Sender en e-post.
  *
- * Loggingen er «best effort»: klarer vi ikke å skrive loggraden, skal
- * e-posten likevel sendes. Selve leveransen er viktigere enn sporingen.
+ * Kaster aldri: resultatet sier om utsendingen lyktes, og kalleren avgjør hva
+ * det betyr. E-post er et tillegg til det som allerede er lagret i databasen,
+ * så en feil her skal aldri velte en bestilling eller en rapport.
  */
 export async function sendMail(
   message: MailMessage,
@@ -58,46 +59,20 @@ export async function sendMail(
 
   if (!provider) {
     const error = 'Ingen e-postleverandør konfigurert (mangler RESEND_API_KEY).';
-    console.error(`[mail] ${error}`);
-    await logEmail({ ...options, message, provider: 'none', result: { ok: false, error } });
+    console.error(`[mail] ${options.template}: ${error}`);
     return { ok: false, error };
   }
 
-  const result = await provider.send(message);
-
-  if (!result.ok) {
-    console.error(`[mail] ${options.template} feilet: ${result.error}`);
-  }
-
-  await logEmail({ ...options, message, provider: provider.name, result });
-  return result;
-}
-
-async function logEmail(args: {
-  template: string;
-  relatedType?: string;
-  relatedId?: string;
-  message: MailMessage;
-  provider: string;
-  result: MailResult;
-}) {
-  if (!hasServiceRole()) return;
-
   try {
-    const supabase = createServiceSupabase();
-    await supabase.from('email_log').insert({
-      to_email: args.message.to,
-      template: args.template,
-      provider: args.provider,
-      provider_message_id: args.result.ok ? args.result.id : null,
-      status: args.result.ok ? 'sent' : 'failed',
-      error: args.result.ok ? null : args.result.error,
-      attempts: 1,
-      related_type: args.relatedType ?? null,
-      related_id: args.relatedId ?? null,
-      sent_at: args.result.ok ? new Date().toISOString() : null,
-    });
+    const result = await provider.send(message);
+    if (!result.ok) {
+      const about = options.relatedId ? ` (${options.relatedType ?? 'id'} ${options.relatedId})` : '';
+      console.error(`[mail] ${options.template} feilet${about}: ${result.error}`);
+    }
+    return result;
   } catch (err) {
-    console.error('[mail] Kunne ikke skrive email_log:', err);
+    const error = err instanceof Error ? err.message : String(err);
+    console.error(`[mail] ${options.template} feilet: ${error}`);
+    return { ok: false, error };
   }
 }

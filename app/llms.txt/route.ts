@@ -39,7 +39,10 @@ ${sizes}
 
 ## Pages (English)
 
+- [Products](${SITE_URL}${localePath('en', '/produkter')}): overview of the ladder range with lengths and prices, storage cabinets, spare parts and service
 - [Product](${SITE_URL}${localePath('en', '/produkt')}): specifications, certification and suitable vessels
+- [3D model](${SITE_URL}${localePath('en', '/3d-leider')}): interactive 3D model of the ladder
+- [About us](${SITE_URL}${localePath('en', '/om-oss')}): the company, the founders and local production in Sunnmøre
 - [Ladder calculator](${SITE_URL}${localePath('en', '/kalkulator')}): work out the ladder length from freeboard and mounting point, then order. A sizing aid, not a compliance certificate – final requirements are confirmed by class society, flag state or the Norwegian Maritime Authority
 - [Order](${SITE_URL}${localePath('en', '/bestill')}): configure length and storage cabinet and send an order
 - [FAQ](${SITE_URL}${localePath('en', '/faq')}): approval, lengths, service life, mounting, delivery, material, spare parts
@@ -48,7 +51,10 @@ ${sizes}
 
 ## Sider (norsk)
 
+- [Produkter](${SITE_URL}/produkter)
 - [Produkt](${SITE_URL}/produkt)
+- [3D-modell](${SITE_URL}/3d-leider)
+- [Om oss](${SITE_URL}/om-oss)
 - [Leiderkalkulator](${SITE_URL}/kalkulator)
 - [Bestill](${SITE_URL}/bestill)
 - [Ofte stilte spørsmål](${SITE_URL}/faq)

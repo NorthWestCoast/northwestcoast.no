@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { requireStaff } from '@/lib/supabase/staff';
+import PortalShell from '@/components/portal/shell';
+import type { NavGroup } from '@/components/portal/nav';
+import { requireAdmin } from '@/lib/portal/context';
 
 export const metadata: Metadata = {
   title: 'Admin',
@@ -10,36 +11,65 @@ export const metadata: Metadata = {
 // Alt her avhenger av sesjonen; ingenting kan prerendres.
 export const dynamic = 'force-dynamic';
 
-const NAV = [
-  { href: '/admin', label: 'Oversikt' },
-  { href: '/admin/selskap', label: 'Selskap' },
-  { href: '/admin/leidere', label: 'Leidere' },
-  { href: '/admin/service', label: 'Service' },
-  { href: '/admin/vedlikehold', label: 'Vedlikehold' },
-  { href: '/admin/priser', label: 'Priser' },
-];
-
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Kaster ut alle som ikke har staff-flagget. RLS stopper dem uansett, men
-  // det er bedre å redirecte enn å rendre en tom side.
-  const { user } = await requireStaff();
+  // Kaster ut alle som ikke er administrator. RLS stopper dem uansett, men
+  // det er bedre å sende dem videre enn å vise en tom side.
+  const { supabase, ctx } = await requireAdmin();
 
-  return (
-    <div className="adm">
-      <header className="adm-head">
-        <div className="adm-brand">
-          <Link href="/admin">NorthWest Coast · Admin</Link>
-          <span>{user.email}</span>
-        </div>
-        <nav className="adm-nav">
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href}>{item.label}</Link>
-          ))}
-          <Link href="/" className="adm-nav-out">← Til nettsiden</Link>
-        </nav>
-      </header>
+  const head = { count: 'exact' as const, head: true };
+  const [newOrders, openTickets, serviceRequests, accessRequests] = await Promise.all([
+    supabase.from('orders').select('id', head).eq('status', 'new'),
+    supabase.from('support_tickets').select('id', head).in('status', ['open', 'in_progress']),
+    supabase.from('service_bookings').select('id', head).eq('status', 'requested'),
+    supabase.from('ladder_access_requests').select('id', head).eq('status', 'pending'),
+  ]);
 
-      <main className="adm-main">{children}</main>
-    </div>
-  );
+  const groups: NavGroup[] = [
+    { items: [{ href: '/admin', label: 'Oversikt', icon: 'dashboard', exact: true }] },
+    {
+      title: 'Salg',
+      items: [
+        { href: '/admin/bestillinger', label: 'Bestillinger', icon: 'orders', count: newOrders.count ?? 0 },
+        { href: '/admin/leveranser', label: 'Leveranser', icon: 'deliveries' },
+        { href: '/admin/henvendelser', label: 'Henvendelser', icon: 'inbox' },
+      ],
+    },
+    {
+      title: 'Kunder',
+      items: [
+        { href: '/admin/selskap', label: 'Selskap', icon: 'companies' },
+        { href: '/admin/brukere', label: 'Brukere', icon: 'people' },
+        { href: '/admin/tilgang', label: 'Tilgangsforespørsler', icon: 'access', count: accessRequests.count ?? 0 },
+      ],
+    },
+    {
+      title: 'Leidere',
+      items: [
+        { href: '/admin/leidere', label: 'Leidere', icon: 'ladder' },
+        { href: '/produksjon', label: 'Produksjon', icon: 'production' },
+        { href: '/admin/service', label: 'Service og avtaler', icon: 'service', count: serviceRequests.count ?? 0 },
+        { href: '/admin/vedlikehold', label: 'Vedlikeholdsrapporter', icon: 'reports' },
+      ],
+    },
+    {
+      title: 'Support',
+      items: [{ href: '/admin/saker', label: 'Saker', icon: 'support', count: openTickets.count ?? 0 }],
+    },
+    {
+      title: 'Innhold',
+      items: [
+        { href: '/admin/nyheter', label: 'Nyheter', icon: 'news' },
+        { href: '/admin/priser', label: 'Produkter og priser', icon: 'prices' },
+      ],
+    },
+    {
+      title: 'Oppsett',
+      items: [
+        { href: '/admin/ansatte', label: 'Ansatte og roller', icon: 'staff' },
+        { href: '/admin/produksjonssteg', label: 'Produksjonssteg', icon: 'steps' },
+      ],
+    },
+  ];
+
+  return <PortalShell area="admin" ctx={ctx} groups={groups}>{children}</PortalShell>;
 }
