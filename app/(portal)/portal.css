@@ -81,17 +81,12 @@
   color: #fff;
 }
 .pt-topbar-brand {
-  font-family: var(--font-playfair), serif;
-  font-weight: 700;
-  font-size: 1.05rem;
-  text-decoration: none;
-  color: #fff;
+  display: flex;
+  align-items: center;
   margin-right: auto;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
 }
-.pt-topbar-brand span { color: #2ecc71; }
+.pt-topbar-brand img { display: block; height: 30px; width: auto; }
 .pt-icon-btn {
   position: relative;
   display: inline-flex;
@@ -151,14 +146,8 @@
   gap: 0.5rem;
   padding: 1.1rem 1.1rem 0.9rem;
 }
-.pt-side-brand {
-  font-family: var(--font-playfair), serif;
-  font-weight: 700;
-  font-size: 1.15rem;
-  color: #fff;
-  text-decoration: none;
-}
-.pt-side-brand span { color: #2ecc71; }
+.pt-side-brand { display: flex; align-items: center; min-width: 0; }
+.pt-side-brand img { display: block; height: 38px; width: auto; }
 .pt-side-area {
   margin: 0 1.1rem 0.9rem;
   padding: 0.3rem 0.55rem;
