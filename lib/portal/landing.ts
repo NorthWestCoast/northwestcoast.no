@@ -9,6 +9,9 @@ export const DEFAULT_NEXT = '/minside';
  */
 export function safeNext(value: string | null): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return DEFAULT_NEXT;
+  // Nettlesere leser en omvendt skråstrek som en vanlig («/\\» blir «//»), og kontrolltegn
+  // hører ikke hjemme i en sti.
+  if (/[\\\u0000-\u001f]/.test(value)) return DEFAULT_NEXT;
   return value;
 }
 

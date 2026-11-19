@@ -121,7 +121,10 @@ export function galleryImageSrc(
 
   const url = filled(row.image_url);
   if (url.startsWith('/') && !url.startsWith('//') && !/\s/.test(url)) return { src: url, unoptimized: false };
-  if (/^https:\/\/[^\s]+$/i.test(url)) return { src: url, unoptimized: !optimizable(url) };
+  // Bare bilder i vår egen lagring. Adresser til andre nettsteder godtas ikke.
+  if (STORAGE_ORIGIN && url.startsWith(`${STORAGE_ORIGIN}/storage/v1/object/public/`) && !/\s/.test(url)) {
+    return { src: url, unoptimized: !optimizable(url) };
+  }
   return null;
 }
 

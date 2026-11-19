@@ -83,6 +83,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       items: [
         { href: '/admin/ansatte', label: 'Ansatte og roller', icon: 'staff' },
         { href: '/admin/produksjonssteg', label: 'Produksjonssteg', icon: 'steps' },
+        { href: '/admin/e-post', label: 'E-post', icon: 'inbox' },
       ],
     },
   ];

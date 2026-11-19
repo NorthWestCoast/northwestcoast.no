@@ -2,8 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import type { PortalContext } from './context';
 import { type ActionResult, err, fail, isEmail, ok } from './forms';
-import { CONTACT_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
-import { SITE_URL } from '@/lib/site';
+import { CONTACT_EMAIL, sendMail } from '@/lib/mail';
+import { accessInvitation } from '@/lib/mail/templates';
 
 type Scope =
   | { scope: 'company'; id: string; role: 'owner' | 'admin' | 'member' }
@@ -48,25 +48,8 @@ export async function createInvitation(
   const mail = await sendMail(
     {
       to: email,
-      subject: `Du har fått tilgang til ${args.targetName} hos NorthWest Coast`,
-      text: [
-        'Hei,',
-        '',
-        `${ctx.displayName} har gitt deg tilgang til ${args.targetName} på Min side hos NorthWest Coast.`,
-        args.message ? `\nMelding: ${args.message}\n` : '',
-        'Der finner du leiderens historikk, servicefrister og vedlikeholdslogg,',
-        'og du kan loggføre kontroller og dele tilstandsrapporter.',
-        '',
-        'Logg inn eller opprett konto med denne e-postadressen:',
-        `${SITE_URL}/logg-inn`,
-        '',
-        'Du trenger ikke passord. Vi sender deg en innloggingslenke.',
-        '',
-        `Spørsmål: ${CONTACT_EMAIL} / ${SUPPORT_PHONE}`,
-        '',
-        'Med vennlig hilsen',
-        'NorthWest Coast AS',
-      ].filter((line) => line !== null).join('\n'),
+      replyTo: CONTACT_EMAIL,
+      ...accessInvitation({ inviterEmail: ctx.email, inviterName: ctx.displayName, targetName: args.targetName }),
     },
     { template: 'access_invitation' },
   );

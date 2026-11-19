@@ -148,3 +148,23 @@ erstattet eller trukket tilbake. Navnet på dokumentet står ett sted:
 | `GET /api/brreg?q=` (innlogget) | Enhetsregisteret | skjema for nye kunder |
 
 Begge fyller bare ut felt. Alt kan fortsatt legges inn for hånd.
+
+## E-post
+
+All e-post bygges i `lib/mail/`: `layout.ts` er den felles rammen og
+byggeklossene (alt som settes inn escapes), `templates.ts` er malene, og
+`events.ts` sender oppfølging til kunden når en ansatt bekrefter eller leverer
+en bestilling eller utsteder et sertifikat. Innloggings-e-postene sendes av
+Supabase og ligger i `auth-templates.ts` (se `supabase/templates/README.md`).
+Admin har en forhåndsvisning av alle e-postene under **E-post**.
+
+Regelen som holder skjemaene trygge: en e-post til en adresse vi ikke har
+bekreftet (kvitteringer, invitasjoner) gjengir ikke fritekst, har ingenting
+fra skjemaet i emnefeltet, og navn slipper bare gjennom et smalt tegnsett.
+Ellers kunne skjemaene brukes til å sende andre en e-post «fra NorthWest
+Coast» med innhold avsenderen selv har valgt.
+
+Oppfølgings-e-postene sendes med den ansattes egen sesjon. Rollen produksjon
+kan ikke lese bestillinger, så «levert» fra produksjonssiden gir bare varsel
+i portalen; e-posten går når en administrator markerer leveransen som levert.
+

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, langOf, rateLimit, tr } from '@/lib/api-guard';
+import { clean, clientIp, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
 import { fetchCatalog, type Catalog } from '@/lib/catalog';
 import { cabinetAvailable, isCustomLength, type CabinetRow, type PriceRow } from '@/lib/pricing';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { SITE_URL } from '@/lib/site';
 import { ORDER_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
 import { orderInternal, orderReceipt, type OrderLineView } from '@/lib/mail/templates';
 
@@ -173,7 +174,8 @@ function calculationNote(raw: unknown): string {
  *   { cabinetNumber, qty }      oppbevaringsskap alene, uten leider.
  */
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const body = await readBody(req);
+  if (!body) return rejected();
   const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true });
@@ -185,11 +187,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const name = clean(body.name, 120);
-  const email = clean(body.email, 160);
-  const phone = clean(body.phone, 40);
-  const vessel = clean(body.vessel, 160);
-  const imo = clean(body.imo, 20);
+  const name = line(body.name, 120);
+  const email = line(body.email, 160);
+  const phone = line(body.phone, 40);
+  const vessel = line(body.vessel, 160);
+  const imo = line(body.imo, 20);
 
   if (!name || !email) {
     return NextResponse.json({ error: tr(lang, 'Navn og e-post er påkrevd.', 'Name and email are required.') }, { status: 400 });
@@ -308,6 +310,7 @@ export async function POST(req: NextRequest) {
       name, email, phone, vessel,
       notes: mailNotes,
       lines: view, total,
+      adminUrl: orderId ? `${SITE_URL}/admin/bestillinger/${orderId}` : undefined,
     });
     const internalResult = await sendMail(
       { to: ORDER_EMAIL, replyTo: email, ...internal },

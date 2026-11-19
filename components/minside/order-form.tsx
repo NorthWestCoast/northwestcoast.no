@@ -402,11 +402,19 @@ export default function OrderForm({
               {companies.length > 0 && (
                 <div className="pt-field">
                   <label htmlFor="order-company">Selskap</label>
-                  <select id="order-company" name="company_id" defaultValue={companies[0].id}>
+                  {/* Med flere selskap velges ingen på forhånd: bestillingen
+                      skal ikke havne i et selskap kunden ikke har valgt selv. */}
+                  <select
+                    id="order-company"
+                    name="company_id"
+                    required={companies.length > 1}
+                    defaultValue={companies.length === 1 ? companies[0].id : ''}
+                  >
+                    {companies.length > 1 && <option value="" disabled>Velg selskap</option>}
                     {companies.map((company) => (
                       <option key={company.id} value={company.id}>{company.name}</option>
                     ))}
-                    <option value="">Ikke knyttet til et selskap</option>
+                    <option value="ingen">Ikke knyttet til et selskap</option>
                   </select>
                 </div>
               )}

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { MAINTENANCE_EMAIL, sendMail } from '@/lib/mail';
-import { maintenanceReceipt, maintenanceReport } from '@/lib/mail/templates';
+import { maintenanceInternal, maintenanceReceipt } from '@/lib/mail/templates';
 import { SITE_URL } from '@/lib/site';
 
 export const MAINTENANCE_BUCKET = 'maintenance-photos';
@@ -65,7 +65,7 @@ export async function finishMaintenance(
     const name = report.reporter ?? 'Ukjent';
     const boat = report.vessel ?? '–';
     const serial = report.serial ?? '–';
-    const common = {
+    const fields = {
       name,
       boat,
       imo: report.imo ?? undefined,
@@ -73,21 +73,19 @@ export async function finishMaintenance(
       email: report.reporter_email ?? undefined,
       notes: report.notes ?? undefined,
       photoCount: photos,
-      matchedLadder: report.matched === true,
     };
 
     // Bildene ligger i en privat bøtte og vises i admin; e-posten lenker dit
     // i stedet for til selve filene.
-    const where = photos > 0
-      ? `${photos === 1 ? 'Bildet' : `De ${photos} bildene`} som ble lastet opp, ligger i admin under «Vedlikeholdsrapporter»:`
-      : 'Ingen bilder ble lastet opp. Rapporten ligger i admin under «Vedlikeholdsrapporter»:';
-
     await sendMail(
       {
         to: MAINTENANCE_EMAIL,
         replyTo: report.reporter_email ?? undefined,
-        subject: `Vedlikehold registrert – ${boat} (${serial})`,
-        text: `${maintenanceReport(common)}\n\n${where}\n${SITE_URL}/admin/vedlikehold`,
+        ...maintenanceInternal({
+          ...fields,
+          matchedLadder: report.matched === true,
+          adminUrl: `${SITE_URL}/admin/vedlikehold`,
+        }),
       },
       { template: 'maintenance_internal', relatedType: 'maintenance_log', relatedId: logId },
     );
@@ -96,15 +94,8 @@ export async function finishMaintenance(
       // Kvitteringen til fartøyet er dokumentasjon ved tilsyn, så den skal
       // inneholde selve rapporten. Den skrives på kundens språk; den interne
       // rapporten er alltid norsk.
-      const receipt = maintenanceReceipt({
-        name,
-        boat,
-        serial,
-        report: maintenanceReport({ ...common, lang }),
-        lang,
-      });
       await sendMail(
-        { to: report.reporter_email, replyTo: MAINTENANCE_EMAIL, ...receipt },
+        { to: report.reporter_email, replyTo: MAINTENANCE_EMAIL, ...maintenanceReceipt({ ...fields, lang }) },
         { template: 'maintenance_receipt', relatedType: 'maintenance_log', relatedId: logId },
       );
     }

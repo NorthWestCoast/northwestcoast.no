@@ -1,13 +1,11 @@
 import { ConsoleProvider } from './console';
 import { ResendProvider } from './resend';
+import { sender } from './config';
 import type { MailMessage, MailProvider, MailResult } from './types';
 
 export type { MailMessage, MailProvider, MailResult } from './types';
 
-export const CONTACT_EMAIL = process.env.CONTACT_TO_EMAIL ?? 'arve@astep.no';
-export const ORDER_EMAIL = process.env.ORDER_TO_EMAIL ?? CONTACT_EMAIL;
-export const MAINTENANCE_EMAIL = process.env.MAINTENANCE_TO_EMAIL ?? CONTACT_EMAIL;
-export const SUPPORT_PHONE = '+47 904 07 341';
+export { CONTACT_EMAIL, MAINTENANCE_EMAIL, ORDER_EMAIL, SUPPORT_PHONE } from './config';
 
 /**
  * Velger leverandør ut fra MAIL_PROVIDER.
@@ -18,7 +16,7 @@ export const SUPPORT_PHONE = '+47 904 07 341';
  */
 function selectProvider(): MailProvider | null {
   const provider = (process.env.MAIL_PROVIDER ?? 'resend').toLowerCase();
-  const from = process.env.RESEND_FROM_EMAIL ?? 'noreply@northwestcoast.no';
+  const from = sender();
 
   switch (provider) {
     case 'resend': {

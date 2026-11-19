@@ -101,8 +101,13 @@ e-posten med «redirect not allowed»:
   `https://northwestcoast.no` når domenet er koblet til)
 - **Redirect URLs:**
   - `https://northwestcoast-no.vercel.app/auth/callback`
-  - `https://northwestcoast-no-*.vercel.app/auth/callback` – for forhåndsvisninger
   - `https://northwestcoast.no/auth/callback` – når domenet er koblet til
+
+  Bare hele, eksakte adresser. Ikke legg inn jokertegn som
+  `https://northwestcoast-no-*.vercel.app/…` for forhåndsvisninger: hvem som
+  helst kan opprette et Vercel-prosjekt med et navn som passer mønsteret, og
+  da kan en innloggingslenke sendes dit. Forhåndsvisninger logger man inn på
+  ved å åpne lenken fra e-posten på produksjonsadressen.
 
 ### Egen SMTP for innloggings-e-post
 
@@ -115,22 +120,37 @@ bare til medlemmer av Supabase-organisasjonen og har en svært lav grense
 (noen få i timen). Uten egen SMTP kan altså ingen kunder logge inn eller
 opprette konto, og avsenderadressen blir ikke NWC sin.
 
-### Innloggingslenke som virker på tvers av enheter
+### Malene for innloggings-e-post
 
-Standardlenken fra Supabase (`/auth/callback?code=…`) må åpnes i samme
-nettleser som ba om den. Ber man om lenken på PC-en og åpner e-posten på
-mobilen, feiler den. `app/auth/confirm/route.ts` tar i stedet imot en
-token-hash, som kan løses inn hvor som helst.
+Malene ligger i `supabase/templates/` og limes inn i Supabase →
+Authentication → Emails → Templates. Framgangsmåten, emnefeltene og
+innstillingene som hører til (lengde på engangskoden, Redirect URLs, SMTP)
+står i `supabase/templates/README.md`.
 
-Supabase → Authentication → Emails → Templates. Bytt lenken i malene
-«Magic Link» og «Confirm signup» til:
+Lenken i malene går til `/auth/confirm`, der brukeren selv trykker «Logg
+inn». Den virker på tvers av enheter, og den brukes ikke opp av e-postfiltre
+som åpner lenker. Inntil malene er limt inn brukes Supabase sine
+standardmaler og `/auth/callback`, som må åpnes i samme nettleser som ba om
+lenken.
 
-```
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email
-```
+### E-post og DNS for northwestcoast.no
 
-Lenken bygges av Site URL, så den må peke på riktig domene. Inntil malene er
-endret brukes `/auth/callback` som før.
+Domenet er verifisert som avsender i Resend (19.11.2026). Disse postene
+ligger i Cloudflare og må bli stående også når nettstedet flyttes:
+
+| Navn | Type | Verdi | Til hva |
+|---|---|---|---|
+| `resend._domainkey` | TXT | `p=MIGf…` | DKIM: signaturen på e-post fra Resend |
+| `send` | MX | `feedback-smtp.eu-west-1.amazonses.com` (10) | Returadresse for avvisninger |
+| `send` | TXT | `v=spf1 include:amazonses.com ~all` | SPF for returadressen |
+| `rsend` | CNAME | `send.forge.rmta.net` (kun DNS) | Resend sin alternative returadresse |
+| `@` | TXT | `v=spf1 -all` | Ingen sender e-post direkte fra roten |
+| `_dmarc` | TXT | `v=DMARC1; p=none; rua=…cloudflare.net` | DMARC, rapporter til Cloudflare |
+
+Når domenet får innbokser (Cloudflare Email Routing eller Microsoft 365) må
+SPF-posten på roten byttes til leverandørens, ellers avvises e-post de
+sender. `p=none` i DMARC betyr «bare overvåk»: sett `p=quarantine` når den
+første e-posten fra Resend er levert og bestått, og `p=reject` senere.
 
 ## 4. Lokal utvikling
 

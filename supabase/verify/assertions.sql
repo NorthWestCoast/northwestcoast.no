@@ -113,5 +113,42 @@ begin
     raise exception 'Regel 7 brutt - app.staff_role() krever ikke verifisert e-post.';
   end if;
 
-  raise notice 'Sikkerhetsreglene holder (7 av 7).';
+  -- 8) Hver SECURITY DEFINER-funksjon har låst search_path. Uten det kan den
+  --    som kaller, få funksjonen til å bruke sine egne objekter.
+  select string_agg(p.oid::regprocedure::text, ', ') into bad
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname in ('public', 'app') and p.prosecdef
+    and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%');
+  if bad is not null then
+    raise exception 'Regel 8 brutt - SECURITY DEFINER uten search_path: %', bad;
+  end if;
+
+  -- 9) På disse tabellene kan innloggede bare endre de kolonnene som er
+  --    nevnt, aldri hele raden: ellers kan et medlemskap dateres tilbake
+  --    eller en delt rapport åpnes igjen.
+  select string_agg(t, ', ') into bad
+  from unnest(array['public.company_members', 'public.ladder_state_shares']) t
+  where has_table_privilege('authenticated', t, 'UPDATE');
+  if bad is not null then
+    raise exception 'Regel 9 brutt - authenticated kan oppdatere hele raden i: %', bad;
+  end if;
+  if has_table_privilege('authenticated', 'public.company_members', 'INSERT') then
+    raise exception 'Regel 9 brutt - medlemmer kan settes inn direkte i company_members.';
+  end if;
+
+  -- 10) Anonyme må kunne slå opp hjelpefunksjonene policyene bruker, og alle
+  --     visninger leser med innloggerens egne rettigheter.
+  if not has_schema_privilege('anon', 'app', 'USAGE') then
+    raise exception 'Regel 10 brutt - anon mangler USAGE på skjemaet app.';
+  end if;
+  select string_agg(c.oid::regclass::text, ', ') into bad
+  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'public' and c.relkind = 'v'
+    and not coalesce(c.reloptions, '{}') @> array['security_invoker=true'];
+  if bad is not null then
+    raise exception 'Regel 10 brutt - visning uten security_invoker: %', bad;
+  end if;
+
+  raise notice 'Sikkerhetsreglene holder (10 av 10).';
 end $$;

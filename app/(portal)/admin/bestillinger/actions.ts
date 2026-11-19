@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireStaff } from '@/lib/supabase/staff';
 import { type ActionResult, err, fail, isoDate, ok, optional, text, uuid } from '@/lib/portal/forms';
 import { dato, idag } from '@/lib/format';
+import { mailOrderConfirmed, mailOrderDelivered, orderStatus } from '@/lib/mail/events';
 
 /** Etter en endring: bestillingen, listene og tellerne i menyen. */
 function refresh(orderId: string) {
@@ -36,6 +37,10 @@ export async function confirmOrder(formData: FormData): Promise<ActionResult> {
 
   refresh(orderId);
   revalidatePath('/produksjon');
+
+  // Kunden får varsel i portalen fra databasen; e-posten når også den som
+  // bestilte fra nettsiden uten konto.
+  await mailOrderConfirmed(supabase, orderId);
 
   if (!jobs) return ok('Bestillingen er bekreftet. Den har verken leidere eller skap, så ingen produksjonsjobb ble opprettet.');
   return ok(
@@ -200,6 +205,7 @@ export async function markDelivered(formData: FormData): Promise<ActionResult> {
   if (!delivery) return err('Fant ikke leveransen.');
   if (delivery.delivered_at) return err('Leveransen er allerede markert som levert.');
 
+  const statusBefore = await orderStatus(supabase, delivery.order_id);
   const jobStatus = delivery.production_jobs?.status;
   if (delivery.job_id && (jobStatus === 'ready' || jobStatus === 'shipped')) {
     const { error } = await supabase.rpc('advance_job', { p_job: delivery.job_id, p_status: 'delivered' });
@@ -226,5 +232,6 @@ export async function markDelivered(formData: FormData): Promise<ActionResult> {
   }
 
   refresh(delivery.order_id);
+  await mailOrderDelivered(supabase, delivery.order_id, statusBefore);
   return ok('Leveransen er markert som levert.');
 }

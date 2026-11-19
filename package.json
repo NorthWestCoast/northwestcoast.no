@@ -12,6 +12,8 @@
     "db:verify": "bash supabase/verify/run.sh",
     "test:prices": "node tests/price-plan.test.mts",
     "test:ladder": "node tests/ladder-rules.test.mts",
+    "test:mail": "node tests/mail-layout.test.mts",
+    "mail:auth": "node scripts/build-auth-mail.mts",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

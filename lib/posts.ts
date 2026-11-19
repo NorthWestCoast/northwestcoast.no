@@ -107,11 +107,19 @@ function formatDate(iso: string): string {
   return `${part('day')}.${part('month')}.${part('year')}`;
 }
 
-/** Forsidebilde: en https-adresse eller en fil i /public. Alt annet får standardbildet. */
+/** Den offentlige bøtta i prosjektets egen lagring, der opplastede bilder ligger. */
+const OWN_MEDIA = `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/+$/, '')}/storage/v1/object/public/`;
+
+/**
+ * Forsidebilde: et bilde lastet opp i admin eller en fil i /public. Adresser
+ * til andre nettsteder godtas ikke, ellers kunne den som skriver innlegg fått
+ * alle besøkendes nettlesere til å hente noe fra en vert hun selv valgte.
+ */
 function coverImage(value: string | null): string {
   const url = filled(value);
-  if (/^https:\/\/[^\s]+$/i.test(url)) return url;
-  if (url.startsWith('/') && !url.startsWith('//')) return url;
+  if (OWN_MEDIA.startsWith('https://') && url.startsWith(OWN_MEDIA) && !/\s/.test(url)) return url;
+  if (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1):\d+\/storage\/v1\/object\/public\/[^\s]+$/.test(url)) return url;
+  if (url.startsWith('/') && !url.startsWith('//') && !/[\s\\]/.test(url)) return url;
   return DEFAULT_ARTICLE_IMAGE;
 }
 

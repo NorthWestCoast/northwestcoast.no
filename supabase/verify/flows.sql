@@ -278,7 +278,12 @@ begin
                'los ser rapporten med lenken');
   perform t.ok(jsonb_array_length(v_res -> 'photos') = 1, 'med bildene');
   perform t.ok(public.get_ladder_share('feil-token-som-er-lang-nok-1234') is null, 'feil lenke gir ingenting');
-  perform t.ok((select count(*) from storage.objects) = 1, 'bildene kan hentes mens delingen er aktiv');
+  perform t.ok((select count(*) from storage.objects) = 0, 'uten nøkkelen fra lenken ser ingen bildene');
+  perform set_config('request.headers', json_build_object('x-share-token', 'feil-token-som-er-lang-nok-1234')::text, true);
+  perform t.ok((select count(*) from storage.objects) = 0, 'feil nøkkel gir heller ingen bilder');
+  perform set_config('request.headers', json_build_object('x-share-token', v_token)::text, true);
+  perform t.ok((select count(*) from storage.objects) = 1, 'bildene kan hentes med nøkkelen mens delingen er aktiv');
+  perform set_config('request.headers', '', true);
 
   v_failed := false;
   begin
@@ -604,6 +609,225 @@ begin
                'produksjon kan ikke endre ansattlista');
 
   raise notice 'Flyttestene består.';
+end $$;
+
+-- ── Sikkerhetsgjennomgangen 19.11.2026 ──────────────────────────────────────
+-- Hvert avsnitt er et angrep som virket før, og som nå skal avvises.
+do $$
+declare
+  o uuid; ad uuid; x uuid; m uuid;       -- eier, selskapsadministrator, utenforstående, medlem
+  v_company uuid; v_other uuid; v_vessel uuid; v_other_vessel uuid; v_ladder uuid;
+  v_share uuid; v_ticket uuid; v_failed boolean; v_count integer;
+  v_token text := 'tok_sec_abcdefghijklmnopqrstuvwxyz01234';
+begin
+  perform t.root();
+  insert into auth.users (email, email_confirmed_at) values ('eier@sikker.test', now()) returning id into o;
+  insert into auth.users (email, email_confirmed_at) values ('admin@sikker.test', now()) returning id into ad;
+  insert into auth.users (email, email_confirmed_at) values ('angriper@sikker.test', now()) returning id into x;
+  insert into auth.users (email, email_confirmed_at) values ('medlem@sikker.test', now()) returning id into m;
+
+  perform t.login(o);  perform public.portal_bootstrap();
+  v_company := public.create_my_company('Sikker Rederi AS');
+  insert into public.vessels (company_id, name) values (v_company, 'MS Sikker') returning id into v_vessel;
+  perform t.login(ad); perform public.portal_bootstrap();
+  perform t.login(m);  perform public.portal_bootstrap();
+  perform t.login(x);  perform public.portal_bootstrap();
+  v_other := public.create_my_company('Sikker Rederi');
+  insert into public.vessels (company_id, name) values (v_other, 'MS Angriper') returning id into v_other_vessel;
+
+  perform t.root();
+  insert into public.company_members (company_id, user_id, role) values (v_company, ad, 'admin'), (v_company, m, 'member');
+  insert into public.ladders (company_id, vessel_id, product_id, serial_number, status)
+  select v_company, v_vessel, p.id, 'SEC-2026-0001', 'installed' from public.products p where p.product_number = '400-034'
+  returning id into v_ladder;
+
+  -- ── Medlemskap kan ikke tvinges på noen ────────────────────────────────
+  perform t.login(x);
+  v_failed := false;
+  begin
+    insert into public.company_members (company_id, user_id, role) values (v_other, o, 'member');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'ingen kan sette inn et medlem direkte');
+
+  -- ── Eierrollen ─────────────────────────────────────────────────────────
+  perform t.login(ad);
+  v_failed := false;
+  begin
+    update public.company_members set role = 'owner' where company_id = v_company and user_id = ad;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en administrator kan ikke gjøre seg selv til eier');
+
+  v_failed := false;
+  begin
+    delete from public.company_members where company_id = v_company and user_id = o;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en administrator kan ikke fjerne eieren');
+
+  v_failed := false;
+  begin
+    update public.company_members set created_at = '2000-01-01' where company_id = v_company and user_id = ad;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'bare rollen kan endres på et medlemskap');
+
+  v_failed := false;
+  begin
+    insert into public.access_invitations (email, scope, company_id, role, invited_by)
+    values ('ny-eier@sikker.test', 'company', v_company, 'owner', ad);
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en administrator kan ikke invitere en ny eier');
+
+  update public.company_members set role = 'admin' where company_id = v_company and user_id = m;
+  perform t.root();
+  perform t.ok((select role from public.company_members where company_id = v_company and user_id = m) = 'admin',
+               'en administrator kan fortsatt endre andre roller');
+
+  perform t.login(o);
+  v_failed := false;
+  begin
+    delete from public.company_members where company_id = v_company and user_id = o;
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'den siste eieren kan ikke forlate selskapet');
+
+  insert into public.access_invitations (email, scope, company_id, role, invited_by, invited_by_name)
+  values ('ny-eier@sikker.test', 'company', v_company, 'owner', o, 'NorthWest Coast AS');
+  perform t.ok((select invited_by_name from public.access_invitations where email = 'ny-eier@sikker.test')
+               = 'eier@sikker.test', 'navnet på den som inviterer hentes fra profilen');
+
+  perform t.login(m);
+  delete from public.company_members where company_id = v_company and user_id = m;
+  perform t.root();
+  perform t.ok(not exists (select 1 from public.company_members where company_id = v_company and user_id = m),
+               'et medlem kan selv forlate selskapet');
+  insert into public.company_members (company_id, user_id, role) values (v_company, m, 'member');
+
+  -- ── Tak på invitasjoner ────────────────────────────────────────────────
+  perform t.login(x);
+  v_failed := false;
+  begin
+    for i in 1..6 loop
+      insert into public.access_invitations (email, scope, company_id, role, invited_by)
+      values ('offer@andre.test', 'company', v_other, 'member', x);
+      delete from public.access_invitations where email = 'offer@andre.test';
+    end loop;
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'samme adresse kan ikke få invitasjoner i det uendelige');
+
+  -- ── Loggføringer kan ikke utgi seg for å komme fra NorthWest Coast ─────
+  perform t.login(m);
+  v_failed := false;
+  begin
+    insert into public.maintenance_logs (ladder_id, reported_by_user_id, reporter_name, kind, title, source)
+    values (v_ladder, m, 'NorthWest Coast AS', 'inspection', 'Årskontroll godkjent', 'admin');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en kunde kan ikke loggføre som NorthWest Coast');
+
+  v_failed := false;
+  begin
+    insert into public.maintenance_logs (ladder_id, vessel_id, reported_by_user_id, reporter_name, kind, title, source)
+    values (v_ladder, v_other_vessel, m, 'Medlem', 'inspection', 'Kontroll', 'portal');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en loggføring kan ikke legges på et annet selskaps fartøy');
+
+  v_failed := false;
+  begin
+    insert into public.maintenance_logs (ladder_id, reported_by_user_id, reporter_name, kind, title, source, performed_at)
+    values (v_ladder, m, 'Medlem', 'inspection', 'Kontroll', 'portal', current_date + 400);
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en loggføring kan ikke dateres fram i tid');
+
+  insert into public.maintenance_logs (ladder_id, vessel_id, reported_by_user_id, reporter_name, kind, title, source, performed_at)
+  values (v_ladder, v_vessel, m, 'Medlem', 'inspection', 'Kontroll før bruk', 'portal', current_date);
+
+  -- ── Delte rapporter kan ikke skrives om ────────────────────────────────
+  perform t.login(o);
+  insert into public.ladder_state_shares (ladder_id, vessel_id, token_hash, created_by, created_by_name, title)
+  values (v_ladder, v_vessel, encode(sha256(convert_to(v_token, 'UTF8')), 'hex'), o, 'NorthWest Coast AS', 'Rapport')
+  returning id into v_share;
+  perform t.ok((select created_by_name from public.ladder_state_shares where id = v_share) = 'eier@sikker.test',
+               'navnet på den som deler hentes fra profilen');
+  update public.ladder_state_shares set revoked_at = now() where id = v_share;
+
+  perform t.login(m);
+  v_failed := false;
+  begin
+    update public.ladder_state_shares set expires_at = 'infinity' where id = v_share;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en delt rapport kan ikke forlenges');
+
+  update public.ladder_state_shares set revoked_at = null where id = v_share;
+  perform t.root();
+  perform t.ok((select revoked_at is not null from public.ladder_state_shares where id = v_share),
+               'en tilbaketrukket lenke kan ikke åpnes igjen av andre');
+
+  perform t.login(m);
+  v_failed := false;
+  begin
+    insert into public.ladder_state_shares (ladder_id, vessel_id, token_hash, created_by, title, expires_at)
+    values (v_ladder, v_vessel, 'x', m, 'Evig', now() + interval '5 years');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en delt rapport kan ikke vare i årevis');
+
+  -- ── En leider kan ikke flyttes til et annet selskap ────────────────────
+  perform t.root();
+  insert into public.ladder_members (ladder_id, user_id, role) values (v_ladder, x, 'manager');
+  perform t.login(x);
+  v_failed := false;
+  begin
+    perform public.install_ladder(v_ladder, v_other_vessel, current_date, null);
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en som forvalter én leider kan ikke flytte den til sitt eget selskap');
+  perform t.root();
+  perform t.ok((select company_id from public.ladders where id = v_ladder) = v_company, 'leideren står der den sto');
+
+  perform t.login(o);
+  v_failed := false;
+  begin
+    perform public.install_ladder(v_ladder, v_vessel, current_date + 900, null);
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'monteringsdatoen kan ikke ligge fram i tid');
+  perform public.install_ladder(v_ladder, v_vessel, current_date, null);
+
+  -- ── En sak havner ikke i et tilfeldig selskap ──────────────────────────
+  perform t.root();
+  insert into public.company_members (company_id, user_id, role, created_at) values (v_other, o, 'member', '2000-01-01');
+  perform t.login(o);
+  v_ticket := public.create_ticket('Faktura', 'Konfidensielt', 'support');
+  perform t.root();
+  perform t.ok((select company_id is null from public.support_tickets where id = v_ticket),
+               'med flere selskap gjettes det ikke hvilket saken gjelder');
+
+  -- ── Avmelding fra nyhetsbrevet står ─────────────────────────────────────
+  perform t.anon();
+  perform public.subscribe_newsletter('avmeldt@sikker.test');
+  perform t.root();
+  update public.newsletter_subscribers set unsubscribed_at = now() where email = 'avmeldt@sikker.test';
+  perform t.anon();
+  perform public.subscribe_newsletter('avmeldt@sikker.test');
+  perform t.root();
+  perform t.ok((select unsubscribed_at is not null from public.newsletter_subscribers where email = 'avmeldt@sikker.test'),
+               'en avmeldt adresse meldes ikke på igjen av andre');
+
+  -- ── Den gamle veien til administrator er stengt ────────────────────────
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', x, 'role', 'authenticated', 'app_metadata', json_build_object('staff', true))::text, true);
+  perform t.ok(app.staff_role() is null, 'et flagg i JWT-en gir ikke lenger administrator');
+
+  raise notice 'Sikkerhetstestene består.';
 end $$;
 
 rollback;

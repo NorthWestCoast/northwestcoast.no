@@ -11,7 +11,25 @@ function localStoragePatterns() {
 }
 
 /** @type {import('next').NextConfig} */
+/**
+ * Bildene som lastes opp i admin ligger i den offentlige bøtta i prosjektets
+ * egen Supabase Storage. Bare akkurat den verten og den bøtta slippes gjennom
+ * next/image, ellers kunne hvem som helst brukt bildeoptimaliseringen vår på
+ * bilder fra sitt eget Supabase-prosjekt.
+ */
+function mediaPatterns() {
+  try {
+    const { protocol, hostname } = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
+    if (protocol !== 'https:') return [];
+    return [{ protocol: 'https', hostname, pathname: '/storage/v1/object/public/public-media/**' }];
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig = {
+  poweredByHeader: false,
+
   // En ekstra utviklingsserver (f.eks. mot det lokale testmiljøet på en annen
   // port) må ha sin egen byggemappe, ellers skriver de to over hverandre.
   distDir: process.env.NEXT_DIST_DIR || '.next',
@@ -32,14 +50,7 @@ const nextConfig = {
     // Forsidebilder til nyheter og bildene i galleriet lastes opp i admin og
     // ligger i den offentlige bøtta i Supabase Storage. Bare den stien slippes
     // gjennom next/image.
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/public/**',
-      },
-      ...localStoragePatterns(),
-    ],
+    remotePatterns: [...mediaPatterns(), ...localStoragePatterns()],
   },
 
   // Gamle URL-er fra dagens live-nettsted, slik at lenker og søkerangering
@@ -109,12 +120,12 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          // Replaced X-Frame-Options: DENY with a CSP frame-ancestors directive
-          // so Vercel previews and v0.dev can embed the page while still
-          // blocking arbitrary third-party framing in modern browsers.
+          // Siden kan ikke legges i en ramme på andre nettsteder, skjemaer
+          // kan bare sende til oss selv, og <base> og <object> kan ikke
+          // brukes til å lede sidens egne lenker og skript et annet sted.
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' https://v0.dev https://*.vercel.app https://*.vercel-preview.com",
+            value: "frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none'",
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

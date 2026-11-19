@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Enkel misbruksbeskyttelse for de offentlige skjema-endepunktene.
@@ -41,11 +41,62 @@ export function rateLimit(
   return true;
 }
 
-/** Trimmer og kutter fritekst før den havner i en e-post. */
+/** Trimmer og kutter fritekst (kommentarer, meldinger) før den lagres eller sendes. */
 export function clean(value: unknown, maxLength = 500): string {
   if (typeof value !== 'string') return '';
   return value.trim().slice(0, maxLength);
 }
+
+/**
+ * Enlinjefelt (navn, fartøy, telefon, serienummer): som clean(), men uten
+ * linjeskift, kontrolltegn og usynlige formattegn. Da kan ingen legge inn
+ * egne «linjer» i den interne e-posten eller skjule hva feltet inneholder.
+ */
+export function line(value: unknown, maxLength = 200): string {
+  if (typeof value !== 'string') return '';
+  return Array.from(
+    value
+      .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  )
+    .slice(0, maxLength)
+    .join('')
+    .trim();
+}
+
+/**
+ * Leser JSON-kroppen i et skjemakall.
+ *
+ * Gir null når kallet ikke kommer fra vår egen side: skjemaene våre sender
+ * alltid JSON fra samme opprinnelse. Uten denne sjekken kunne en hvilken som
+ * helst nettside fått besøkendes nettlesere til å sende inn skjemaene for
+ * seg (et vanlig HTML-skjema kan poste tekst, men ikke JSON, på tvers av
+ * nettsteder). Kall uten Origin og Sec-Fetch-Site kommer ikke fra en
+ * nettleser, og slippes gjennom til de vanlige grensene.
+ */
+export async function readBody(req: NextRequest): Promise<Record<string, unknown> | null> {
+  if (!(req.headers.get('content-type') ?? '').toLowerCase().startsWith('application/json')) return null;
+
+  const fetchSite = req.headers.get('sec-fetch-site');
+  if (fetchSite && fetchSite !== 'same-origin') return null;
+
+  const origin = req.headers.get('origin');
+  if (origin) {
+    const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
+    try {
+      if (new URL(origin).host !== host) return null;
+    } catch {
+      return null;
+    }
+  }
+
+  const body: unknown = await req.json().catch(() => null);
+  return body && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, unknown>) : {};
+}
+
+/** Svaret når readBody() avviser kallet. */
+export const rejected = () => NextResponse.json({ error: 'Ugyldig forespørsel.' }, { status: 403 });
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 

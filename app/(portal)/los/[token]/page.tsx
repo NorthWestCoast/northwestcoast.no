@@ -58,7 +58,9 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
     return <Message title="Lenken er ikke gyldig">Sjekk at du har fått med hele lenken.</Message>;
   }
 
-  const supabase = await createServerSupabase();
+  // Nøkkelen fra lenken sendes også som hode: bildene i rapporten ligger i en
+  // privat bøtte, og lagringen slipper dem bare gjennom for den som har den.
+  const supabase = await createServerSupabase({ 'x-share-token': token });
   const { data, error } = await supabase.rpc('get_ladder_share', { p_token: token });
   if (error) console.error('[los] get_ladder_share feilet:', error.message);
 
@@ -82,7 +84,7 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
     return <Message title="Lenken er ikke gyldig">Sjekk at du har fått med hele lenken, eller be fartøyet om en ny.</Message>;
   }
 
-  // Lagringen slipper bildene gjennom så lenge delingen er aktiv.
+  // Lagringen slipper bildene gjennom så lenge delingen er aktiv og nøkkelen stemmer.
   const urls = await signedUrls(supabase, BUCKETS.shares, share.photos.map((photo) => photo.path));
   const photos = share.photos.flatMap((photo, index) => {
     const url = urls.get(photo.path);

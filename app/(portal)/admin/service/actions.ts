@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireStaff } from '@/lib/supabase/staff';
 import { type ActionResult, checked, err, fail, isoDate, ok, optional, text, uuid } from '@/lib/portal/forms';
+import { mailCertificateIssued } from '@/lib/mail/events';
 import { CERTIFICATE_NAME, CERTIFICATE_NAME_LOWER } from '@/lib/portal/labels';
 import { nextServiceDue } from '@/lib/portal/service';
 import { BUCKETS } from '@/lib/portal/storage';
@@ -258,6 +259,8 @@ export async function issueCertificate(formData: FormData): Promise<CertificateI
     p_remarks: optional(formData.get('remarks'), 2000) ?? undefined,
   });
   if (error || !certificateId) return failure(error, `${CERTIFICATE_NAME} kunne ikke utstedes.`);
+
+  await mailCertificateIssued(supabase, certificateId);
 
   const { data: certificate } = await supabase
     .from('ladder_certificates')

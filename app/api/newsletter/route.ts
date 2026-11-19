@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, rateLimit, langOf, tr } from '@/lib/api-guard';
+import { clientIp, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { CONTACT_EMAIL, sendMail } from '@/lib/mail';
+import { newsletterNotice } from '@/lib/mail/templates';
 
 /**
  * Nyhetsbrevpåmelding.
@@ -11,7 +12,8 @@ import { CONTACT_EMAIL, sendMail } from '@/lib/mail';
  * vi trenger bare å ikke miste adressen.
  */
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const body = await readBody(req);
+  if (!body) return rejected();
   const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true });
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: tr(lang, 'For mange forsøk. Prøv igjen om litt.', 'Too many attempts. Please try again shortly.') }, { status: 429 });
   }
 
-  const email = clean(body.email, 160).toLowerCase();
+  const email = line(body.email, 160).toLowerCase();
 
   if (!isEmail(email)) {
     return NextResponse.json({ error: tr(lang, 'Skriv inn en gyldig e-postadresse.', 'Please enter a valid email address.') }, { status: 400 });
@@ -48,14 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Varsel til NWC er nå ren bekvemmelighet – adressen er allerede trygt lagret.
-  await sendMail(
-    {
-      to: CONTACT_EMAIL,
-      subject: `Ny nyhetsbrevpåmelding: ${email}`,
-      text: `E-post: ${email}\nLagret i newsletter_subscribers: ja`,
-    },
-    { template: 'newsletter_notice' },
-  );
+  await sendMail({ to: CONTACT_EMAIL, ...newsletterNotice({ email }) }, { template: 'newsletter_notice' });
 
   return NextResponse.json({ ok: true });
 }

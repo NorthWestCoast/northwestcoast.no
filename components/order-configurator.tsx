@@ -254,6 +254,11 @@ export default function OrderConfigurator({
         src="https://cdnjs.cloudflare.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
         type="module"
         strategy="lazyOnload"
+        // Fila hentes fra en tredjepart. Sjekksummen gjør at nettleseren nekter
+        // å kjøre den hvis innholdet noen gang endres. Bytt den sammen med
+        // versjonen (cdnjs oppgir den for hver fil).
+        integrity="sha512-AWSEwG4jfWAImdUewi12P6MJeDZZCt5zurLaZ+YlY5FsQB2YeaUKVrQbevkV6cFQHfDX7bRqorNKVv55uL/XIg=="
+        crossOrigin="anonymous"
       />
       {/* 3D viewer */}
       <div className="config-viewer">

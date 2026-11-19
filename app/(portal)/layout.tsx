@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, DM_Sans, DM_Mono } from 'next/font/google';
 import '../globals.css'; // Global styles
 import './portal.css';
-import Analytics from '@/components/analytics';
 import { no } from '@/lib/dictionaries/no';
 import { SITE_URL, THEME_COLOR } from '@/lib/site';
 
@@ -74,8 +73,11 @@ export default function RootLayout({
       className={`${playfair.variable} ${dmSans.variable} ${dmMono.variable}`}
     >
       <body>
+        {/* Ingen besøksanalyse her. Adressene i denne delen kan inneholde
+            engangsnøkler (innloggingslenke, delt rapport, sertifikat), og de
+            skal ikke sendes til en tredjepart. Analysen står bare i den
+            offentlige delen, se app/(site)/[lang]/layout.tsx. */}
         {children}
-        <Analytics />
       </body>
     </html>
   );

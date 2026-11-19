@@ -15,6 +15,7 @@ import {
   text,
   uuid,
 } from '@/lib/portal/forms';
+import { mailOrderDelivered } from '@/lib/mail/events';
 import { CUSTOM_PRODUCT_NUMBER, fmtLength, isCustomLength } from '@/lib/pricing';
 
 /**
@@ -102,10 +103,19 @@ export async function deliverJob(formData: FormData): Promise<ActionResult> {
   const job = uuid(formData.get('job'));
   if (!job) return err('Fant ikke jobben.');
 
+  // Hvilken bestilling jobben hører til, og hvor den sto før, så kunden får
+  // e-post når den siste jobben i bestillingen blir levert.
+  const { data: before } = await supabase
+    .from('production_jobs')
+    .select('order_id, orders(status)')
+    .eq('id', job)
+    .maybeSingle();
+
   const { error } = await supabase.rpc('advance_job', { p_job: job, p_status: 'delivered' });
   if (error) return fail(error);
 
   refresh();
+  if (before?.order_id) await mailOrderDelivered(supabase, before.order_id, before.orders?.status ?? null);
   return ok('Jobben er markert som levert.');
 }
 
