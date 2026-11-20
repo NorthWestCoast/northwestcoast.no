@@ -1,4 +1,10 @@
 -- Fjerner demodataene fra supabase/seed/demo.sql.
+-- Lageret først: bevegelsene må bort før varene de gjelder.
+delete from public.stock_movements where item_id::text like '0d000000-0000-4000-8000-%';
+delete from public.product_components where item_id::text like '0d000000-0000-4000-8000-%';
+delete from public.purchase_orders where id::text like '0d000000-0000-4000-8000-%';
+delete from public.stock_items where id::text like '0d000000-0000-4000-8000-%';
+delete from public.suppliers where id::text like '0d000000-0000-4000-8000-%';
 delete from public.deliveries where order_id in (select id from public.orders where id::text like '0d000000-0000-4000-8000-%');
 delete from public.production_jobs where id::text like '0d000000-0000-4000-8000-%';
 delete from public.orders where id::text like '0d000000-0000-4000-8000-%';

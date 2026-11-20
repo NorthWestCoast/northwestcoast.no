@@ -50,10 +50,12 @@ Postgres, Mac: `brew install postgresql@17`) uten å røre noen ekte database:
   constraints, indekser, policyer, funksjoner, triggere, rettigheter ...),
   som sammenlignes med `verify/expected-fingerprint.txt`
 
-`expected-fingerprint.txt` er fingeravtrykket av produksjon da det ble skrevet
-(2026-11-19, etter `20261119162558`, den siste av de fire migrasjonene fra
-sikkerhetsgjennomgangen). Kjør `verify/fingerprint.sql` i Supabase
-SQL-editor for å sammenligne med live-databasen.
+`expected-fingerprint.txt` er fingeravtrykket etter alle migrasjonene i mappa.
+Sist sammenlignet med produksjon 2026-11-21, rett etter de tre
+lagermigrasjonene (`ladder_status_in_stock`, `inventory_schema` og
+`inventory_production`): alle kategoriene var like. Kjør
+`verify/fingerprint.sql` i Supabase SQL-editor for å sammenligne med
+live-databasen.
 
 ### Lokalt miljø og demodata
 

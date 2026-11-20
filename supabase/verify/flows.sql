@@ -959,4 +959,253 @@ begin
   raise notice 'Sikkerhetstestene består.';
 end $$;
 
+-- ── Lager ───────────────────────────────────────────────────────────────────
+do $$
+declare
+  adm uuid; prod uuid; cust uuid; med uuid;
+  v_built uuid; v_resale uuid; v_spare uuid; v_special uuid;     -- produkter
+  i_step uuid; i_rope uuid; i_built uuid; i_resale uuid; i_spare uuid;  -- lagervarer
+  v_sup uuid; v_po uuid; v_line uuid; v_line2 uuid;
+  v_order jsonb; v_job uuid; v_stock_job uuid; v_ladder uuid; v_failed boolean;
+  r record;
+begin
+  select id into adm  from auth.users where lower(email) = 'admin@nwc.test';
+  select id into prod from auth.users where lower(email) = 'prod@nwc.test';
+  select id into cust from auth.users where lower(email) = 'eier@rederi.test';
+  select id into med  from auth.users where lower(email) = 'media@byraa.test';
+
+  perform t.root();
+  insert into public.products (product_number, name, kind, length_m, steps, price_nok, sourcing)
+  values ('L-BYGG-4', 'Egen leider 4 m', 'ladder', 4, 13, 10000, 'assembled') returning id into v_built;
+  insert into public.products (product_number, name, kind, length_m, steps, price_nok, sourcing)
+  values ('L-VIDERE-6', 'Videresalgsleider 6 m', 'ladder', 6, 19, 12000, 'resale') returning id into v_resale;
+  insert into public.products (product_number, name, kind, price_nok, sourcing)
+  values ('R-TRINN', 'Trinn, reservedel', 'spare_part', 400, 'resale') returning id into v_spare;
+  insert into public.products (product_number, name, kind, price_nok, sourcing, price_on_request)
+  values ('L-SPES', 'Egen leider, spesiallengde', 'ladder', 0, 'assembled', true) returning id into v_special;
+
+  -- ── Administrator setter opp varer og stykkliste ───────────────────────
+  perform t.login(adm);
+  insert into public.suppliers (name) values ('Tauverket AS') returning id into v_sup;
+  insert into public.stock_items (item_number, name, category, supply, unit, product_id, reorder_point)
+  values ('D-TRINN', 'Trinn', 'part', 'external', 'stk', v_spare, 20) returning id into i_step;
+  insert into public.stock_items (item_number, name, category, supply, unit, supplier_id)
+  values ('D-TAU', 'Sidetau', 'part', 'purchased', 'm', v_sup) returning id into i_rope;
+  insert into public.stock_items (item_number, name, category, supply, product_id)
+  values ('F-BYGG-4', 'Egen leider 4 m', 'finished', 'assembled', v_built) returning id into i_built;
+  insert into public.stock_items (item_number, name, category, supply, product_id)
+  values ('F-VIDERE-6', 'Videresalgsleider 6 m', 'finished', 'purchased', v_resale) returning id into i_resale;
+
+  insert into public.product_components (product_id, item_id, qty) values (v_built, i_step, 13), (v_built, i_rope, 8.5);
+  insert into public.product_components (product_id, item_id, qty, qty_per_metre) values (v_special, i_step, 1, 3);
+  insert into public.product_components (product_id, item_id, qty_per_metre) values (v_special, i_rope, 2.1);
+
+  v_failed := false;
+  begin
+    update public.stock_items set on_hand = 999 where id = i_step;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'beholdningen kan ikke settes direkte, bare gjennom bevegelser');
+
+  -- ── Innkjøp og varemottak ──────────────────────────────────────────────
+  insert into public.purchase_orders (supplier_id, kind, expected_on)
+  values (v_sup, 'external_production', current_date + 14) returning id into v_po;
+  insert into public.purchase_order_lines (purchase_order_id, item_id, qty_ordered)
+  values (v_po, i_step, 100) returning id into v_line;
+  insert into public.purchase_order_lines (purchase_order_id, item_id, qty_ordered)
+  values (v_po, i_rope, 60) returning id into v_line2;
+  perform t.ok((select on_order from public.stock_overview where id = i_step) = 100, 'det som er bestilt vises som «i bestilling»');
+
+  perform t.login(prod);
+  perform public.receive_purchase_line(v_line, 60);
+  perform t.ok((select on_hand from public.stock_items where id = i_step) = 60
+               and (select on_order from public.stock_overview where id = i_step) = 40,
+               'produksjon registrerer delmottak, resten står i bestilling');
+  perform public.receive_purchase_line(v_line, 40);
+  perform public.receive_purchase_line(v_line2, 60);
+  perform t.ok((select status from public.purchase_orders where id = v_po) = 'received', 'innkjøpet er mottatt når alt er kommet');
+  v_failed := false;
+  begin
+    perform public.receive_purchase_line(v_line, 1);
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'et avsluttet innkjøp tar ikke imot mer');
+
+  insert into public.stock_movements (item_id, quantity, kind, note) values (i_resale, 5, 'receipt', 'Varemottak uten innkjøp');
+  insert into public.stock_movements (item_id, quantity, kind, note) values (i_rope, -1.5, 'scrap', 'Skadet kveil');
+  perform t.ok((select on_hand from public.stock_items where id = i_rope) = 58.5, 'produksjon kan registrere svinn');
+  perform t.ok((select created_by_name from public.stock_movements where kind = 'scrap' and item_id = i_rope) is not null,
+               'bevegelsen stemples med hvem som registrerte den');
+
+  v_failed := false;
+  begin
+    insert into public.stock_movements (item_id, quantity, kind) values (i_rope, 5, 'scrap');
+  exception when check_violation then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'fortegnet må passe med slaget bevegelse');
+
+  v_failed := false;
+  begin
+    insert into public.stock_movements (item_id, quantity, kind, job_id) values (i_rope, -1, 'production_out', gen_random_uuid());
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en manuell bevegelse kan ikke knyttes til en jobb');
+
+  v_failed := false;
+  begin
+    delete from public.stock_movements where item_id = i_rope;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'bevegelser kan ikke slettes');
+
+  v_failed := false;
+  begin
+    insert into public.stock_items (item_number, name) values ('X-1', 'Ulovlig vare');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'produksjon kan ikke opprette varer');
+
+  -- ── Kunder og media ser ikke lageret ───────────────────────────────────
+  perform t.login(cust);
+  perform t.ok((select count(*) from public.stock_items) = 0 and (select count(*) from public.stock_movements) = 0
+               and (select count(*) from public.product_components) = 0, 'kunder ser ikke lageret');
+  perform t.ok((select count(*) from public.stock_usage()) = 0, 'og får ingenting ut av forbruksoversikten');
+  perform t.login(med);
+  perform t.ok((select count(*) from public.stock_overview) = 0 and (select count(*) from public.purchase_orders) = 0,
+               'media ser ikke lageret');
+
+  -- ── Bestilling av en leider vi bygger selv: delene trekkes når den er ferdig ──
+  perform t.login(cust);
+  v_order := public.place_order(jsonb_build_object(
+    'name', 'Eier', 'email', 'lager1@rederi.test', 'source', 'portal',
+    'items', jsonb_build_array(
+      jsonb_build_object('product_id', v_built, 'qty', 1),
+      jsonb_build_object('product_id', v_resale, 'qty', 1),
+      jsonb_build_object('product_id', v_spare, 'qty', 4))));
+  perform t.login(adm);
+  perform public.confirm_order((v_order ->> 'id')::uuid);
+  perform t.ok((select reserved from public.stock_overview where id = i_step) = 13
+               and (select available from public.stock_overview where id = i_step) = 87,
+               'åpne jobber binder deler etter stykklista');
+
+  perform t.login(prod);
+  select id into v_job from public.production_jobs where order_id = (v_order ->> 'id')::uuid and product_id = v_built;
+  perform public.assign_job_serial(v_job, 'LAGER-0001');
+  for r in select id from public.production_job_steps where job_id = v_job loop
+    perform public.set_production_step(r.id, true);
+  end loop;
+  perform t.ok((select on_hand from public.stock_items where id = i_step) = 87
+               and (select on_hand from public.stock_items where id = i_rope) = 50
+               and (select on_hand from public.stock_items where id = i_built) = 1,
+               'ferdig montert: delene er trukket, og enheten står på lager');
+  perform t.ok((select reserved from public.stock_overview where id = i_step) = 0, 'og delene er ikke lenger bundet');
+
+  -- Et steg åpnes og lukkes igjen: delene trekkes ikke en gang til.
+  select id into r from public.production_job_steps where job_id = v_job limit 1;
+  perform public.set_production_step(r.id, false);
+  perform public.set_production_step(r.id, true);
+  perform t.ok((select on_hand from public.stock_items where id = i_step) = 87, 'delene trekkes bare én gang per jobb');
+
+  perform public.advance_job(v_job, 'delivered');
+  perform t.ok((select on_hand from public.stock_items where id = i_built) = 0, 'levert: enheten går ut som solgt');
+
+  -- ── Videresalg: ingen deler, bare enheten ut ───────────────────────────
+  select id into v_job from public.production_jobs where order_id = (v_order ->> 'id')::uuid and product_id = v_resale;
+  perform public.assign_job_serial(v_job, 'LAGER-0002');
+  for r in select id from public.production_job_steps where job_id = v_job loop
+    perform public.set_production_step(r.id, true);
+  end loop;
+  perform t.ok((select on_hand from public.stock_items where id = i_resale) = 5
+               and (select count(*) from public.stock_movements where job_id = v_job) = 0,
+               'en leider vi selger videre trekker ingen deler og legges ikke inn på nytt');
+  perform public.advance_job(v_job, 'delivered');
+  perform t.ok((select on_hand from public.stock_items where id = i_resale) = 4, 'den går ut av lageret når den leveres');
+
+  -- ── Reservedeler: trekkes når bestillingen er levert ───────────────────
+  perform t.root();
+  perform t.ok((select status from public.orders where id = (v_order ->> 'id')::uuid) = 'delivered', 'bestillingen er levert');
+  perform t.ok((select on_hand from public.stock_items where id = i_step) = 83, 'reservedelene i bestillingen er trukket som direkte salg');
+
+  -- ── Forbruk: produksjon mot direkte salg ───────────────────────────────
+  perform t.login(adm);
+  select * into r from public.stock_usage(current_date - 1, current_date) u where u.item_id = i_step;
+  perform t.ok(r.received = 100 and r.used_in_production = 13 and r.sold = 4,
+               'forbruket skiller mellom produksjon og direkte salg');
+
+  -- ── Spesiallengde: mengden følger lengden ──────────────────────────────
+  perform t.login(cust);
+  v_order := public.place_order(jsonb_build_object(
+    'name', 'Eier', 'email', 'lager2@rederi.test', 'source', 'portal',
+    'company_id', (select cm.company_id from public.company_members cm
+                   join public.companies c on c.id = cm.company_id
+                   where cm.user_id = cust and c.name = 'Testrederi AS'),
+    'items', jsonb_build_array(jsonb_build_object('product_id', v_built, 'qty', 1))));
+  perform t.root();
+  insert into public.production_jobs (product_id, kind, product_name, product_number, length_m)
+  values (v_special, 'ladder', 'Egen leider – 5,5 m (spesiallengde)', 'L-SPES', 5.5) returning id into v_job;
+  perform t.login(prod);
+  perform public.assign_job_serial(v_job, 'LAGER-0003');
+  for r in select id from public.production_job_steps where job_id = v_job loop
+    perform public.set_production_step(r.id, true);
+  end loop;
+  perform t.ok((select -quantity from public.stock_movements where job_id = v_job and item_id = i_step) = 17.5
+               and (select -quantity from public.stock_movements where job_id = v_job and item_id = i_rope) = 11.55,
+               'en spesiallengde trekker deler etter lengden');
+  perform public.advance_job(v_job, 'delivered');
+
+  -- ── Bygget til lager, og solgt fra lager ───────────────────────────────
+  perform t.login(adm);
+  insert into public.production_jobs (product_id, kind, product_name, product_number, length_m, steps)
+  values (v_built, 'ladder', 'Egen leider 4 m', 'L-BYGG-4', 4, 13) returning id into v_stock_job;
+  perform t.login(prod);
+  perform public.assign_job_serial(v_stock_job, 'LAGER-0004');
+  for r in select id from public.production_job_steps where job_id = v_stock_job loop
+    perform public.set_production_step(r.id, true);
+  end loop;
+  perform public.advance_job(v_stock_job, 'stocked');
+  select ladder_id into v_ladder from public.production_jobs where id = v_stock_job;
+  perform t.root();   -- produksjon ser ikke leidere uten kunde
+  perform t.ok((select status from public.production_jobs where id = v_stock_job) = 'stocked'
+               and (select status::text from public.ladders where id = v_ladder) = 'in_stock'
+               and (select on_hand from public.stock_items where id = i_built) = 1,
+               'en jobb uten bestilling kan legges på lager');
+
+  perform t.login(prod);
+  v_failed := false;
+  begin
+    perform public.advance_job(v_stock_job, 'delivered');
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en enhet på lager leveres ikke uten bestilling');
+
+  perform t.login(cust);
+  perform t.ok(not exists (select 1 from public.ladders where id = v_ladder), 'kunder ser ikke leidere som står på lager');
+
+  perform t.login(adm);
+  perform public.confirm_order((v_order ->> 'id')::uuid);
+  select id into v_job from public.production_jobs where order_id = (v_order ->> 'id')::uuid;
+  perform t.login(prod);
+  perform public.fulfil_job_from_stock(v_job, v_stock_job);
+  perform t.ok(not exists (select 1 from public.production_jobs where id = v_job)
+               and (select status from public.production_jobs where id = v_stock_job) = 'ready'
+               and (select order_id from public.production_jobs where id = v_stock_job) = (v_order ->> 'id')::uuid,
+               'enheten på lager tar plassen til jobben for bestillingen');
+  perform t.ok((select count(*) from public.stock_movements where job_id = v_stock_job and kind = 'production_out') = 2,
+               'og delene trekkes ikke en gang til');
+  perform public.advance_job(v_stock_job, 'delivered');
+  perform t.root();
+  perform t.ok((select on_hand from public.stock_items where id = i_built) = 0
+               and (select status::text from public.ladders where id = v_ladder) = 'delivered',
+               'solgt fra lager: enheten er ute, og leideren er levert');
+  perform t.login(cust);
+  perform t.ok(exists (select 1 from public.ladders where id = v_ladder), 'og kunden ser leideren sin');
+
+  -- ── Minimumsbeholdning ─────────────────────────────────────────────────
+  perform t.login(adm);
+  update public.stock_items set reorder_point = 80 where id = i_step;
+  perform t.ok((select below_minimum from public.stock_overview where id = i_step), 'varer under minimum flagges');
+
+  raise notice 'Lagertestene består.';
+end $$;
+
 rollback;

@@ -1304,6 +1304,51 @@ export type Database = {
         }
         Relationships: []
       }
+      product_components: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          note: string | null
+          product_id: string
+          qty: number
+          qty_per_metre: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          note?: string | null
+          product_id: string
+          qty?: number
+          qty_per_metre?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          note?: string | null
+          product_id?: string
+          qty?: number
+          qty_per_metre?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_components_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_components_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_price_history: {
         Row: {
           changed_at: string
@@ -1416,6 +1461,8 @@ export type Database = {
           started_at: string | null
           status: string
           steps: number | null
+          stock_posted_at: string | null
+          stock_sold_at: string | null
           updated_at: string
           vessel_name: string | null
           with_cabinet: boolean
@@ -1446,6 +1493,8 @@ export type Database = {
           started_at?: string | null
           status?: string
           steps?: number | null
+          stock_posted_at?: string | null
+          stock_sold_at?: string | null
           updated_at?: string
           vessel_name?: string | null
           with_cabinet?: boolean
@@ -1476,6 +1525,8 @@ export type Database = {
           started_at?: string | null
           status?: string
           steps?: number | null
+          stock_posted_at?: string | null
+          stock_sold_at?: string | null
           updated_at?: string
           vessel_name?: string | null
           with_cabinet?: boolean
@@ -1556,6 +1607,7 @@ export type Database = {
           price_on_request: boolean
           product_number: string
           sort_order: number
+          sourcing: string
           steps: number | null
           updated_at: string
         }
@@ -1573,6 +1625,7 @@ export type Database = {
           price_on_request?: boolean
           product_number: string
           sort_order?: number
+          sourcing?: string
           steps?: number | null
           updated_at?: string
         }
@@ -1590,6 +1643,7 @@ export type Database = {
           price_on_request?: boolean
           product_number?: string
           sort_order?: number
+          sourcing?: string
           steps?: number | null
           updated_at?: string
         }
@@ -1682,6 +1736,101 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_lines: {
+        Row: {
+          id: string
+          item_id: string
+          note: string | null
+          purchase_order_id: string
+          qty_ordered: number
+          qty_received: number
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          note?: string | null
+          purchase_order_id: string
+          qty_ordered: number
+          qty_received?: number
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          note?: string | null
+          purchase_order_id?: string
+          qty_ordered?: number
+          qty_received?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expected_on: string | null
+          id: string
+          kind: string
+          notes: string | null
+          ordered_on: string
+          po_number: string
+          reference: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expected_on?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          ordered_on?: string
+          po_number?: string
+          reference?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expected_on?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          ordered_on?: string
+          po_number?: string
+          reference?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -1911,6 +2060,182 @@ export type Database = {
           email?: string
           full_name?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Relationships: []
+      }
+      stock_items: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          id: string
+          item_number: string
+          location: string | null
+          name: string
+          notes: string | null
+          on_hand: number
+          product_id: string | null
+          reorder_point: number
+          supplier_id: string | null
+          supply: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          item_number: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          on_hand?: number
+          product_id?: string | null
+          reorder_point?: number
+          supplier_id?: string | null
+          supply?: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          item_number?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          on_hand?: number
+          product_id?: string | null
+          reorder_point?: number
+          supplier_id?: string | null
+          supply?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          item_id: string
+          job_id: string | null
+          kind: string
+          note: string | null
+          occurred_on: string
+          order_id: string | null
+          purchase_line_id: string | null
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          item_id: string
+          job_id?: string | null
+          kind: string
+          note?: string | null
+          occurred_on?: string
+          order_id?: string | null
+          purchase_line_id?: string | null
+          quantity: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          item_id?: string
+          job_id?: string | null
+          kind?: string
+          note?: string | null
+          occurred_on?: string
+          order_id?: string | null
+          purchase_line_id?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_purchase_line_id_fkey"
+            columns: ["purchase_line_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          active: boolean
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+        }
+        Insert: {
+          active?: boolean
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+        }
+        Update: {
+          active?: boolean
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
         }
         Relationships: []
       }
@@ -2148,6 +2473,30 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_overview: {
+        Row: {
+          active: boolean | null
+          available: number | null
+          below_minimum: boolean | null
+          category: string | null
+          created_at: string | null
+          id: string | null
+          item_number: string | null
+          location: string | null
+          name: string | null
+          notes: string | null
+          on_hand: number | null
+          on_order: number | null
+          product_id: string | null
+          reorder_point: number | null
+          reserved: number | null
+          supplier_id: string | null
+          supply: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_invitation: { Args: { p_invitation: string }; Returns: string }
@@ -2162,6 +2511,7 @@ export type Database = {
       decide_ladder_access: { Args: { p_request: string; p_approve: boolean; p_role?: string; p_note?: string }; Returns: undefined }
       decline_invitation: { Args: { p_invitation: string }; Returns: undefined }
       finish_maintenance_report: { Args: { p_log: string; p_paths?: string[] }; Returns: Json }
+      fulfil_job_from_stock: { Args: { p_job: string; p_stock_job: string }; Returns: string }
       get_certificate: { Args: { p_token: string }; Returns: Json }
       get_ladder_share: { Args: { p_token: string }; Returns: Json }
       install_ladder: { Args: { p_ladder: string; p_vessel: string; p_installed_at?: string; p_project?: string }; Returns: undefined }
@@ -2174,11 +2524,13 @@ export type Database = {
       place_order: { Args: { payload: Json }; Returns: Json }
       portal_bootstrap: { Args: never; Returns: Json }
       purge_expired_shares: { Args: { retain_days?: number }; Returns: number }
+      receive_purchase_line: { Args: { p_line: string; p_qty: number; p_received_on?: string; p_note?: string }; Returns: undefined }
       reply_ticket: { Args: { p_ticket: string; p_body: string }; Returns: undefined }
       request_ladder_access: { Args: { p_serial: string; p_message?: string }; Returns: Json }
       request_service: { Args: { p_ladder: string; p_preferred_date?: string; p_location?: string; p_notes?: string }; Returns: string }
       set_production_step: { Args: { p_step: string; p_done: boolean; p_note?: string }; Returns: Json }
       set_ticket_status: { Args: { p_ticket: string; p_status: string }; Returns: undefined }
+      stock_usage: { Args: { p_from?: string; p_to?: string }; Returns: unknown[] }
       submit_contact_request: { Args: { payload: Json }; Returns: string }
       submit_maintenance_report: { Args: { payload: Json }; Returns: Json }
       subscribe_newsletter: { Args: { p_email: string }; Returns: Json }
@@ -2187,7 +2539,7 @@ export type Database = {
     Enums: {
       company_role: "owner" | "admin" | "member"
       email_status: "queued" | "sent" | "failed"
-      ladder_lifecycle_status: "in_production" | "delivered" | "installed" | "retired"
+      ladder_lifecycle_status: "in_production" | "delivered" | "installed" | "retired" | "in_stock"
       ladder_photo_kind: "ladder" | "attachment_point" | "overview" | "other"
       log_kind: "maintenance" | "inspection" | "test" | "usage" | "repair" | "note"
       order_status: "new" | "quoted" | "confirmed" | "in_production" | "delivered" | "cancelled"

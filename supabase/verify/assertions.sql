@@ -76,7 +76,8 @@ begin
           'request_service', 'cancel_service_booking',
           'confirm_order', 'set_production_step', 'assign_job_serial', 'advance_job',
           'place_cabinet', 'issue_ladder_certificate',
-          'accept_invitation', 'decline_invitation')
+          'accept_invitation', 'decline_invitation',
+          'receive_purchase_line', 'fulfil_job_from_stock')
       )
     );
   if bad is not null then
@@ -130,7 +131,8 @@ begin
   --    nevnt, aldri hele raden: ellers kan et medlemskap dateres tilbake
   --    eller en delt rapport åpnes igjen.
   select string_agg(t, ', ') into bad
-  from unnest(array['public.company_members', 'public.ladder_state_shares']) t
+  from unnest(array['public.company_members', 'public.ladder_state_shares',
+                    'public.stock_items', 'public.stock_movements']) t
   where has_table_privilege('authenticated', t, 'UPDATE');
   if bad is not null then
     raise exception 'Regel 9 brutt - authenticated kan oppdatere hele raden i: %', bad;

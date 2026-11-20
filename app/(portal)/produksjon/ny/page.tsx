@@ -10,6 +10,9 @@ import { createJob } from '../actions';
  * Manuell jobb: en leider eller et oppbevaringsskap som skal produseres uten
  * at det finnes en bestilling i systemet (lager, garanti, avtale gjort på
  * telefon). Jobben får slaget sitt (leider eller skap) fra produktet.
+ *
+ * Det er slik det bygges til lager: jobben har ingen bestilling, og kan
+ * legges på lager som ferdigvare når den er ferdig.
  */
 export default async function NyJobbPage() {
   const { supabase } = await requireAdmin('/produksjon/ny');
@@ -54,7 +57,7 @@ export default async function NyJobbPage() {
     <>
       <PageHeader
         title="Ny jobb"
-        description="Legg en leider eller et oppbevaringsskap i produksjon uten bestilling. Jobber fra bestillinger opprettes når bestillingen bekreftes i admin."
+        description="Legg en leider eller et oppbevaringsskap i produksjon uten bestilling. En slik jobb kan legges på lager når den er ferdig, og knyttes til en bestilling senere. Jobber fra bestillinger opprettes når bestillingen bekreftes i admin."
         crumbs={[{ href: '/produksjon', label: 'Tavle' }, { label: 'Ny jobb' }]}
       />
 

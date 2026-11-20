@@ -4,7 +4,11 @@ import { jobStatus } from '@/lib/portal/labels';
 import { Badge, Card, Empty, PageHeader, Td } from '@/components/portal/ui';
 import { JobKindBadge, datoOslo, specLine } from '@/components/produksjon/job';
 
-/** Jobber som har forlatt produksjonen: sendt, levert eller kansellert. */
+/**
+ * Jobber som har forlatt produksjonen: sendt, levert eller kansellert.
+ * Enheter som er lagt på lager står ikke her; de er fortsatt i lokalet og
+ * vises under tavla til de blir solgt.
+ */
 export default async function FerdigeJobberPage() {
   const { supabase } = await requireProduction('/produksjon/ferdige');
 
@@ -23,7 +27,7 @@ export default async function FerdigeJobberPage() {
     <>
       <PageHeader
         title="Sendt og levert"
-        description="Jobber som er sendt, levert eller kansellert. De nyeste står øverst."
+        description="Jobber som er sendt, levert eller kansellert. De nyeste står øverst. Ferdige enheter som står på lager, finner du under tavla."
         crumbs={[{ href: '/produksjon', label: 'Tavle' }, { label: 'Sendt og levert' }]}
       />
 

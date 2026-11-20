@@ -22,6 +22,8 @@ const JOB: Record<string, Label> = {
   shipped: { label: 'Sendt', tone: 'info' },
   delivered: { label: 'Levert', tone: 'ok' },
   cancelled: { label: 'Kansellert', tone: 'neutral' },
+  // Bygget uten bestilling og lagt på lager som ferdigvare.
+  stocked: { label: 'På lager', tone: 'info' },
 };
 
 const TICKET: Record<string, Label> = {
@@ -45,6 +47,7 @@ const LADDER: Record<string, Label> = {
   delivered: { label: 'Levert, ikke tatt i bruk', tone: 'info' },
   installed: { label: 'I bruk', tone: 'ok' },
   retired: { label: 'Utrangert', tone: 'neutral' },
+  in_stock: { label: 'På lager', tone: 'info' },
 };
 
 const SERVICE_STATE: Record<string, Label> = {
@@ -179,3 +182,56 @@ export const PRODUCT_KINDS: Record<string, string> = {
   cabinet: 'Oppbevaringsskap',
   spare_part: 'Reservedel',
 };
+
+/* ── Lager ───────────────────────────────────────────────────────────────── */
+
+/** Slaget bevegelse på lageret. Fortegnet følger slaget: inn er pluss, ut er minus. */
+const MOVEMENT: Record<string, Label> = {
+  receipt: { label: 'Varemottak', tone: 'ok' },
+  production_in: { label: 'Ferdig montert', tone: 'ok' },
+  return: { label: 'Retur fra kunde', tone: 'info' },
+  production_out: { label: 'Brukt i produksjon', tone: 'warn' },
+  sale: { label: 'Solgt', tone: 'info' },
+  scrap: { label: 'Svinn', tone: 'danger' },
+  adjustment: { label: 'Varetelling', tone: 'neutral' },
+};
+export const movementKind = (s: string | null | undefined) => pick(MOVEMENT, s);
+
+/** Bevegelsene som registreres for hånd, med fortegnet de har. */
+export const MANUAL_MOVEMENTS = [
+  { kind: 'receipt', label: 'Varemottak', sign: 1 },
+  { kind: 'scrap', label: 'Svinn eller kassering', sign: -1 },
+  { kind: 'sale', label: 'Solgt direkte', sign: -1 },
+  { kind: 'return', label: 'Retur fra kunde', sign: 1 },
+] as const;
+
+export const STOCK_CATEGORY: Record<string, string> = {
+  part: 'Del',
+  finished: 'Ferdigvare',
+};
+
+export const STOCK_SUPPLY: Record<string, string> = {
+  purchased: 'Kjøpes ferdig',
+  external: 'Produseres eksternt',
+  assembled: 'Settes sammen hos oss',
+};
+
+export const STOCK_UNITS = ['stk', 'm', 'kg', 'l', 'sett', 'par'] as const;
+
+export const PRODUCT_SOURCING: Record<string, string> = {
+  assembled: 'Bygges selv',
+  resale: 'Videresalg',
+};
+
+export const PURCHASE_KIND: Record<string, string> = {
+  purchase: 'Innkjøp',
+  external_production: 'Produksjon hos ekstern part',
+};
+
+const PURCHASE: Record<string, Label> = {
+  ordered: { label: 'Bestilt', tone: 'warn' },
+  received: { label: 'Mottatt', tone: 'ok' },
+  cancelled: { label: 'Kansellert', tone: 'neutral' },
+};
+export const purchaseStatus = (s: string | null | undefined) => pick(PURCHASE, s);
+

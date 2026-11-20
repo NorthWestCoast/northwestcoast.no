@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { requireProduction } from '@/lib/portal/context';
 import { jobStatus } from '@/lib/portal/labels';
-import { Alert, PageHeader } from '@/components/portal/ui';
-import { JobCard, isOverdue, type BoardJob } from '@/components/produksjon/job';
+import { Alert, Card, PageHeader, Td } from '@/components/portal/ui';
+import { JobCard, JobKindBadge, datoOslo, isCabinetJob, isOverdue, meter, type BoardJob } from '@/components/produksjon/job';
 import { idag } from '@/lib/format';
 
 const COLUMNS = [
@@ -16,6 +16,10 @@ const COLUMNS = [
  * Tavla: alle jobber som ikke er avsluttet, fordelt på hvor langt de er
  * kommet. Kolonnene står ved siden av hverandre på store skjermer og under
  * hverandre på telefon.
+ *
+ * Enheter som er bygget uten bestilling og lagt på lager, er ferdige jobber
+ * og står ikke i kolonnene. De vises i en egen liste under tavla, fordi de
+ * fortsatt står i lokalet og kan brukes når en bestilling kommer.
  */
 export default async function ProduksjonPage() {
   const { supabase, ctx } = await requireProduction();
@@ -32,6 +36,16 @@ export default async function ProduksjonPage() {
     .limit(500);
 
   if (error) console.error('[produksjon] Kunne ikke hente jobbene:', error.message);
+
+  const { data: shelf, error: shelfError } = await supabase
+    .from('production_jobs')
+    .select('id, job_number, kind, product_name, product_number, length_m, steps, serial_number, completed_at')
+    .eq('status', 'stocked')
+    // Eldste først: det som har stått lengst, bør selges først.
+    .order('completed_at', { ascending: true, nullsFirst: false })
+    .limit(500);
+
+  if (shelfError) console.error('[produksjon] Kunne ikke hente enhetene på lager:', shelfError.message);
 
   const jobs: BoardJob[] = (data ?? []).map(({ production_job_steps: steps, ...job }) => ({
     ...job,
@@ -87,6 +101,45 @@ export default async function ProduksjonPage() {
           );
         })}
       </div>
+
+      {(shelf ?? []).length > 0 && (
+        <div style={{ marginTop: '1.25rem' }}>
+          <Card
+            title={`På lager (${shelf?.length ?? 0})`}
+            description="Ferdige enheter som er bygget uten bestilling. Når en bestilling på samme produkt og lengde er bekreftet, åpner du jobben den opprettet og velger «Hent fra lager»."
+            flush
+          >
+            <table className="pt-table">
+              <thead>
+                <tr><th>Jobb</th><th>Produkt</th><th>Produksjonsnummer</th><th>Ferdig</th></tr>
+              </thead>
+              <tbody>
+                {(shelf ?? []).map((unit) => (
+                  <tr key={unit.id}>
+                    <Td label="Jobb" className="pt-table-strong pt-nowrap">
+                      <Link href={`/produksjon/${unit.id}`}>{unit.job_number}</Link>
+                    </Td>
+                    <Td label="Produkt">
+                      <div>
+                        {unit.product_name} <JobKindBadge job={unit} />
+                        <div className="pt-muted">
+                          {isCabinetJob(unit)
+                            ? 'Oppbevaringsskap'
+                            : [meter(unit.length_m), unit.steps ? `${unit.steps} trinn` : null].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                    </Td>
+                    <Td label="Produksjonsnummer">
+                      {unit.serial_number ? <span className="pt-mono">{unit.serial_number}</span> : '–'}
+                    </Td>
+                    <Td label="Ferdig" className="pt-nowrap">{datoOslo(unit.completed_at)}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      )}
     </>
   );
 }

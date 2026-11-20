@@ -200,3 +200,49 @@ endret hvordan portalen oppfører seg:
 - **Ingen passord**: en trigger på `auth.users` tømmer passordfeltet, så
   innlogging med passord aldri virker, heller ikke rett mot Auth-API-et.
 
+## Lager
+
+Lageret holder rede på deler og ferdigvarer, hva som er bestilt, og hva som
+har gått til produksjon mot direkte salg. Sidene ligger under `/admin/lager`
+(oversikt, vare, innkjøp, stykklister, forbruk) og `/produksjon/lager`.
+
+- **Vare** (`stock_items`): alt det telles opp av. En del eller en
+  ferdigvare, som kjøpes ferdig, produseres hos ekstern part eller settes
+  sammen hos NWC. En vare kan være knyttet til produktet den selges som:
+  en reservedel, en ferdig leider eller et skap.
+- **Bevegelser** (`stock_movements`): det eneste som endrer beholdningen.
+  De endres og slettes aldri; en feil rettes med en ny bevegelse
+  (varetelling). Slaget sier hva som skjedde: varemottak, ferdig montert,
+  brukt i produksjon, solgt, svinn, retur eller telling.
+- **Stykkliste** (`product_components`): delene et produkt består av, med
+  mengde per enhet og eventuelt mengde per meter (for spesiallengder).
+- **Slik skaffes produktet** (`products.sourcing`): «bygges selv» eller
+  «videresalg».
+- **Innkjøp** (`purchase_orders`): bestillinger hos leverandør, både vanlig
+  innkjøp og deler satt i produksjon hos ekstern part. Varemottak
+  (`receive_purchase_line`) legger varene inn, også delvis.
+
+Lageret føres av seg selv der det går an:
+
+| Hendelse | Bevegelse |
+|---|---|
+| Produksjonsjobb for et produkt som bygges selv blir «klar» | Delene i stykklista trekkes (brukt i produksjon), og enheten legges inn (ferdig montert) hvis produktet har en lagervare. Én gang per jobb. |
+| Produksjonsjobb blir levert | Enheten går ut som solgt, også for videresalg. Skapet som følger en leider, går ut samtidig. |
+| Bestilling med reservedeler blir levert | Reservedelene går ut som solgt. |
+| Varemottak på et innkjøp | Varene legges inn. |
+
+**Bygget til lager.** En jobb uten bestilling kan avsluttes som «på lager»
+(`advance_job(…, 'stocked')`); leideren får status `in_stock`. Når den selges,
+tar jobben plassen til jobben som ble opprettet for bestillingen
+(`fulfil_job_from_stock`), så produksjonsnummeret og historikken følger med,
+og delene trekkes ikke en gang til.
+
+Beholdningen kan bli negativ: produksjonen stoppes aldri av at en telling er
+feil. Oversikten merker slike varer med «Må telles». «Bundet» er det åpne
+jobber kommer til å bruke etter stykklista, og minimum måles mot det som er
+tilgjengelig etter at det er trukket fra.
+
+Administratorer styrer varer, stykklister og innkjøp. Produksjon ser alt, og
+kan registrere varemottak, svinn og telling. Kunder og medierollen ser
+ingenting av lageret.
+

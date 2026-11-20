@@ -34,11 +34,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const head = { count: 'exact' as const, head: true };
-  const [newOrders, openTickets, serviceRequests, accessRequests] = await Promise.all([
+  const [newOrders, openTickets, serviceRequests, accessRequests, lowStock] = await Promise.all([
     supabase.from('orders').select('id', head).eq('status', 'new'),
     supabase.from('support_tickets').select('id', head).in('status', ['open', 'in_progress']),
     supabase.from('service_bookings').select('id', head).eq('status', 'requested'),
     supabase.from('ladder_access_requests').select('id', head).eq('status', 'pending'),
+    // Aktive varer der det som er tilgjengelig, er under minimum.
+    supabase.from('stock_overview').select('id', head).eq('below_minimum', true),
   ]);
 
   const groups: NavGroup[] = [
@@ -68,6 +70,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: '/produksjon', label: 'Produksjon', icon: 'production' },
         { href: '/admin/service', label: 'Service og avtaler', icon: 'service', count: serviceRequests.count ?? 0 },
         { href: '/admin/vedlikehold', label: 'Vedlikeholdsrapporter', icon: 'reports' },
+      ],
+    },
+    {
+      title: 'Lager',
+      items: [
+        // De andre punktene ligger under samme sti. Menyen markerer den lengste stien som passer.
+        { href: '/admin/lager', label: 'Lager', icon: 'stock', count: lowStock.count ?? 0 },
+        { href: '/admin/lager/innkjop', label: 'Innkjøp', icon: 'purchase' },
+        { href: '/admin/lager/stykklister', label: 'Stykklister', icon: 'parts' },
+        { href: '/admin/lager/forbruk', label: 'Forbruk', icon: 'usage' },
       ],
     },
     {
