@@ -8,6 +8,7 @@ import { ChevronDown, Menu, User, X } from 'lucide-react';
 import LangFlag from '@/components/lang-flag';
 import { useLang, useT } from '@/components/lang-provider';
 import { LANGS, localePath, stripLangPrefix, type Lang } from '@/lib/i18n';
+import { isPortalPage, portalHref, siteHref } from '@/lib/site';
 
 /**
  * Fra denne bredden vises lenkene i selve navigasjonslinja; under den tar
@@ -31,8 +32,16 @@ export default function Nav() {
   const t = useT();
   const pathname = usePathname() ?? '/';
   const basePath = stripLangPrefix(pathname);
-  // Innlogget område og personvern finnes bare på norsk – ingen språkvelger der.
-  const norwegianOnly = /^\/(minside|admin|logg-inn|personvern)(\/|$)/.test(basePath);
+  // Innlogging, bekreftelse og personvern ligger i portaldelen. De finnes bare
+  // på norsk – ingen språkvelger der.
+  const portalPage = isPortalPage(basePath);
+  // De samme sidene kan vises på portalens eget vertsnavn, der de offentlige
+  // sidene ikke finnes. Derfra får lenkene nettstedets adresse (se siteHref);
+  // ellers er de vanlige relative lenker.
+  const site = (path: string) => {
+    const href = localePath(lang, path);
+    return portalPage ? siteHref(href) : href;
+  };
 
   const navLinks: NavLink[] = [
     {
@@ -102,7 +111,7 @@ export default function Nav() {
   return (
     <>
       <nav ref={navRef} id="navbar">
-        <Link className="nav-logo" href={localePath(lang, '/')}>
+        <Link className="nav-logo" href={site('/')}>
           <Image
             src="/images/logo/NY-logo.png"
             alt="NorthWest Coast"
@@ -129,7 +138,7 @@ export default function Nav() {
                 onKeyDown={(e) => { if (e.key === 'Escape') setSubOpen(false); }}
               >
                 <Link
-                  href={localePath(lang, l.href)}
+                  href={site(l.href)}
                   aria-expanded={subOpen}
                   onClick={() => setSubOpen(false)}
                 >
@@ -139,7 +148,7 @@ export default function Nav() {
                 <ul className="nav-sub">
                   {l.sub.map((s) => (
                     <li key={s.href}>
-                      <Link href={localePath(lang, s.href)} onClick={() => setSubOpen(false)}>
+                      <Link href={site(s.href)} onClick={() => setSubOpen(false)}>
                         {s.label}
                       </Link>
                     </li>
@@ -148,7 +157,7 @@ export default function Nav() {
               </li>
             ) : (
               <li key={l.href}>
-                <Link href={localePath(lang, l.href)}>{l.label}</Link>
+                <Link href={site(l.href)}>{l.label}</Link>
               </li>
             ),
           )}
@@ -156,15 +165,15 @@ export default function Nav() {
 
         <div className="nav-right">
           {/* Min side finnes bare på norsk, derfor ingen språkprefiks. */}
-          <Link href="/logg-inn" className="nav-account nav-account-desktop" title={t.account.title}>
+          <Link href={portalHref('/logg-inn')} className="nav-account nav-account-desktop" title={t.account.title}>
             <User size={16} strokeWidth={1.8} aria-hidden="true" />
             <span>{t.account.navLabel}</span>
           </Link>
-          {!norwegianOnly && (
+          {!portalPage && (
             <div className="nav-lang nav-lang-desktop">{LANGS.map(langSwitch)}</div>
           )}
           <Link
-            href={localePath(lang, '/bestill')}
+            href={site('/bestill')}
             className="nav-cta nav-cta-desktop plausible-event-name=CTA:+Bestill plausible-event-source=nav"
           >
             {t.nav.cta}
@@ -180,7 +189,7 @@ export default function Nav() {
         <ul>
           {navLinks.flatMap((l) => [
             <li key={l.href}>
-              <Link href={localePath(lang, l.href)} onClick={() => setOpen(false)}>
+              <Link href={site(l.href)} onClick={() => setOpen(false)}>
                 {l.label}
               </Link>
             </li>,
@@ -189,7 +198,7 @@ export default function Nav() {
               .map((s) => (
                 <li key={s.href}>
                   <Link
-                    href={localePath(lang, s.href)}
+                    href={site(s.href)}
                     className="nav-drawer-sub"
                     onClick={() => setOpen(false)}
                   >
@@ -199,14 +208,14 @@ export default function Nav() {
               )),
           ])}
           <li>
-            <Link href="/logg-inn" className="nav-drawer-account" onClick={() => setOpen(false)}>
+            <Link href={portalHref('/logg-inn')} className="nav-drawer-account" onClick={() => setOpen(false)}>
               <User size={17} strokeWidth={1.8} aria-hidden="true" />
               {t.account.navLabel}
             </Link>
           </li>
           <li>
             <Link
-              href={localePath(lang, '/bestill')}
+              href={site('/bestill')}
               className="nav-drawer-cta plausible-event-name=CTA:+Bestill plausible-event-source=meny"
               onClick={() => setOpen(false)}
             >
@@ -214,7 +223,7 @@ export default function Nav() {
             </Link>
           </li>
         </ul>
-        {!norwegianOnly && (
+        {!portalPage && (
           <div className="nav-lang nav-lang-mobile">{LANGS.map(langSwitch)}</div>
         )}
       </div>

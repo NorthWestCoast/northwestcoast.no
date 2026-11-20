@@ -3,17 +3,20 @@ import { requireStaff } from '@/lib/supabase/staff';
 import { uuid } from '@/lib/portal/forms';
 import { Badge, Card, Disclosure, Empty, KV, PageHeader, Td } from '@/components/portal/ui';
 import { PortalForm } from '@/components/portal/forms';
-import { Hidden, Input, Select, Textarea } from '@/components/admin/fields';
-import ServiceFields from '@/components/admin/service-fields';
+import { Hidden, Input, Textarea } from '@/components/admin/fields';
+import ServiceForm from '@/components/admin/service-form';
 import { agreementStatus } from '@/components/admin/agreement-fields';
-import { bookingStatus, serviceResult, serviceState } from '@/lib/portal/labels';
+import {
+  CERTIFICATE_NAME, CERTIFICATE_NAME_LOWER, bookingStatus, certificateState, certificateStatus, serviceResult,
+  serviceState,
+} from '@/lib/portal/labels';
 import { dato, fristTekst, idag, nok } from '@/lib/format';
-import { recordService } from '../actions';
 import { cancelBooking, scheduleBooking } from './actions';
 
 /**
  * Service: bestillinger fra kundene, leidere der fristen nærmer seg,
- * registrering av utført service, og serviceavtalene.
+ * registrering av utført service (med bilder og servicesertifikat), og
+ * serviceavtalene.
  */
 export default async function ServicePage({
   searchParams,
@@ -39,7 +42,7 @@ export default async function ServicePage({
         .limit(200),
       supabase
         .from('ladder_status')
-        .select('ladder_id, serial_number, company_name, vessel_name')
+        .select('ladder_id, serial_number, company_name, vessel_name, project_name, service_interval_months')
         .order('serial_number')
         .limit(1000),
       supabase
@@ -49,10 +52,13 @@ export default async function ServicePage({
         .limit(200),
       supabase
         .from('service_reports')
-        .select('id, performed_at, performed_by, result, next_service_due, ladder_id, ladders(serial_number)')
+        .select('id, performed_at, performed_by, result, next_service_due, ladder_id, ladders(serial_number), service_report_photos(count), ladder_certificates(id, certificate_number, valid_until, replaced_by, revoked_at, created_at)')
         .order('performed_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(15),
     ]);
+
+  const today = idag();
 
   const requested = (bookings ?? []).filter((booking) => booking.status === 'requested');
   const scheduled = (bookings ?? [])
@@ -207,21 +213,25 @@ export default async function ServicePage({
       <Card
         id="registrer"
         title="Registrer utført service"
-        description="Fagmessig kontroll utført av NorthWest Coast. Rapporten avslutter åpne servicebestillinger på leideren og setter ny frist."
+        description={`Fagmessig kontroll utført av NorthWest Coast. Rapporten avslutter åpne servicebestillinger på leideren og setter ny frist. Legg ved bilder, og utsted ${CERTIFICATE_NAME_LOWER} når leideren er godkjent.`}
       >
-        <PortalForm action={recordService} submitLabel="Lagre servicerapport">
-          <Select name="ladder_id" label="Leider" required defaultValue={preselected ?? ''}>
-            <option value="" disabled>Velg leider</option>
-            {ladders?.map((ladder) => (
-              <option key={ladder.ladder_id} value={ladder.ladder_id ?? ''}>
-                {ladder.serial_number}
-                {ladder.company_name ? ` · ${ladder.company_name}` : ''}
-                {ladder.vessel_name ? ` · ${ladder.vessel_name}` : ''}
-              </option>
-            ))}
-          </Select>
-          <ServiceFields scope="service" performedBy={ctx.displayName} />
-        </PortalForm>
+        <ServiceForm
+          ladders={(ladders ?? []).flatMap((ladder) =>
+            ladder.ladder_id
+              ? [{
+                  id: ladder.ladder_id,
+                  label: [ladder.serial_number, ladder.company_name, ladder.vessel_name ?? ladder.project_name]
+                    .filter(Boolean)
+                    .join(' · '),
+                  intervalMonths: ladder.service_interval_months ?? 12,
+                }]
+              : [],
+          )}
+          selected={preselected}
+          performedBy={ctx.displayName}
+          today={today}
+          scope="service"
+        />
       </Card>
 
       <Card
@@ -263,11 +273,19 @@ export default async function ServicePage({
         {reports?.length ? (
           <table className="pt-table">
             <thead>
-              <tr><th>Leider</th><th>Utført</th><th>Utført av</th><th>Resultat</th><th>Neste frist</th></tr>
+              <tr>
+                <th>Leider</th><th>Utført</th><th>Utført av</th><th>Resultat</th><th>Neste frist</th>
+                <th>Bilder</th><th>{CERTIFICATE_NAME}</th>
+              </tr>
             </thead>
             <tbody>
               {reports.map((report) => {
                 const result = serviceResult(report.result);
+                const photos = report.service_report_photos[0]?.count ?? 0;
+                // Det som står for denne servicen (ikke erstattet eller trukket tilbake), ellers det nyeste.
+                const issued = [...report.ladder_certificates].sort((a, b) => b.created_at.localeCompare(a.created_at));
+                const certificate = issued.find((c) => !c.revoked_at && !c.replaced_by) ?? issued[0];
+                const state = certificate ? certificateState(certificate, today) : null;
                 return (
                   <tr key={report.id}>
                     <Td label="Leider" className="pt-table-strong">
@@ -277,6 +295,30 @@ export default async function ServicePage({
                     <Td label="Utført av">{report.performed_by}</Td>
                     <Td label="Resultat"><Badge tone={result.tone}>{result.label}</Badge></Td>
                     <Td label="Neste frist" className="pt-nowrap">{dato(report.next_service_due)}</Td>
+                    <Td label="Bilder">{photos > 0 ? photos : '–'}</Td>
+                    <Td label={CERTIFICATE_NAME}>
+                      {certificate && state ? (
+                        <>
+                          <a
+                            href={`/minside/leider/${report.ladder_id}/sertifikat/${certificate.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="pt-link pt-nowrap"
+                          >
+                            {certificate.certificate_number}
+                          </a>
+                          {state !== 'valid' && (
+                            <> <Badge tone={certificateStatus(state).tone}>{certificateStatus(state).label}</Badge></>
+                          )}
+                        </>
+                      ) : report.result === 'failed' ? (
+                        '–'
+                      ) : (
+                        <Link href={`/minside/leider/${report.ladder_id}#administrasjon`} className="pt-link">
+                          Ikke utstedt
+                        </Link>
+                      )}
+                    </Td>
                   </tr>
                 );
               })}

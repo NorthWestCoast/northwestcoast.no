@@ -6,9 +6,9 @@ export const BUCKETS = {
   logs: 'maintenance-photos',
   /** Bilder til delte tilstandsrapporter. Mappe = delingens id. */
   shares: 'ladder-state-photos',
-  /** Servicerapporter (PDF). Mappe = leiderens id. */
+  /** Servicerapporter (PDF) og bilder fra service. Mappe = leiderens id; bildene i <leider-id>/<rapport-id>/. */
   reports: 'service-reports',
-  /** Offentlige bilder til nyheter og produkter. */
+  /** Offentlige bilder til nyheter, produkter og galleriet (mappen galleri/). */
   media: 'public-media',
 } as const;
 

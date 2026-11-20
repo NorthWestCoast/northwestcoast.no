@@ -4,10 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLang, useT } from '@/components/lang-provider';
-import { CONTAIN_BG, GALLERY_IMAGES, GALLERY_TABS, openLightbox, type ImageTag } from '@/lib/gallery-images';
+import { CONTAIN_BG, GALLERY_TABS, openLightbox, type GalleryItem, type ImageTag } from '@/lib/gallery-images';
 import { localePath } from '@/lib/i18n';
 
-export default function MediaGallery() {
+/**
+ * Bildeseksjonen på forsiden: de fire første bildene i hver kategori.
+ * `images` er de faste bildene og bildene fra admin, ferdig oversatt og i
+ * riktig rekkefølge (lib/gallery.ts).
+ */
+export default function MediaGallery({ images }: { images: GalleryItem[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [activeTab, setActiveTab] = useState<ImageTag>('ladder');
   const lang = useLang();
@@ -22,7 +27,7 @@ export default function MediaGallery() {
     return () => observer.disconnect();
   }, []);
 
-  const filtered = GALLERY_IMAGES.filter((img) => img.tag === activeTab).slice(0, 4);
+  const filtered = images.filter((img) => img.tag === activeTab).slice(0, 4);
 
   return (
     <section className="gallery" id="produkter" ref={sectionRef}>
@@ -46,20 +51,21 @@ export default function MediaGallery() {
       <div className="mg-grid reveal">
         {filtered.map((img) => (
           <div
-            key={img.src}
+            key={img.id}
             className="mg-card"
             onClick={() => openLightbox(img.src, img.contain)}
           >
             <Image
               src={img.src}
-              alt={t.gallery.images[img.key].alt}
+              alt={img.alt}
               fill sizes="(max-width: 900px) 50vw, 25vw"
+              unoptimized={img.unoptimized}
               style={{
                 objectFit: img.contain ? 'contain' : 'cover',
                 background: img.contain ? CONTAIN_BG : undefined,
               }}
             />
-            <div className="g-label">{t.gallery.images[img.key].label}</div>
+            {img.label && <div className="g-label">{img.label}</div>}
           </div>
         ))}
       </div>

@@ -65,26 +65,49 @@ export function buildAlternates(pathname: string) {
   };
 }
 
+/** Navnet nettstedet går under i delingskort og strukturerte data. */
+export const SITE_NAME = 'NorthWest Coast';
+
+/** Delingsbildet (1200×630) som app/og/[lang]/route.tsx tegner. */
+export function ogImage(lang: Lang) {
+  return {
+    url: `${SITE_URL}/og/${lang}`,
+    width: 1200,
+    height: 630,
+    alt: `${SITE_NAME} – Argostep. ${getDict(lang).meta.home.ogDescription}`,
+  };
+}
+
+/**
+ * Metadata for én side: unik tittel og beskrivelse, canonical til sidens egen
+ * adresse på eget språk, hreflang til begge språk, og delingskort.
+ *
+ * Twitter-kortet settes ikke her: rot-layouten oppgir bare korttypen, og Next
+ * fyller da tittel, beskrivelse og bilde fra openGraph for hver side. Sto de i
+ * layouten, ville alle undersider arvet forsidens tittel i kortet.
+ */
 export function pageMetadata(lang: Lang, key: MetaKey, pathname: string) {
   const dict = getDict(lang);
   const meta = dict.meta[key];
-  const alternates = buildAlternates(pathname);
+  const url = `${SITE_URL}${localePath(lang, pathname)}`;
 
   return {
     metadataBase: new URL(SITE_URL),
     title: meta.title,
     description: meta.description,
     alternates: {
-      ...alternates,
-      canonical: `${SITE_URL}${localePath(lang, pathname)}`,
+      ...buildAlternates(pathname),
+      canonical: url,
     },
     openGraph: {
-      images: [{ url: `${SITE_URL}/og/${lang}`, width: 1200, height: 630 }],
+      siteName: SITE_NAME,
+      images: [ogImage(lang)],
       title: meta.title,
       description: meta.description,
       locale: dict.ogLocale,
+      alternateLocale: LANGS.filter((l) => l !== lang).map((l) => getDict(l).ogLocale),
       type: 'website' as const,
-      url: `${SITE_URL}${localePath(lang, pathname)}`,
+      url,
     },
   };
 }

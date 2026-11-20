@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getArticles } from '@/lib/posts';
 import { SITE_URL } from '@/lib/site';
-import { localePath } from '@/lib/i18n';
+import { LANGS, buildAlternates, localePath } from '@/lib/i18n';
 
 /** Datoer i artiklene er på formatet DD.MM.YYYY. */
 function parseNorwegianDate(date: string): Date {
@@ -24,25 +24,25 @@ const PAGES: { path: string; priority: number; changeFrequency: 'weekly' | 'mont
   { path: '/nyheter', priority: 0.6, changeFrequency: 'weekly' },
 ];
 
-/** Norsk er kanonisk; engelsk oppgis som språkalternativ (hreflang). */
-function entry(
+/**
+ * Én oppføring per språk. Begge lister de samme språkalternativene (nb-NO, en
+ * og x-default), slik Google ber om for hreflang i sitemap: hver språkutgave
+ * er sin egen adresse og peker på alle utgavene, seg selv medregnet.
+ */
+function entries(
   path: string,
   priority: number,
   changeFrequency: 'weekly' | 'monthly' | 'yearly',
   lastModified?: Date,
-): MetadataRoute.Sitemap[number] {
-  return {
-    url: `${SITE_URL}${localePath('no', path)}`,
+): MetadataRoute.Sitemap {
+  const { languages } = buildAlternates(path);
+  return LANGS.map((lang) => ({
+    url: `${SITE_URL}${localePath(lang, path)}`,
     lastModified,
     changeFrequency,
     priority,
-    alternates: {
-      languages: {
-        'nb-NO': `${SITE_URL}${localePath('no', path)}`,
-        en: `${SITE_URL}${localePath('en', path)}`,
-      },
-    },
-  };
+    alternates: { languages },
+  }));
 }
 
 // Nyheter redigeres i admin. Sitemapet bygges på nytt hver time, og med en
@@ -52,10 +52,12 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const articles = await getArticles('no');
 
+  // Bare offentlige sider. Innlogging og de innloggede områdene (/logg-inn,
+  // /minside, /admin, /produksjon, /los) hører ikke hjemme her.
   return [
-    ...PAGES.map((p) => entry(p.path, p.priority, p.changeFrequency)),
-    ...articles.map((a) =>
-      entry(`/nyheter/${a.slug}`, 0.5, 'yearly', parseNorwegianDate(a.date)),
+    ...PAGES.flatMap((p) => entries(p.path, p.priority, p.changeFrequency)),
+    ...articles.flatMap((a) =>
+      entries(`/nyheter/${a.slug}`, 0.5, 'yearly', parseNorwegianDate(a.date)),
     ),
     // Personvernerklæringen finnes bare på norsk.
     { url: `${SITE_URL}/personvern`, changeFrequency: 'yearly', priority: 0.3 },

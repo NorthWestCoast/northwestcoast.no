@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/logg-inn?feil=manglende-kode`);
+    // En brukt eller utløpt lenke kommer hit med error_code i stedet for kode.
+    const feil = searchParams.has('error_code') ? 'ugyldig-lenke' : 'manglende-kode';
+    return NextResponse.redirect(`${origin}/logg-inn?feil=${feil}`);
   }
 
   const supabase = await createServerSupabase();

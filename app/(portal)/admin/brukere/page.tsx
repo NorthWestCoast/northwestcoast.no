@@ -3,7 +3,7 @@ import { requireStaff } from '@/lib/supabase/staff';
 import { Badge, Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
 import { ActionButton, PortalForm } from '@/components/portal/forms';
 import { Input, SearchForm, Select } from '@/components/admin/fields';
-import { COMPANY_ROLES, LADDER_ROLES, STAFF_ROLES, VESSEL_ROLES } from '@/lib/portal/labels';
+import { COMPANY_ROLES, LADDER_ROLES, VESSEL_ROLES, staffRoleLabel } from '@/lib/portal/labels';
 import { dato, datoTid } from '@/lib/format';
 import { inviteToCompany, revokeInvitation } from '../actions';
 import { anyColumnMatches, searchTerm } from '../_lib/search';
@@ -109,7 +109,7 @@ export default async function BrukerePage({
                     <Td label="Navn" className="pt-table-strong">
                       <span>
                         {profile.full_name ?? 'Uten navn'}
-                        {staffRole && <> <Badge tone="info">NorthWest Coast: {STAFF_ROLES[staffRole]}</Badge></>}
+                        {staffRole && <> <Badge tone="info">NorthWest Coast: {staffRoleLabel(staffRole).label}</Badge></>}
                       </span>
                     </Td>
                     <Td label="E-post">{profile.email}</Td>

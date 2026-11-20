@@ -29,6 +29,70 @@ function resolveSiteUrl(): string {
 
 export const SITE_URL = resolveSiteUrl().replace(/\/$/, '');
 
+/**
+ * Adressen til den innloggede delen: Min side, Admin, Produksjon,
+ * innloggingen, delte rapporter (/los) og sertifikater (/sertifikat).
+ *
+ * Med NEXT_PUBLIC_PORTAL_URL satt (https://portal.northwestcoast.no) ligger
+ * den på sitt eget vertsnavn, så innloggingen ikke deler opprinnelse med det
+ * offentlige nettstedet. Uten variabelen ligger alt på samme adresse, som i
+ * lokal utvikling og i forhåndsvisninger. Vertsreglene står i next.config.mjs.
+ */
+export const PORTAL_URL = (process.env.NEXT_PUBLIC_PORTAL_URL || SITE_URL).replace(/\/$/, '');
+
+function hostnameOf(url: string | undefined): string | null {
+  try {
+    return new URL(url ?? '').hostname;
+  } catch {
+    return null;
+  }
+}
+
+const SITE_HOSTNAME = hostnameOf(process.env.NEXT_PUBLIC_SITE_URL);
+const PORTAL_HOSTNAME = hostnameOf(process.env.NEXT_PUBLIC_PORTAL_URL);
+
+/**
+ * Sant når portalen ligger på sitt eget vertsnavn: begge adressene er satt,
+ * og vertsnavnene er ulike. Samme vilkår som portalHosts() i
+ * next.config.mjs, som setter opp videresendingene mellom de to.
+ *
+ * Bare NEXT_PUBLIC_-variablene leses her, ikke SITE_URL: i nettleseren
+ * finnes ikke VERCEL_*, så SITE_URL kan være en annen der enn på serveren.
+ * Lenkene under brukes i klientkomponenter og må bli like begge steder.
+ */
+export const PORTAL_HAS_OWN_HOST = Boolean(
+  SITE_HOSTNAME && PORTAL_HOSTNAME && SITE_HOSTNAME !== PORTAL_HOSTNAME,
+);
+
+/**
+ * Sider i portaldelen (app/(portal)), som kan vises på portalens vertsnavn.
+ * Områdene følger PORTAL_AREAS i next.config.mjs. /personvern er med fordi
+ * den svarer på begge vertsnavnene.
+ */
+const PORTAL_PAGE = /^\/(minside|admin|produksjon|logg-inn|auth|los|sertifikat|personvern)(\/|$)/;
+
+export function isPortalPage(pathname: string): boolean {
+  return PORTAL_PAGE.test(pathname);
+}
+
+/**
+ * Lenke fra en offentlig side inn i portalen, f.eks. portalHref('/logg-inn').
+ * Med portalen på eget vertsnavn går den rett dit, så besøkende slipper
+ * hoppet via videresendingen. Ellers er den en vanlig relativ lenke.
+ */
+export function portalHref(path: string): string {
+  return PORTAL_HAS_OWN_HOST ? `${PORTAL_URL}${path}` : path;
+}
+
+/**
+ * Lenke fra en side i portaldelen til en offentlig side. På portalens
+ * vertsnavn finnes ikke de offentlige sidene, og «/» er Min side, så lenken
+ * må ha nettstedets adresse. Ellers er den en vanlig relativ lenke.
+ */
+export function siteHref(path: string): string {
+  return PORTAL_HAS_OWN_HOST ? `${SITE_URL}${path}` : path;
+}
+
 export const ORG = {
   name: 'Northwestcoast AS',
   legalName: 'Northwestcoast AS',
@@ -43,19 +107,48 @@ export const ORG = {
   country: 'NO',
 } as const;
 
+/**
+ * Fargen nettleseren får på adresselinja (themeColor) og manifestets
+ * bakgrunn. Samme marineblå som toppen av sidene (--navy i globals.css).
+ */
+export const THEME_COLOR = '#0a1628';
+
+/**
+ * Profilene selskapet selv har lagt inn som miljøvariabler. En tom verdi
+ * (slik .env.example står) regnes som ikke satt.
+ */
+const SOCIAL_ENV = {
+  facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL || undefined,
+  instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || undefined,
+  linkedin: process.env.NEXT_PUBLIC_LINKEDIN_URL || undefined,
+};
+
 /** Offisielle profiler (hentet fra dagens live-nettsted). Env kan overstyre. */
 export const SOCIAL_URLS = {
-  facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL ?? 'https://www.facebook.com/northwestcoastas',
-  instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://www.instagram.com/northwestcoastas/',
-  linkedin: process.env.NEXT_PUBLIC_LINKEDIN_URL ?? 'https://www.linkedin.com/company/northwestcoast-as/',
+  facebook: SOCIAL_ENV.facebook ?? 'https://www.facebook.com/northwestcoastas',
+  instagram: SOCIAL_ENV.instagram ?? 'https://www.instagram.com/northwestcoastas/',
+  linkedin: SOCIAL_ENV.linkedin ?? 'https://www.linkedin.com/company/northwestcoast-as/',
 } as const;
 
-/** Delingsbildet som genereres av app/opengraph-image.tsx. */
+/**
+ * Profilene som er bekreftet gjennom miljøvariabler, til `sameAs` i de
+ * strukturerte dataene. Der sier vi til søkemotorene at profilen ER
+ * selskapet, så standardadressene over (som bare er lenker i bunnteksten)
+ * tas ikke med før de er lagt inn eksplisitt.
+ */
+export const CONFIRMED_SOCIAL_URLS: string[] = Object.values(SOCIAL_ENV).filter(
+  (url): url is string => typeof url === 'string' && /^https:\/\//i.test(url),
+);
+
+/**
+ * Delingsbildet som genereres av app/og/[lang]/route.tsx. Med hele adressen:
+ * sidene som bruker det ligger i portaldelen, og bildet lages på nettstedet.
+ */
 const OG_IMAGE = {
-  url: '/opengraph-image',
+  url: `${SITE_URL}/og/no`,
   width: 1200,
   height: 630,
-  alt: 'Argostep – modulær maritim leider fra NorthWest Coast',
+  alt: 'Argostep – modulær leider til båt fra NorthWest Coast',
 };
 
 /**

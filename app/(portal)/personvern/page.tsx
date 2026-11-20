@@ -1,14 +1,29 @@
 import type { Metadata } from 'next';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
-import { pageMetadata } from '@/lib/site';
+import { pageMetadata, SITE_URL } from '@/lib/site';
 
-export const metadata: Metadata = pageMetadata({
+const base = pageMetadata({
   title: 'Personvernerklæring',
   description:
     'Hvilke personopplysninger NorthWest Coast behandler, hvorfor, hvor lenge de lagres og hvilke rettigheter du har.',
   path: '/personvern',
 });
+
+/**
+ * Siden ligger i portaldelen, men er offentlig og svarer på begge
+ * vertsnavnene. Den kanoniske adressen er nettstedets, og bare der skal den
+ * indekseres: portal-layouten setter noindex for alt annet, og på portalens
+ * vertsnavn stopper X-Robots-Tag (next.config.mjs) også denne.
+ */
+const url = `${SITE_URL}/personvern`;
+
+export const metadata: Metadata = {
+  ...base,
+  alternates: { canonical: url },
+  openGraph: { ...base.openGraph, url },
+  robots: { index: true, follow: true },
+};
 
 /**
  * Personvernerklæring.

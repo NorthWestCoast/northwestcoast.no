@@ -4,18 +4,22 @@ import { notFound } from 'next/navigation';
 import { managedCompanies, requireUser } from '@/lib/portal/context';
 import { Badge, Card, Disclosure, Empty, KV, PageHeader, Td } from '@/components/portal/ui';
 import { ActionButton, PortalForm } from '@/components/portal/forms';
+import { Place } from '@/components/portal/placement';
+import VesselFields from '@/components/portal/vessel-fields';
 import { uuid } from '@/lib/portal/forms';
 import { VESSEL_ROLES, ladderStatus } from '@/lib/portal/labels';
+import CabinetTable, { CABINET_COLUMNS } from '@/components/minside/cabinet-table';
 import { InviteForm } from '@/components/minside/forms';
 import InvitationList from '@/components/minside/invitation-list';
 import { loadPeople, personName } from '@/components/minside/people';
 import ServiceState from '@/components/minside/service-state';
 import { meter } from '@/components/minside/util';
+import { VESSEL_SOURCE } from '@/lib/vessel-lookup';
 import { inviteToVessel, removeVesselMember, updateVessel } from '../actions';
 
 export const metadata: Metadata = { title: 'Fartøy' };
 
-/** Ett fartøy: opplysninger, leiderne om bord og hvem som har tilgang. */
+/** Ett fartøy: opplysninger, leiderne og skapene om bord, og hvem som har tilgang. */
 export default async function FartoyDetaljPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
   const id = uuid(rawId);
@@ -25,17 +29,23 @@ export default async function FartoyDetaljPage({ params }: { params: Promise<{ i
 
   const { data: vessel } = await supabase
     .from('vessels')
-    .select('id, name, imo, call_sign, vessel_type, home_port, company_id, companies(name)')
+    .select('id, name, imo, call_sign, registration_mark, vessel_type, home_port, length_m, beam_m, build_year, registry_id, company_id, companies(name)')
     .eq('id', id)
     .maybeSingle();
   if (!vessel) notFound();
 
-  const [{ data: ladders }, { data: members }] = await Promise.all([
+  const [{ data: ladders }, { data: cabinets }, { data: members }] = await Promise.all([
     supabase
       .from('ladder_status')
-      .select('ladder_id, serial_number, product_name, length_m, status, service_state, next_service_due, days_until_service, open_tasks')
+      .select('ladder_id, serial_number, product_name, length_m, project_id, project_name, status, service_state, next_service_due, days_until_service, open_tasks')
       .eq('vessel_id', id)
       .order('serial_number'),
+    supabase
+      .from('cabinets')
+      .select(CABINET_COLUMNS)
+      .eq('vessel_id', id)
+      .neq('status', 'retired')
+      .order('created_at'),
     supabase.from('vessel_members').select('user_id, role, created_at').eq('vessel_id', id).order('created_at'),
   ]);
 
@@ -75,42 +85,28 @@ export default async function FartoyDetaljPage({ params }: { params: Promise<{ i
           <KV
             items={[
               { label: 'Navn', value: vessel.name },
-              { label: 'IMO', value: vessel.imo },
-              { label: 'Kallesignal', value: vessel.call_sign },
               { label: 'Type', value: vessel.vessel_type },
               { label: 'Hjemmehavn', value: vessel.home_port },
               { label: 'Selskap', value: companyName },
+              { label: 'IMO', value: vessel.imo },
+              { label: 'Kallesignal', value: vessel.call_sign },
+              { label: 'Registreringsmerke', value: vessel.registration_mark },
+              { label: 'Byggeår', value: vessel.build_year },
+              { label: 'Lengde', value: meter(vessel.length_m) },
+              { label: 'Bredde', value: meter(vessel.beam_m) },
             ]}
           />
+          {vessel.registry_id && (
+            <p className="pt-hint" style={{ marginTop: '0.9rem' }}>
+              Opplysningene er hentet fra {VESSEL_SOURCE}.
+            </p>
+          )}
         </div>
         {isCompanyAdmin && (
           <Disclosure summary="Endre opplysninger">
             <PortalForm action={updateVessel} submitLabel="Lagre" resetOnSuccess={false}>
               <input type="hidden" name="vessel_id" value={vessel.id} />
-              <div className="pt-form-row">
-                <div className="pt-field">
-                  <label htmlFor="vessel-name">Navn</label>
-                  <input id="vessel-name" name="name" required minLength={2} maxLength={160} defaultValue={vessel.name} />
-                </div>
-                <div className="pt-field">
-                  <label htmlFor="vessel-imo">IMO-nummer</label>
-                  <input id="vessel-imo" name="imo" inputMode="numeric" maxLength={11} defaultValue={vessel.imo ?? ''} placeholder="7 siffer" />
-                </div>
-              </div>
-              <div className="pt-form-row pt-form-row-3">
-                <div className="pt-field">
-                  <label htmlFor="vessel-call">Kallesignal</label>
-                  <input id="vessel-call" name="call_sign" maxLength={20} defaultValue={vessel.call_sign ?? ''} autoCapitalize="characters" />
-                </div>
-                <div className="pt-field">
-                  <label htmlFor="vessel-type">Type</label>
-                  <input id="vessel-type" name="vessel_type" maxLength={80} defaultValue={vessel.vessel_type ?? ''} />
-                </div>
-                <div className="pt-field">
-                  <label htmlFor="vessel-port">Hjemmehavn</label>
-                  <input id="vessel-port" name="home_port" maxLength={80} defaultValue={vessel.home_port ?? ''} />
-                </div>
-              </div>
+              <VesselFields scope="vessel" vessel={vessel} />
             </PortalForm>
           </Disclosure>
         )}
@@ -137,7 +133,14 @@ export default async function FartoyDetaljPage({ params }: { params: Promise<{ i
                       <Link href={`/minside/leider/${ladder.ladder_id}`}>{ladder.serial_number}</Link>
                     </Td>
                     <Td label="Produkt">
-                      {[ladder.product_name, meter(ladder.length_m)].filter(Boolean).join(' · ') || '–'}
+                      <div>
+                        {[ladder.product_name, meter(ladder.length_m)].filter(Boolean).join(' · ') || '–'}
+                        {ladder.project_id && (
+                          <div className="pt-hint">
+                            Prosjekt: <Place projectId={ladder.project_id} projectName={ladder.project_name} />
+                          </div>
+                        )}
+                      </div>
                     </Td>
                     <Td label="Status"><div><Badge tone={status.tone}>{status.label}</Badge></div></Td>
                     <Td label="Service">
@@ -153,10 +156,20 @@ export default async function FartoyDetaljPage({ params }: { params: Promise<{ i
           </table>
         ) : (
           <Empty title="Ingen leidere på fartøyet" action={{ href: '/minside/leidere', label: 'Gå til leidere' }}>
-            Leverte leidere monterer du på fartøyet under Leidere.
+            Åpne leideren under Leidere, og velg dette fartøyet under «Plassering».
           </Empty>
         )}
       </Card>
+
+      {cabinets && cabinets.length > 0 && (
+        <Card
+          title="Oppbevaringsskap om bord"
+          actions={isCompanyAdmin ? <Link href="/minside/leidere#skap" className="pt-link">Flytt eller ta ned</Link> : undefined}
+          flush
+        >
+          <CabinetTable cabinets={cabinets} on="vessel" />
+        </Card>
+      )}
 
       <Card
         title="Mannskap med tilgang"

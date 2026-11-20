@@ -3,15 +3,20 @@
 import { revalidatePath } from 'next/cache';
 import { requireStaff } from '@/lib/supabase/staff';
 import { type ActionResult, err, fail, isEmail, ok, optional, text } from '@/lib/portal/forms';
-import { STAFF_ROLES } from '@/lib/portal/labels';
+import { staffRoleLabel } from '@/lib/portal/labels';
+import { STAFF_ROLE_VALUES, type StaffRoleValue } from './roles';
 
 /**
- * Ansattlista styrer hvem som er administrator eller produksjon. Databasen
- * nekter å fjerne eller nedgradere den siste administratoren; meldingen
- * derfra vises som den er.
+ * Ansattlista styrer hvem som er administrator, produksjon eller media. Den
+ * gjelder også eksterne (et byrå som skriver nyheter): rollen følger
+ * e-postadressen. Databasen nekter å fjerne eller nedgradere den siste
+ * administratoren; meldingen derfra vises som den er.
  */
 
-const isRole = (value: string): value is 'admin' | 'production' => value === 'admin' || value === 'production';
+const isRole = (value: string): value is StaffRoleValue =>
+  STAFF_ROLE_VALUES.some((role) => role === value);
+
+const roleName = (role: StaffRoleValue) => staffRoleLabel(role).label.toLowerCase();
 
 function refresh() {
   revalidatePath('/admin/ansatte');
@@ -35,7 +40,7 @@ export async function addStaff(formData: FormData): Promise<ActionResult> {
   if (error) return error.code === '23505' ? err(`${email} står allerede på lista.`) : fail(error);
 
   refresh();
-  return ok(`${email} er lagt til som ${STAFF_ROLES[role].toLowerCase()}. Tilgangen gjelder fra neste innlogging.`);
+  return ok(`${email} er lagt til som ${roleName(role)}. Tilgangen gjelder fra neste innlogging.`);
 }
 
 export async function setStaffRole(formData: FormData): Promise<ActionResult> {
@@ -50,7 +55,7 @@ export async function setStaffRole(formData: FormData): Promise<ActionResult> {
   if (error) return fail(error);
 
   refresh();
-  return ok(`Rollen er endret til ${STAFF_ROLES[role].toLowerCase()}.`);
+  return ok(`Rollen er endret til ${roleName(role)}.`);
 }
 
 export async function removeStaff(formData: FormData): Promise<ActionResult> {

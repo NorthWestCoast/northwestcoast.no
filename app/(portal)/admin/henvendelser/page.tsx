@@ -33,10 +33,11 @@ export default async function HenvendelserPage({
     supabase
       .from('newsletter_subscribers')
       .select('id', { count: 'exact', head: true })
+      .not('confirmed_at', 'is', null)
       .is('unsubscribed_at', null),
     supabase
       .from('newsletter_subscribers')
-      .select('id, email, source, created_at, unsubscribed_at')
+      .select('id, email, source, created_at, confirmed_at, unsubscribed_at')
       .order('created_at', { ascending: false })
       .limit(50),
   ]);
@@ -113,7 +114,7 @@ export default async function HenvendelserPage({
 
       <Card
         title="Nyhetsbrev"
-        description={`${subscriberCount.count ?? 0} aktive påmeldte. Under vises de 50 siste.`}
+        description={`${subscriberCount.count ?? 0} bekreftede påmeldte. En påmelding gjelder først når mottakeren har bekreftet den med lenken i e-posten. Under vises de 50 siste.`}
         flush
       >
         {subscribers.data?.length ? (
@@ -130,7 +131,9 @@ export default async function HenvendelserPage({
                   <Td label="Status">
                     {subscriber.unsubscribed_at
                       ? <Badge>Avmeldt {dato(subscriber.unsubscribed_at)}</Badge>
-                      : <Badge tone="ok">Påmeldt</Badge>}
+                      : subscriber.confirmed_at
+                        ? <Badge tone="ok">Påmeldt</Badge>
+                        : <Badge tone="warn">Venter på bekreftelse</Badge>}
                   </Td>
                 </tr>
               ))}

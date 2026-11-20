@@ -2,14 +2,23 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Facebook, Instagram, Linkedin } from 'lucide-react';
 import { useLang, useT } from '@/components/lang-provider';
 import { localePath } from '@/lib/i18n';
-import { SOCIAL_URLS } from '@/lib/site';
+import { isPortalPage, siteHref, SOCIAL_URLS } from '@/lib/site';
 
 export default function Footer() {
   const lang = useLang();
   const t = useT();
+  // Bunnteksten står også på sidene i portaldelen (innlogging, personvern),
+  // som kan vises på portalens eget vertsnavn. Derfra får lenkene til de
+  // offentlige sidene nettstedets adresse (se siteHref).
+  const fromPortal = isPortalPage(usePathname() ?? '/');
+  const site = (path: string) => {
+    const href = localePath(lang, path);
+    return fromPortal ? siteHref(href) : href;
+  };
 
   return (
     <>
@@ -56,24 +65,24 @@ export default function Footer() {
         <div className="fcol">
           <h4>{t.footer.products}</h4>
           <ul>
-            <li><Link href={localePath(lang, '/produkter')}>{t.products.overview}</Link></li>
-            <li><Link href={localePath(lang, '/produkt')}>{t.footer.ladder}</Link></li>
-            <li><Link href={localePath(lang, '/3d-leider')}>{t.viewerPage.navLabel}</Link></li>
-            <li><Link href={`${localePath(lang, '/produkter')}#reservedeler`}>{t.footer.parts}</Link></li>
-            <li><Link href={localePath(lang, '/kalkulator')}>{t.calculator.navLabel}</Link></li>
-            <li><Link href={localePath(lang, '/bestill')}>{t.footer.orderList}</Link></li>
-            <li><Link href={localePath(lang, '/vedlikehold')}>{t.footer.maintenance}</Link></li>
+            <li><Link href={site('/produkter')}>{t.products.overview}</Link></li>
+            <li><Link href={site('/produkt')}>{t.footer.ladder}</Link></li>
+            <li><Link href={site('/3d-leider')}>{t.viewerPage.navLabel}</Link></li>
+            <li><Link href={`${site('/produkter')}#reservedeler`}>{t.footer.parts}</Link></li>
+            <li><Link href={site('/kalkulator')}>{t.calculator.navLabel}</Link></li>
+            <li><Link href={site('/bestill')}>{t.footer.orderList}</Link></li>
+            <li><Link href={site('/vedlikehold')}>{t.footer.maintenance}</Link></li>
           </ul>
         </div>
 
         <div className="fcol">
           <h4>{t.footer.company}</h4>
           <ul>
-            <li><Link href={localePath(lang, '/om-oss')}>{t.footer.about}</Link></li>
-            <li><Link href={`${localePath(lang, '/')}#sertifisering`}>{t.footer.certifications}</Link></li>
-            <li><Link href={`${localePath(lang, '/')}#kontakt`}>{t.footer.contact}</Link></li>
-            <li><Link href={localePath(lang, '/faq')}>{t.footer.faq}</Link></li>
-            <li><Link href={localePath(lang, '/nyheter')}>{t.footer.news}</Link></li>
+            <li><Link href={site('/om-oss')}>{t.footer.about}</Link></li>
+            <li><Link href={`${site('/')}#sertifisering`}>{t.footer.certifications}</Link></li>
+            <li><Link href={`${site('/')}#kontakt`}>{t.footer.contact}</Link></li>
+            <li><Link href={site('/faq')}>{t.footer.faq}</Link></li>
+            <li><Link href={site('/nyheter')}>{t.footer.news}</Link></li>
             {/* Personvernerklæringen finnes bare på norsk. */}
             <li><Link href="/personvern">{t.footer.privacy}</Link></li>
           </ul>

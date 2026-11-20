@@ -132,5 +132,16 @@ begin
   values ('Nina Demo', 'nina@demo.invalid', '422 22 222', 'Demo Havbruk AS', 'Argostep 12 m',
           'Vi vurderer leidere til tre servicebåter. Kan dere ringe meg?');
 
+  -- Et prosjekt på land og to skap: ett på fartøyet, ett som ikke er plassert.
+  insert into public.projects (id, company_id, name, kind, location, description)
+  values ('0d000000-0000-4000-8000-000000000051', v_company, 'Demo Skansekaia', 'quay', 'Ålesund',
+          'Leider og skap som står fast på kaia, til bruk ved ombordstigning fra småbåt.');
+
+  insert into public.cabinets (id, product_id, company_id, vessel_id, ladder_id, status, installed_at, location_note)
+  values ('0d000000-0000-4000-8000-000000000061', cab8.id, v_company, v_havorn, l1, 'installed',
+          current_date - 200, 'Akterdekk, babord side');
+  insert into public.cabinets (id, product_id, company_id, status)
+  values ('0d000000-0000-4000-8000-000000000062', cab8.id, v_company, 'delivered');
+
   raise notice 'Demodata lagt inn.';
 end $$;

@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Enkel misbruksbeskyttelse for de offentlige skjema-endepunktene.
@@ -41,11 +41,62 @@ export function rateLimit(
   return true;
 }
 
-/** Trimmer og kutter fritekst før den havner i en e-post. */
+/** Trimmer og kutter fritekst (kommentarer, meldinger) før den lagres eller sendes. */
 export function clean(value: unknown, maxLength = 500): string {
   if (typeof value !== 'string') return '';
   return value.trim().slice(0, maxLength);
 }
+
+/**
+ * Enlinjefelt (navn, fartøy, telefon, serienummer): som clean(), men uten
+ * linjeskift, kontrolltegn og usynlige formattegn. Da kan ingen legge inn
+ * egne «linjer» i den interne e-posten eller skjule hva feltet inneholder.
+ */
+export function line(value: unknown, maxLength = 200): string {
+  if (typeof value !== 'string') return '';
+  return Array.from(
+    value
+      .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  )
+    .slice(0, maxLength)
+    .join('')
+    .trim();
+}
+
+/**
+ * Leser JSON-kroppen i et skjemakall.
+ *
+ * Gir null når kallet ikke kommer fra vår egen side: skjemaene våre sender
+ * alltid JSON fra samme opprinnelse. Uten denne sjekken kunne en hvilken som
+ * helst nettside fått besøkendes nettlesere til å sende inn skjemaene for
+ * seg (et vanlig HTML-skjema kan poste tekst, men ikke JSON, på tvers av
+ * nettsteder). Kall uten Origin og Sec-Fetch-Site kommer ikke fra en
+ * nettleser, og slippes gjennom til de vanlige grensene.
+ */
+export async function readBody(req: NextRequest): Promise<Record<string, unknown> | null> {
+  if (!(req.headers.get('content-type') ?? '').toLowerCase().startsWith('application/json')) return null;
+
+  const fetchSite = req.headers.get('sec-fetch-site');
+  if (fetchSite && fetchSite !== 'same-origin') return null;
+
+  const origin = req.headers.get('origin');
+  if (origin) {
+    const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
+    try {
+      if (new URL(origin).host !== host) return null;
+    } catch {
+      return null;
+    }
+  }
+
+  const body: unknown = await req.json().catch(() => null);
+  return body && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, unknown>) : {};
+}
+
+/** Svaret når readBody() avviser kallet. */
+export const rejected = () => NextResponse.json({ error: 'Ugyldig forespørsel.' }, { status: 403 });
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -72,4 +123,20 @@ export function langOf(body: Record<string, unknown>): ApiLang {
 /** Velger tekst etter språk – brukes til feilmeldinger som vises til kunden. */
 export function tr(lang: ApiLang, no: string, en: string): string {
   return lang === 'en' ? en : no;
+}
+
+/**
+ * Hodene som forteller databasen at et skjemakall kommer gjennom nettstedet,
+ * og fra hvilken besøkende.
+ *
+ * Skjemafunksjonene i databasen kan kalles av alle med den offentlige
+ * nøkkelen. Med FORM_GATE_SECRET satt teller kall herfra per besøkende, mens
+ * kall rett mot API-et får sin egen lille kvote. Da kan ingen stenge
+ * skjemaene for andre ved å bruke opp en felles grense (se app.form_throttle).
+ * Uten variabelen gjelder den gamle, felles grensen.
+ */
+export function gateHeaders(req: NextRequest): Record<string, string> | undefined {
+  const secret = process.env.FORM_GATE_SECRET?.trim();
+  if (!secret) return undefined;
+  return { 'x-nwc-gate': secret, 'x-nwc-client': clientIp(req).slice(0, 64) };
 }

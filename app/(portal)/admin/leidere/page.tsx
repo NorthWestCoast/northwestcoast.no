@@ -3,6 +3,8 @@ import { requireStaff } from '@/lib/supabase/staff';
 import { Badge, Card, Disclosure, Empty, PageHeader, Tabs, Td } from '@/components/portal/ui';
 import { PortalForm } from '@/components/portal/forms';
 import { Input, SearchForm, Select, Textarea } from '@/components/admin/fields';
+import { loadAdminPlaces } from '@/components/admin/placement-options';
+import { Place, PlacementFields, placeText } from '@/components/portal/placement';
 import { ladderStatus, serviceState } from '@/lib/portal/labels';
 import { dato } from '@/lib/format';
 import type { Enums } from '@/lib/supabase/database.types';
@@ -35,13 +37,13 @@ export default async function LeiderePage({
 
   let query = supabase
     .from('ladder_status')
-    .select('ladder_id, serial_number, product_name, status, company_name, vessel_name, next_service_due, service_state')
+    .select('ladder_id, serial_number, product_name, status, company_name, vessel_id, vessel_name, project_id, project_name, next_service_due, service_state')
     .order('serial_number')
     .limit(500);
   if (status) query = query.eq('status', status);
   if (q) query = query.ilike('serial_number', `%${q}%`);
 
-  const [{ data: ladders }, { data: products }, { data: companies }, { data: vessels }, { data: allLadders }] =
+  const [{ data: ladders }, { data: products }, places, { data: allLadders }] =
     await Promise.all([
       query,
       supabase
@@ -50,14 +52,14 @@ export default async function LeiderePage({
         .eq('kind', 'ladder')
         .eq('active', true)
         .order('length_m'),
-      supabase.from('companies').select('id, name').order('name'),
-      supabase.from('vessels').select('id, name, companies(name)').order('name'),
+      loadAdminPlaces(supabase),
       supabase
         .from('ladder_status')
-        .select('ladder_id, serial_number, product_name, company_name, vessel_name')
+        .select('ladder_id, serial_number, product_name, company_name, vessel_name, project_name')
         .order('serial_number')
         .limit(1000),
     ]);
+  const { companies } = places;
 
   return (
     <>
@@ -79,7 +81,7 @@ export default async function LeiderePage({
               <Input scope="register" name="produced_at" label="Produsert dato" type="date" />
               <Select scope="register" name="company_id" label="Kunde (valgfritt)" defaultValue="">
                 <option value="">Ingen ennå</option>
-                {companies?.map((company) => (
+                {companies.map((company) => (
                   <option key={company.id} value={company.id}>{company.name}</option>
                 ))}
               </Select>
@@ -104,30 +106,28 @@ export default async function LeiderePage({
                 <option key={ladder.ladder_id} value={ladder.ladder_id ?? ''}>
                   {ladder.serial_number} · {ladder.product_name}
                   {ladder.company_name ? ` · ${ladder.company_name}` : ' · ingen kunde'}
-                  {ladder.vessel_name ? ` · ${ladder.vessel_name}` : ''}
+                  {placeText(ladder.vessel_name, ladder.project_name) ? ` · ${placeText(ladder.vessel_name, ladder.project_name)}` : ''}
                 </option>
               ))}
             </Select>
-            <div className="pt-form-row pt-form-row-3">
-              <Select scope="assign" name="company_id" label="Selskap" defaultValue="">
-                <option value="">Ikke valgt</option>
-                {companies?.map((company) => (
-                  <option key={company.id} value={company.id}>{company.name}</option>
-                ))}
-              </Select>
-              <Select scope="assign" name="vessel_id" label="Fartøy" defaultValue="">
-                <option value="">Ikke valgt</option>
-                {vessels?.map((vessel) => (
-                  <option key={vessel.id} value={vessel.id}>
-                    {vessel.name}{vessel.companies ? ` (${vessel.companies.name})` : ''}
-                  </option>
-                ))}
-              </Select>
-              <Input scope="assign" name="installed_at" label="Montert dato" type="date" />
-            </div>
+            <Select scope="assign" name="company_id" label="Selskap" defaultValue="">
+              <option value="">Ikke valgt</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>{company.name}</option>
+              ))}
+            </Select>
+            <PlacementFields
+              scope="assign"
+              vessels={places.vessels}
+              projects={places.projects}
+              dateLabel="Tatt i bruk"
+              dateRequired={false}
+            />
             <p className="pt-hint">
-              Velg selskap, fartøy eller begge. Med fartøy og montert dato regnes leideren som i bruk, og
-              servicefristen begynner å løpe. Med fartøy uten dato er den levert, men ikke montert.
+              Velg selskap, fartøy, prosjekt eller flere av dem. En leider som står på en kai eller et anlegg på
+              land, knyttes til et prosjekt i stedet for et fartøy. Med dato regnes leideren som i bruk, og
+              servicefristen begynner å løpe. Uten dato er den levert, men ikke tatt i bruk. Velger du fartøy
+              eller prosjekt, erstatter det plasseringen leideren har fra før.
             </p>
           </PortalForm>
         </Disclosure>
@@ -151,7 +151,7 @@ export default async function LeiderePage({
         {ladders?.length ? (
           <table className="pt-table">
             <thead>
-              <tr><th>Produksjonsnr.</th><th>Produkt</th><th>Kunde</th><th>Fartøy</th><th>Status</th><th>Neste service</th></tr>
+              <tr><th>Produksjonsnr.</th><th>Produkt</th><th>Kunde</th><th>Plassering</th><th>Status</th><th>Neste service</th></tr>
             </thead>
             <tbody>
               {ladders.map((ladder) => {
@@ -164,7 +164,17 @@ export default async function LeiderePage({
                     </Td>
                     <Td label="Produkt">{ladder.product_name}</Td>
                     <Td label="Kunde">{ladder.company_name ?? '–'}</Td>
-                    <Td label="Fartøy">{ladder.vessel_name ?? '–'}</Td>
+                    <Td label="Plassering">
+                      <div>
+                        <Place
+                          vesselId={ladder.vessel_id}
+                          vesselName={ladder.vessel_name}
+                          projectId={ladder.project_id}
+                          projectName={ladder.project_name}
+                          empty="–"
+                        />
+                      </div>
+                    </Td>
                     <Td label="Status"><Badge tone={state.tone}>{state.label}</Badge></Td>
                     <Td label="Neste service">
                       {ladder.next_service_due

@@ -2,23 +2,35 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireStaff } from '@/lib/supabase/staff';
 import { uuid } from '@/lib/portal/forms';
-import { Badge, Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
+import { Alert, Badge, Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
 import { ActionButton, PortalForm } from '@/components/portal/forms';
+import { Place } from '@/components/portal/placement';
+import ProjectFields from '@/components/portal/project-fields';
+import VesselFields from '@/components/portal/vessel-fields';
 import { Hidden, Input, Select, Textarea } from '@/components/admin/fields';
 import CompanyFields from '@/components/admin/company-fields';
 import AgreementFields, { agreementStatus } from '@/components/admin/agreement-fields';
 import InlineSelect from '@/components/admin/inline-select';
 import {
-  COMPANY_ROLES, ladderStatus, orderStatus, serviceState, ticketStatusStaff,
+  COMPANY_ROLES, cabinetStatus, ladderStatus, orderStatus, projectKind, projectStatus, serviceState, ticketStatusStaff,
 } from '@/lib/portal/labels';
 import { dato, datoTid, nok } from '@/lib/format';
 import {
   createVessel, inviteToCompany, removeMember, revokeInvitation, setMemberRole, updateCompany,
 } from '../../actions';
 import { createAgreement, deleteAgreement, updateAgreement } from '../actions';
+import { createProject } from '../../prosjekter/actions';
 
-export default async function SelskapDetaljPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SelskapDetaljPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ fartoy?: string }>;
+}) {
   const { id: rawId } = await params;
+  // Satt av «Ny kunde» når kunden ble opprettet, men fartøyet ikke lot seg lagre.
+  const vesselFailed = (await searchParams).fartoy === 'feilet';
   const id = uuid(rawId);
   if (!id) notFound();
 
@@ -34,15 +46,16 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
   const [
     { data: vessels }, { data: ladders }, { data: members }, { data: invitations },
     { data: agreements }, { data: orders }, { data: tickets },
+    { data: projects }, { data: cabinets }, { data: withOrgNumber },
   ] = await Promise.all([
     supabase
       .from('vessels')
-      .select('id, name, imo, call_sign, vessel_type, home_port, ladders(count)')
+      .select('id, name, imo, call_sign, registration_mark, vessel_type, home_port, ladders(count)')
       .eq('company_id', id)
       .order('name'),
     supabase
       .from('ladder_status')
-      .select('ladder_id, serial_number, product_name, status, vessel_name, next_service_due, service_state')
+      .select('ladder_id, serial_number, product_name, status, vessel_id, vessel_name, project_id, project_name, next_service_due, service_state')
       .eq('company_id', id)
       .order('serial_number'),
     supabase.from('company_members').select('user_id, role, created_at').eq('company_id', id).order('created_at'),
@@ -70,7 +83,23 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
       .eq('company_id', id)
       .order('last_message_at', { ascending: false })
       .limit(50),
+    supabase
+      .from('projects')
+      .select('id, name, kind, location, status, ladders(count), cabinets(count)')
+      .eq('company_id', id)
+      .order('status')
+      .order('name'),
+    supabase
+      .from('cabinets')
+      .select('id, serial_number, status, location_note, vessel_id, project_id, products(name), vessels(name), projects(name)')
+      .eq('company_id', id)
+      .order('created_at'),
+    // Til dublettkontrollen når opplysningene hentes fra Brønnøysundregistrene.
+    supabase.from('companies').select('id, name, org_number').not('org_number', 'is', null).limit(5000),
   ]);
+  const known = (withOrgNumber ?? []).flatMap((other) =>
+    other.org_number ? [{ id: other.id, name: other.name, orgNumber: other.org_number }] : [],
+  );
 
   // company_members peker på auth.users, ikke profiles, så navnene hentes for seg.
   const memberIds = (members ?? []).map((member) => member.user_id);
@@ -91,10 +120,25 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
         description={[company.org_number ? `Org.nr. ${company.org_number}` : null, place || null].filter(Boolean).join(' · ') || undefined}
       />
 
+      {vesselFailed && (
+        <Alert tone="warn" title="Kunden er opprettet, men fartøyet ble ikke lagret">
+          Legg det til under «Nytt fartøy» nedenfor. Står IMO-nummeret alt på et annet fartøy, må det rettes der først.
+        </Alert>
+      )}
+
       <Card title="Opplysninger og kontakt">
         <PortalForm action={updateCompany} submitLabel="Lagre endringer" resetOnSuccess={false}>
           <Hidden fields={companyId} />
-          <CompanyFields scope="company" company={company} />
+          <CompanyFields
+            scope="company"
+            company={company}
+            lookup={{
+              known,
+              selfId: company.id,
+              label: 'Hent fra Brønnøysundregistrene',
+              hint: 'Velg et treff for å oppdatere navn, org.nr. og adresse. Ingenting lagres før du trykker «Lagre endringer».',
+            }}
+          />
         </PortalForm>
       </Card>
 
@@ -107,7 +151,12 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
             <tbody>
               {vessels.map((vessel) => (
                 <tr key={vessel.id}>
-                  <Td label="Navn" className="pt-table-strong">{vessel.name}</Td>
+                  <Td label="Navn" className="pt-table-strong">
+                    <div>
+                      <Link href={`/minside/fartoy/${vessel.id}`}>{vessel.name}</Link>
+                      {vessel.registration_mark && <div className="pt-hint">{vessel.registration_mark}</div>}
+                    </div>
+                  </Td>
                   <Td label="IMO">{vessel.imo ?? '–'}</Td>
                   <Td label="Kallesignal">{vessel.call_sign ?? '–'}</Td>
                   <Td label="Type">{vessel.vessel_type ?? '–'}</Td>
@@ -123,23 +172,46 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
         <Disclosure summary="Nytt fartøy">
           <PortalForm action={createVessel} submitLabel="Legg til fartøy">
             <Hidden fields={companyId} />
-            <div className="pt-form-row">
-              <Input scope="vessel" name="name" label="Navn" required maxLength={160} placeholder="MS Havbris" />
-              <Input
-                scope="vessel"
-                name="imo"
-                label="IMO"
-                inputMode="numeric"
-                maxLength={12}
-                placeholder="9074729"
-                hint="Valgfritt. Kontrollsifferet sjekkes."
-              />
-            </div>
-            <div className="pt-form-row pt-form-row-3">
-              <Input scope="vessel" name="call_sign" label="Kallesignal" maxLength={20} />
-              <Input scope="vessel" name="vessel_type" label="Type" maxLength={80} placeholder="Fiskefartøy" />
-              <Input scope="vessel" name="home_port" label="Hjemmehavn" maxLength={80} />
-            </div>
+            <VesselFields scope="vessel" />
+          </PortalForm>
+        </Disclosure>
+      </Card>
+
+      <Card
+        title={`Prosjekter (${projects?.length ?? 0})`}
+        description="Steder og oppdrag som ikke er et fartøy, for eksempel en kai eller et anlegg på land."
+        flush
+      >
+        {projects?.length ? (
+          <table className="pt-table">
+            <thead>
+              <tr><th>Navn</th><th>Type</th><th>Sted</th><th className="pt-num">Leidere</th><th className="pt-num">Skap</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {projects.map((project) => {
+                const status = projectStatus(project.status);
+                return (
+                  <tr key={project.id}>
+                    <Td label="Navn" className="pt-table-strong">
+                      <Link href={`/minside/prosjekter/${project.id}`}>{project.name}</Link>
+                    </Td>
+                    <Td label="Type">{projectKind(project.kind).label}</Td>
+                    <Td label="Sted">{project.location ?? '–'}</Td>
+                    <Td label="Leidere" className="pt-num">{project.ladders[0]?.count ?? 0}</Td>
+                    <Td label="Skap" className="pt-num">{project.cabinets[0]?.count ?? 0}</Td>
+                    <Td label="Status"><Badge tone={status.tone}>{status.label}</Badge></Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <Empty title="Ingen prosjekter" />
+        )}
+        <Disclosure summary="Nytt prosjekt">
+          <PortalForm action={createProject} submitLabel="Opprett prosjekt">
+            <Hidden fields={companyId} />
+            <ProjectFields scope="project" />
           </PortalForm>
         </Disclosure>
       </Card>
@@ -152,7 +224,7 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
         {ladders?.length ? (
           <table className="pt-table">
             <thead>
-              <tr><th>Produksjonsnr.</th><th>Produkt</th><th>Fartøy</th><th>Status</th><th>Neste service</th></tr>
+              <tr><th>Produksjonsnr.</th><th>Produkt</th><th>Plassering</th><th>Status</th><th>Neste service</th></tr>
             </thead>
             <tbody>
               {ladders.map((ladder) => {
@@ -164,7 +236,16 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
                       <Link href={`/minside/leider/${ladder.ladder_id}`}>{ladder.serial_number}</Link>
                     </Td>
                     <Td label="Produkt">{ladder.product_name}</Td>
-                    <Td label="Fartøy">{ladder.vessel_name ?? 'Ikke montert'}</Td>
+                    <Td label="Plassering">
+                      <div>
+                        <Place
+                          vesselId={ladder.vessel_id}
+                          vesselName={ladder.vessel_name}
+                          projectId={ladder.project_id}
+                          projectName={ladder.project_name}
+                        />
+                      </div>
+                    </Td>
                     <Td label="Status"><Badge tone={status.tone}>{status.label}</Badge></Td>
                     <Td label="Neste service">
                       {ladder.next_service_due
@@ -178,6 +259,51 @@ export default async function SelskapDetaljPage({ params }: { params: Promise<{ 
           </table>
         ) : (
           <Empty title="Ingen leidere knyttet til selskapet" />
+        )}
+      </Card>
+
+      <Card
+        title={`Oppbevaringsskap (${cabinets?.length ?? 0})`}
+        actions={<Link href="/admin/skap" className="pt-btn pt-btn-ghost pt-btn-sm">Registrer skap</Link>}
+        flush
+      >
+        {cabinets?.length ? (
+          <table className="pt-table">
+            <thead>
+              <tr><th>Modell</th><th>Nummer</th><th>Plassering</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {cabinets.map((cabinet) => {
+                const status = cabinetStatus(cabinet.status);
+                return (
+                  <tr key={cabinet.id}>
+                    <Td label="Modell" className="pt-table-strong">
+                      <Link href={`/admin/skap/${cabinet.id}`}>{cabinet.products?.name ?? 'Oppbevaringsskap'}</Link>
+                    </Td>
+                    <Td label="Nummer">{cabinet.serial_number ?? '–'}</Td>
+                    <Td label="Plassering">
+                      <div>
+                        <div>
+                          <Place
+                            vesselId={cabinet.vessel_id}
+                            vesselName={cabinet.vessels?.name}
+                            projectId={cabinet.project_id}
+                            projectName={cabinet.projects?.name}
+                          />
+                        </div>
+                        {cabinet.location_note && <div className="pt-hint">{cabinet.location_note}</div>}
+                      </div>
+                    </Td>
+                    <Td label="Status"><Badge tone={status.tone}>{status.label}</Badge></Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <Empty title="Ingen oppbevaringsskap">
+            Skap dukker opp her når en bestilling med skap er levert.
+          </Empty>
         )}
       </Card>
 

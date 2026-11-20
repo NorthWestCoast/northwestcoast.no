@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, rateLimit, langOf, tr } from '@/lib/api-guard';
+import { clean, clientIp, gateHeaders, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { SUPPORT_PHONE } from '@/lib/mail';
 import { MAINTENANCE_BUCKET, finishMaintenance } from './notify';
@@ -32,7 +32,8 @@ function safeName(name: string, index: number): string {
 }
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const body = await readBody(req);
+  if (!body) return rejected();
   const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true, uploads: [] });
@@ -44,11 +45,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const name = clean(body.name, 120);
-  const boat = clean(body.boat, 160);
-  const imo = clean(body.imo, 20);
-  const serial = clean(body.serial, 60);
-  const email = clean(body.email, 160);
+  const name = line(body.name, 120);
+  const boat = line(body.boat, 160);
+  const imo = line(body.imo, 20);
+  const serial = line(body.serial, 60);
+  const email = line(body.email, 160);
   const notes = clean(body.notes, 4000);
   const photos = (Array.isArray(body.photos) ? body.photos : []).slice(
     0,
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   let supabase: Awaited<ReturnType<typeof createServerSupabase>>;
   try {
-    supabase = await createServerSupabase();
+    supabase = await createServerSupabase(gateHeaders(req));
   } catch (error) {
     console.error('[maintenance] Supabase er ikke konfigurert – rapport tapt:', error);
     return NextResponse.json({ error: failed }, { status: 500 });
@@ -119,7 +120,6 @@ export async function POST(req: NextRequest) {
     ok: true,
     logId,
     bucket: MAINTENANCE_BUCKET,
-    matchedLadder: result?.matched === true,
     uploads,
   });
 }

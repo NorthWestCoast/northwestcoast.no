@@ -6,6 +6,7 @@ import Wave from '@/components/wave';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
 import GalleryPage from '@/components/gallery-page';
+import { getGalleryImages } from '@/lib/gallery';
 import { DEFAULT_LANG, getDict, isLang, pageMetadata } from '@/lib/i18n';
 
 export async function generateMetadata({
@@ -25,6 +26,7 @@ export default async function GalleriPage({
   const { lang } = await params;
   const l = isLang(lang) ? lang : DEFAULT_LANG;
   const t = getDict(l);
+  const images = await getGalleryImages(l);
 
   return (
     <>
@@ -40,7 +42,7 @@ export default async function GalleriPage({
 
       <Wave top="var(--navy)" bottom="var(--sand-light)" dualBottomFill="var(--sand-light)" />
 
-      <GalleryPage />
+      <GalleryPage images={images} />
 
       <Wave top="var(--sand-light)" bottom="var(--navy)" dual dualBottomFill="var(--navy)" />
 

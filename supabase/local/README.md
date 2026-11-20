@@ -29,12 +29,19 @@ innloggingslenken skrives ut i terminalen der `start.sh` kjører.
 |---|---|
 | `admin@nwc.test` | Administrator |
 | `produksjon@nwc.test` | Produksjon |
+| `media@nwc.test` | Media (nyheter og galleri) |
 | `kari@demo.test` | Eier av Demo Rederi AS |
 | `mannskap@demo.test` | Mannskap på MS Demo Havørn |
 | `los@demo.test` | Ingen tilgang (tester forespørsel via produksjonsnummer) |
 
 En adresse som ikke finnes fra før, blir en ny bruker uten tilgang – slik en
 ny kunde opplever det.
+
+Til curl og skript finnes en ferdig innlogget økt som Cookie-hode:
+
+```bash
+curl -H "Cookie: $(node supabase/local/server.mjs --print-cookie admin@nwc.test)" http://localhost:3000/admin
+```
 
 ## Begrensninger
 

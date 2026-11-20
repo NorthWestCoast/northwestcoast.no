@@ -1,11 +1,12 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { Playfair_Display, DM_Sans, DM_Mono } from 'next/font/google';
 import Analytics from '@/components/analytics';
 import JsonLd from '@/components/json-ld';
 import { LangProvider } from '@/components/lang-provider';
 import { organizationLd, websiteLd } from '@/lib/seo';
-import { LANGS, buildAlternates, getDict, isLang, SITE_URL } from '@/lib/i18n';
+import { LANGS, getDict, isLang, pageMetadata, SITE_NAME } from '@/lib/i18n';
+import { THEME_COLOR } from '@/lib/site';
 import '../../globals.css'; // Global styles
 
 const playfair = Playfair_Display({
@@ -35,6 +36,14 @@ export function generateStaticParams() {
   return LANGS.map((lang) => ({ lang }));
 }
 
+// Fargen på adresselinja i mobilnettlesere: samme marineblå som toppen av siden.
+export const viewport: Viewport = { themeColor: THEME_COLOR };
+
+/**
+ * Metadata for forsiden, og standardverdier for sidene under. Favikon,
+ * apple-touch-icon og manifest kommer fra filene i app/ (favicon.ico,
+ * icon.png, apple-icon.png, manifest.ts) og trenger ikke nevnes her.
+ */
 export async function generateMetadata({
   params,
 }: {
@@ -43,27 +52,23 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLang(lang)) return {};
   const dict = getDict(lang);
+  const home = pageMetadata(lang, 'home', '/');
 
   return {
-    metadataBase: new URL(SITE_URL),
-    title: dict.meta.home.title,
-    description: dict.meta.home.description,
-    applicationName: 'NorthWest Coast',
+    ...home,
+    applicationName: SITE_NAME,
     keywords: dict.meta.keywords,
+    authors: [{ name: SITE_NAME }],
+    creator: SITE_NAME,
+    publisher: SITE_NAME,
     robots: {
       index: true,
       follow: true,
-      googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large' },
+      googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large', 'max-video-preview': -1 },
     },
-    twitter: { card: 'summary_large_image', images: [`${SITE_URL}/og/${lang}`], title: dict.meta.home.title, description: dict.meta.home.ogDescription },
-    alternates: buildAlternates('/'),
-    openGraph: {
-      images: [{ url: `${SITE_URL}/og/${lang}`, width: 1200, height: 630 }],
-      title: dict.meta.home.title,
-      description: dict.meta.home.ogDescription,
-      locale: dict.ogLocale,
-      type: 'website',
-    },
+    // Bare korttypen: tittel, beskrivelse og bilde fylles fra hver sides openGraph.
+    twitter: { card: 'summary_large_image' },
+    openGraph: { ...home.openGraph, description: dict.meta.home.ogDescription },
   };
 }
 
@@ -83,7 +88,7 @@ export default async function RootLayout({
       className={`${playfair.variable} ${dmSans.variable} ${dmMono.variable}`}
     >
       <body>
-        <JsonLd data={[organizationLd(), websiteLd(lang)]} />
+        <JsonLd data={[organizationLd(lang), websiteLd(lang)]} />
         <LangProvider lang={lang}>{children}</LangProvider>
         <Analytics />
       </body>

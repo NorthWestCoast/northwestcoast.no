@@ -1,19 +1,25 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/supabase/staff';
-import { Card, Empty, KV, PageHeader, Timeline } from '@/components/portal/ui';
-import { PortalForm } from '@/components/portal/forms';
-import { Hidden, Select } from '@/components/admin/fields';
+import { Badge, Card, Empty, KV, PageHeader, Td, Timeline } from '@/components/portal/ui';
+import { ActionButton, PortalForm } from '@/components/portal/forms';
+import { Hidden, SearchForm, Select } from '@/components/admin/fields';
+import MaintenanceReportForm from '@/components/admin/maintenance-report-form';
+import { uuid } from '@/lib/portal/forms';
 import { BUCKETS, signedUrls } from '@/lib/portal/storage';
 import { logKind } from '@/lib/portal/labels';
-import { dato, datoTid } from '@/lib/format';
-import { linkMaintenanceLog } from '../actions';
+import { dato, datoTid, idag } from '@/lib/format';
+import { linkMaintenanceLog, verifyMaintenanceLog } from '../actions';
+import { anyColumnMatches, searchTerm } from '../_lib/search';
 
-const COLUMNS = 'id, kind, title, serial_number_raw, vessel_name_raw, imo_raw, reporter_name, reporter_email, performed_at, notes, created_at, source, ladder_id, ladders(serial_number), maintenance_photos(storage_path, caption)';
+const COLUMNS = 'id, kind, title, serial_number_raw, vessel_name_raw, imo_raw, reporter_name, reporter_email, performed_at, notes, created_at, source, verified_at, ladder_id, ladders(serial_number), maintenance_photos(storage_path, caption)';
 
 const SOURCES: Record<string, string> = {
   web: 'Skjemaet på nettsiden',
   portal: 'Min side',
+  admin: 'Lagt inn av NorthWest Coast',
 };
+
+const LADDER_COLUMNS = 'ladder_id, serial_number, product_name, company_name, vessel_name, project_name';
 
 function Photos({ photos, urls }: { photos: { storage_path: string; caption: string | null }[]; urls: Map<string, string> }) {
   const visible = photos.filter((photo) => urls.has(photo.storage_path));
@@ -31,16 +37,27 @@ function Photos({ photos, urls }: { photos: { storage_path: string; caption: str
 }
 
 /**
- * Vedlikeholdsrapporter fra det åpne skjemaet og fra Min side.
+ * Vedlikeholdsrapporter: de som kommer fra det åpne skjemaet og fra Min side,
+ * og de NorthWest Coast legger inn selv («Ny rapport»).
  *
- * Skjemaet tar imot hvilket som helst produksjonsnummer og lagrer råteksten
- * selv når oppslaget bommer, så en innsending aldri går tapt. De som ikke
- * fant leideren sin kobles til riktig leider her.
+ * Skjemaet på nettsiden tar imot hvilket som helst produksjonsnummer og lagrer
+ * råteksten selv når oppslaget bommer, så en innsending aldri går tapt. De som
+ * ikke fant leideren sin kobles til riktig leider her.
+ *
+ * Ny rapport: leideren velges først (søk med ?q=, valgt med ?leider=), så
+ * fylles skjemaet ut. Leidersiden lenker hit med leideren forhåndsvalgt.
  */
-export default async function VedlikeholdPage() {
-  const { supabase } = await requireStaff();
+export default async function VedlikeholdPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; leider?: string }>;
+}) {
+  const params = await searchParams;
+  const q = searchTerm(params.q);
+  const selectedId = uuid(params.leider ?? null);
+  const { supabase, ctx } = await requireStaff();
 
-  const [{ data: unlinked }, { data: recent }, { data: ladders }] = await Promise.all([
+  const [{ data: unlinked }, { data: recent }, { data: ladders }, { data: selected }, { data: matches }] = await Promise.all([
     supabase
       .from('maintenance_logs')
       .select(COLUMNS)
@@ -58,6 +75,17 @@ export default async function VedlikeholdPage() {
       .select('ladder_id, serial_number, company_name, vessel_name')
       .order('serial_number')
       .limit(1000),
+    selectedId
+      ? supabase.from('ladder_status').select(LADDER_COLUMNS).eq('ladder_id', selectedId).maybeSingle()
+      : Promise.resolve({ data: null }),
+    q && !selectedId
+      ? supabase
+          .from('ladder_status')
+          .select(LADDER_COLUMNS)
+          .or(anyColumnMatches(['serial_number', 'vessel_name', 'company_name', 'project_name'], q))
+          .order('serial_number')
+          .limit(20)
+      : Promise.resolve({ data: null }),
   ]);
 
   const urls = await signedUrls(
@@ -70,8 +98,74 @@ export default async function VedlikeholdPage() {
     <>
       <PageHeader
         title="Vedlikeholdsrapporter"
-        description="Det mannskapet har loggført, fra skjemaet på nettsiden og fra Min side."
+        description="Det mannskapet har loggført, fra skjemaet på nettsiden og fra Min side, og det NorthWest Coast legger inn selv."
       />
+
+      <Card
+        id="ny"
+        title="Ny rapport"
+        description="Vedlikehold NorthWest Coast har utført, eller noe kunden har meldt på telefon eller e-post. Kunden ser rapporten i historikken til leideren."
+        flush
+      >
+        {selected?.ladder_id ? (
+          <div className="pt-card-body pt-stack">
+            <div className="pt-record-head" style={{ justifyContent: 'space-between' }}>
+              <div>
+                <strong>
+                  Leider{' '}
+                  <Link href={`/minside/leider/${selected.ladder_id}`} className="pt-link">{selected.serial_number}</Link>
+                </strong>
+                <div className="pt-list-sub">
+                  {[selected.product_name, selected.company_name, selected.vessel_name ?? selected.project_name]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </div>
+              </div>
+              <Link href="/admin/vedlikehold#ny" className="pt-btn pt-btn-ghost pt-btn-sm">Bytt leider</Link>
+            </div>
+            <MaintenanceReportForm
+              ladderId={selected.ladder_id}
+              performedBy={ctx.displayName}
+              today={idag()}
+              scope="ny"
+            />
+          </div>
+        ) : (
+          <>
+            <div className="pt-card-body pt-stack">
+              {selectedId && <p className="pt-msg" data-ok="false" role="alert">Fant ikke leideren. Søk den opp under.</p>}
+              <SearchForm
+                action="/admin/vedlikehold#ny"
+                q={q}
+                placeholder="Søk på produksjonsnummer, fartøy eller kunde"
+              />
+              {!q && <p className="pt-hint">Søk opp leideren rapporten gjelder, og velg den.</p>}
+              {q && !matches?.length && <p className="pt-hint">Ingen leidere passer med «{q}».</p>}
+            </div>
+            {matches && matches.length > 0 && (
+              <table className="pt-table">
+                <thead>
+                  <tr><th>Leider</th><th>Kunde</th><th>Står på</th><th /></tr>
+                </thead>
+                <tbody>
+                  {matches.map((ladder) => (
+                    <tr key={ladder.ladder_id}>
+                      <Td label="Leider" className="pt-table-strong">{ladder.serial_number}</Td>
+                      <Td label="Kunde">{ladder.company_name ?? '–'}</Td>
+                      <Td label="Står på">{ladder.vessel_name ?? ladder.project_name ?? '–'}</Td>
+                      <Td>
+                        <Link href={`/admin/vedlikehold?leider=${ladder.ladder_id}#ny`} className="pt-btn pt-btn-ghost pt-btn-sm">
+                          Velg
+                        </Link>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+      </Card>
 
       {unlinked?.length ? (
         unlinked.map((log) => (
@@ -125,7 +219,11 @@ export default async function VedlikeholdPage() {
         </Card>
       )}
 
-      <Card title="Siste rapporter" description="De 50 siste som er koblet til en leider." flush>
+      <Card
+        title="Siste rapporter"
+        description="De 50 siste som er koblet til en leider. Meldinger fra det åpne skjemaet på nettsiden teller ikke som vedlikehold, og vises ikke for los, før de er bekreftet her."
+        flush
+      >
         {recent?.length ? (
           <Timeline
             items={recent.map((log) => ({
@@ -137,13 +235,28 @@ export default async function VedlikeholdPage() {
                     {log.ladders?.serial_number ?? log.serial_number_raw ?? 'Leider'}
                   </Link>
                   {' · '}{logKind(log.kind)}{log.title ? ` · ${log.title}` : ''}
+                  {log.source === 'web' && !log.verified_at && <> <Badge tone="warn">Ikke bekreftet</Badge></>}
                 </>
               ),
               text: [
                 log.notes,
                 [log.reporter_name, log.vessel_name_raw, SOURCES[log.source] ?? log.source].filter(Boolean).join(' · '),
               ].filter(Boolean).join('\n'),
-              extra: <Photos photos={log.maintenance_photos} urls={urls} />,
+              extra: (
+                <>
+                  <Photos photos={log.maintenance_photos} urls={urls} />
+                  {log.source === 'web' && !log.verified_at && (
+                    <div style={{ marginTop: '0.6rem' }}>
+                      <ActionButton
+                        action={verifyMaintenanceLog}
+                        fields={{ log_id: log.id }}
+                        label="Bekreft meldingen"
+                        tone="green"
+                      />
+                    </div>
+                  )}
+                </>
+              ),
             }))}
           />
         ) : (

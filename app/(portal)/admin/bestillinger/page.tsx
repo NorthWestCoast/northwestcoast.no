@@ -25,7 +25,7 @@ export default async function BestillingerPage({
 
   let query = supabase
     .from('orders')
-    .select('id, order_number, created_at, contact_name, vessel_name, total_nok, status, companies(name), order_lines(qty)')
+    .select('id, order_number, created_at, contact_name, vessel_name, total_nok, status, companies(name), order_lines(qty, on_request)')
     .order('created_at', { ascending: false })
     .limit(200);
   const statuses = VIEWS[view].statuses;
@@ -58,6 +58,7 @@ export default async function BestillingerPage({
               {orders.map((order) => {
                 const status = orderStatus(order.status);
                 const units = order.order_lines.reduce((sum, line) => sum + line.qty, 0);
+                const onRequest = order.order_lines.some((line) => line.on_request);
                 return (
                   <tr key={order.id}>
                     <Td label="Nr." className="pt-table-strong">
@@ -67,7 +68,11 @@ export default async function BestillingerPage({
                     <Td label="Kunde">{order.companies?.name ?? order.contact_name}</Td>
                     <Td label="Fartøy">{order.vessel_name ?? '–'}</Td>
                     <Td label="Enheter" className="pt-num">{units}</Td>
-                    <Td label="Sum eks. mva" className="pt-num">{nok(order.total_nok)}</Td>
+                    <Td label="Sum eks. mva" className="pt-num">
+                      {!onRequest
+                        ? nok(order.total_nok)
+                        : order.total_nok > 0 ? `${nok(order.total_nok)} + forespørsel` : 'På forespørsel'}
+                    </Td>
                     <Td label="Status"><Badge tone={status.tone}>{status.label}</Badge></Td>
                   </tr>
                 );

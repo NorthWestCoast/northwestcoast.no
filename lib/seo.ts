@@ -1,115 +1,175 @@
 import type { LocalizedArticle } from './articles';
 import { FAQ_ITEMS } from './faq-items';
-import { getDict, localePath, SITE_URL, type Lang } from './i18n';
+import { getDict, LANGS, localePath, SITE_NAME, SITE_URL, type Lang } from './i18n';
 import type { PriceTable } from './pricing';
-import { SOCIAL_URLS } from './site';
+import { CONFIRMED_SOCIAL_URLS, ORG } from './site';
 
 /**
  * Strukturert data (JSON-LD) for søkemotorer og AI-assistenter. Alt her er
- * hentet fra det som allerede står på nettstedet – ingen nye påstander.
- * Bevisst utelatt: Review-markup (kundeuttalelsene er ikke verifiserbare
- * anmeldelser).
+ * hentet fra det som allerede står på nettstedet: ordbøkene, prislista og
+ * lib/site.ts. Ingen nye påstander.
+ *
+ * Bevisst utelatt, fordi nettstedet ikke gir grunnlag for det:
+ * - Review/aggregateRating (kundeuttalelsene er ikke verifiserbare anmeldelser)
+ * - availability og priceValidUntil på tilbudene (lagerstatus og gyldighet
+ *   står ingen steder; prisene er veiledende og bekreftes etter kontakt)
+ * - stiftelsesår, antall ansatte og lignende om selskapet
+ *
+ * Hver funksjon returnerer ETT objekt med `@context`. components/json-ld.tsx
+ * skriver ett objekt per script-tagg (Safari tåler ikke lister).
  */
 const abs = (path: string) => `${SITE_URL}${path}`;
+const bcp47 = (lang: Lang) => (lang === 'no' ? 'nb-NO' : 'en');
 
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const SITE_ID = `${SITE_URL}/#website`;
+const PRODUCT_ID = `${SITE_URL}/#argostep`;
+const CABINET_ID = `${SITE_URL}/#oppbevaringsskap`;
 
-export function organizationLd() {
+/** Kvadratisk logo (512×512) fra scripts/generate-icons.mjs. */
+const LOGO_PATH = '/icons/icon-512.png';
+
+const orgNumber = ORG.orgNumber.replace(/\s/g, '');
+
+export function organizationLd(lang: Lang = 'no') {
+  const t = getDict(lang);
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': ORG_ID,
-    name: 'NorthWest Coast',
-    legalName: 'Northwestcoast AS',
+    name: SITE_NAME,
+    legalName: ORG.legalName,
+    alternateName: ['Northwestcoast', 'NWC'],
+    description: t.footer.tagline,
     url: SITE_URL,
-    logo: abs('/images/logo/NY-logo.png'),
-    telephone: '+4790407341',
-    email: 'arve@astep.no',
-    identifier: '998196159',
-    sameAs: Object.values(SOCIAL_URLS),
+    logo: {
+      '@type': 'ImageObject',
+      '@id': `${SITE_URL}/#logo`,
+      url: abs(LOGO_PATH),
+      contentUrl: abs(LOGO_PATH),
+      width: 512,
+      height: 512,
+      caption: SITE_NAME,
+    },
+    image: abs(LOGO_PATH),
+    telephone: ORG.phone,
+    email: ORG.email,
+    // Organisasjonsnummeret, også på ISO 6523-form (0192 = Enhetsregisteret).
+    identifier: {
+      '@type': 'PropertyValue',
+      name: lang === 'no' ? 'Organisasjonsnummer' : 'Norwegian organisation number',
+      value: orgNumber,
+    },
+    iso6523Code: `0192:${orgNumber}`,
+    // Bare profiler selskapet selv har lagt inn (se CONFIRMED_SOCIAL_URLS).
+    ...(CONFIRMED_SOCIAL_URLS.length > 0 ? { sameAs: CONFIRMED_SOCIAL_URLS } : {}),
     address: {
       '@type': 'PostalAddress',
-      postOfficeBoxNumber: '79',
-      postalCode: '6281',
-      addressLocality: 'Søvik',
-      addressCountry: 'NO',
+      postOfficeBoxNumber: ORG.street.replace(/^Postboks\s+/i, ''),
+      postalCode: ORG.postalCode,
+      addressLocality: ORG.city,
+      addressCountry: ORG.country,
     },
     founder: [
       { '@type': 'Person', name: 'Kristian B. Dyb' },
       { '@type': 'Person', name: 'Arve Toven' },
       { '@type': 'Person', name: 'Tor Arne Reitan' },
     ],
+    brand: { '@type': 'Brand', name: 'Argostep' },
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'sales',
-      telephone: '+4790407341',
-      email: 'arve@astep.no',
+      telephone: ORG.phone,
+      email: ORG.email,
       availableLanguage: ['nb', 'en'],
     },
   };
 }
 
 export function websiteLd(lang: Lang) {
+  const t = getDict(lang);
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     '@id': SITE_ID,
     url: SITE_URL,
-    name: 'NorthWest Coast',
-    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    name: SITE_NAME,
+    alternateName: ['Northwestcoast', 'NWC'],
+    description: t.meta.home.description,
+    inLanguage: LANGS.map(bcp47),
     publisher: { '@id': ORG_ID },
   };
 }
 
+/**
+ * Leideren som produkt. Beskrivelsen og spesifikasjonene er de samme som
+ * vises på /produkt og /3d-leider; prisene kommer fra prislista som sendes
+ * inn (veiledende, eks. mva.). Lengder uten fast pris tas ikke med som tilbud.
+ */
 export function productLd(lang: Lang, table: PriceTable) {
   const t = getDict(lang);
   const priced = table.filter((r) => !r.onRequest);
   const prices = priced.map((r) => r.price);
+  const orderUrl = abs(localePath(lang, '/bestill'));
+
+  const specs = [...Object.values(t.product.specs), ...Object.values(t.viewerPage.specs)];
 
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    '@id': `${SITE_URL}/#argostep`,
+    '@id': PRODUCT_ID,
     name: t.product.title,
-    description: t.meta.produkt.description,
+    alternateName: t.products.ladder.title,
+    description: t.product.answerBody,
     image: [abs('/images/ladder-full.png'), abs('/images/leider_in_use.jpg')],
     brand: { '@type': 'Brand', name: 'Argostep' },
     manufacturer: { '@id': ORG_ID },
-    category: 'Marine safety equipment > Embarkation ladders',
-    material: lang === 'no' ? 'Glassfiberarmert plast' : 'Glass-fibre reinforced plastic',
+    category: lang === 'no' ? 'Maritimt sikkerhetsutstyr > Leidere' : 'Marine safety equipment > Embarkation ladders',
+    material: t.product.specs.material.val,
     additionalProperty: [
-      { '@type': 'PropertyValue', name: 'Standard', value: 'ISO 799-1:2019' },
+      ...specs.map(({ key, val }) => ({
+        '@type': 'PropertyValue',
+        name: key,
+        value: val,
+        // Godkjenningen gjelder norske fartøy under 15 meter: si det her også.
+        ...(key === t.product.specs.approval.key ? { description: t.certs.cards.nma.sub } : {}),
+      })),
       {
         '@type': 'PropertyValue',
-        name: lang === 'no' ? 'Godkjenning' : 'Approval',
-        value: lang === 'no' ? 'Sjøfartsdirektoratet' : 'Norwegian Maritime Authority',
+        name: t.certs.vesselsLabel,
+        value: Object.values(t.certs.vessels).join(', '),
       },
-      { '@type': 'PropertyValue', name: lang === 'no' ? 'Lengder' : 'Lengths', value: '2–15 m' },
     ],
     url: abs(localePath(lang, '/produkt')),
-    offers: {
-      '@type': 'AggregateOffer',
-      priceCurrency: 'NOK',
-      lowPrice: Math.min(...prices),
-      highPrice: Math.max(...prices),
-      offerCount: table.length,
-      offers: priced.map((r) => ({
-        '@type': 'Offer',
-        name: r.productName,
-        sku: r.productNumber,
-        price: r.price,
-        priceCurrency: 'NOK',
-        priceSpecification: {
-          '@type': 'UnitPriceSpecification',
-          price: r.price,
-          priceCurrency: 'NOK',
-          valueAddedTaxIncluded: false,
-        },
-        url: abs(localePath(lang, '/bestill')),
-        seller: { '@id': ORG_ID },
-      })),
-    },
+    mainEntityOfPage: abs(localePath(lang, '/produkt')),
+    ...(priced.length > 0
+      ? {
+          offers: {
+            '@type': 'AggregateOffer',
+            priceCurrency: 'NOK',
+            lowPrice: Math.min(...prices),
+            highPrice: Math.max(...prices),
+            offerCount: priced.length,
+            url: orderUrl,
+            offers: priced.map((r) => ({
+              '@type': 'Offer',
+              name: r.productName,
+              description: `${r.length} m, ${r.steps} ${t.order.steps}`,
+              sku: r.productNumber,
+              price: r.price,
+              priceCurrency: 'NOK',
+              priceSpecification: {
+                '@type': 'UnitPriceSpecification',
+                price: r.price,
+                priceCurrency: 'NOK',
+                valueAddedTaxIncluded: false,
+              },
+              url: orderUrl,
+              seller: { '@id': ORG_ID },
+            })),
+          },
+        }
+      : {}),
   };
 }
 
@@ -119,7 +179,10 @@ export function faqLd(lang: Lang, limit?: number) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    name: t.faq.title,
+    inLanguage: bcp47(lang),
+    isPartOf: { '@id': SITE_ID },
+    about: { '@id': PRODUCT_ID },
     mainEntity: items.map(({ key }) => ({
       '@type': 'Question',
       name: t.faq.items[key].q,
@@ -129,7 +192,7 @@ export function faqLd(lang: Lang, limit?: number) {
 }
 
 export function breadcrumbLd(lang: Lang, trail: { name: string; path: string }[]) {
-  const all = [{ name: 'NorthWest Coast', path: '/' }, ...trail];
+  const all = [{ name: SITE_NAME, path: '/' }, ...trail];
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -142,6 +205,7 @@ export function breadcrumbLd(lang: Lang, trail: { name: string; path: string }[]
   };
 }
 
+/** Leiderkalkulatoren: et gratis verktøy i nettleseren, uten innlogging. */
 export function calculatorLd(lang: Lang) {
   const t = getDict(lang);
   return {
@@ -152,10 +216,12 @@ export function calculatorLd(lang: Lang) {
     url: abs(localePath(lang, '/kalkulator')),
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Any',
-    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    inLanguage: bcp47(lang),
     isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: 0, priceCurrency: 'NOK' },
     provider: { '@id': ORG_ID },
+    isPartOf: { '@id': SITE_ID },
+    about: { '@id': PRODUCT_ID },
   };
 }
 
@@ -165,10 +231,10 @@ export function aboutLd(lang: Lang) {
   return {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
-    name: t.meta.omOss.title,
+    name: `${t.about.navLabel} – ${SITE_NAME}`,
     description: t.meta.omOss.description,
     url: abs(localePath(lang, '/om-oss')),
-    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    inLanguage: bcp47(lang),
     isPartOf: { '@id': SITE_ID },
     about: { '@id': ORG_ID },
     mainEntity: { '@id': ORG_ID },
@@ -188,12 +254,13 @@ export function cabinetLd(lang: Lang, table: PriceTable) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    '@id': `${SITE_URL}/#oppbevaringsskap`,
+    '@id': CABINET_ID,
     name: `Argostep ${t.products.storage.title}`,
     description: t.products.storage.desc,
     image: [abs('/images/leider_cabinet.jpg'), abs('/images/leider_cabinet2.jpg')],
     brand: { '@type': 'Brand', name: 'Argostep' },
-    manufacturer: { '@id': ORG_ID },
+    // Ingen `manufacturer`: nettstedet sier ikke hvem som produserer skapene.
+    isAccessoryOrSparePartFor: { '@id': PRODUCT_ID },
     url: abs(`${localePath(lang, '/produkter')}#oppbevaring`),
     offers: {
       '@type': 'AggregateOffer',
@@ -201,6 +268,7 @@ export function cabinetLd(lang: Lang, table: PriceTable) {
       lowPrice: Math.min(...prices),
       highPrice: Math.max(...prices),
       offerCount: new Set(withCabinet.map((r) => r.cabinetName)).size,
+      url: abs(localePath(lang, '/bestill')),
       seller: { '@id': ORG_ID },
     },
   };
@@ -222,7 +290,7 @@ export function productListLd(lang: Lang, table: PriceTable) {
     '@type': 'ItemList',
     name: t.products.title,
     url: abs(localePath(lang, '/produkter')),
-    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    numberOfItems: items.length,
     itemListElement: items.map((item, i) => ({
       '@type': 'ListItem',
       position: i + 1,
@@ -241,7 +309,7 @@ export function model3dLd(lang: Lang) {
     name: t.viewer.modelAlt,
     description: t.meta.leider3d.description,
     url: abs(localePath(lang, '/3d-leider')),
-    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
+    inLanguage: bcp47(lang),
     encoding: [
       {
         '@type': 'MediaObject',
@@ -249,15 +317,27 @@ export function model3dLd(lang: Lang) {
         encodingFormat: 'model/gltf-binary',
       },
     ],
+    about: { '@id': PRODUCT_ID },
     isPartOf: { '@id': SITE_ID },
     creator: { '@id': ORG_ID },
   };
 }
 
-/** Strukturert data for ett innlegg (fra lib/posts.ts). */
+/** «30.08.2026» → «2026-08-30». Ukjent format gir undefined, og feltet utelates. */
+function isoDate(date: string): string | undefined {
+  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(date.trim());
+  if (!match) return undefined;
+  const [, d, m, y] = match;
+  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+
+/**
+ * Strukturert data for ett innlegg (fra lib/posts.ts). `Article`, ikke
+ * `NewsArticle`: dette er selskapets egne nyheter, ikke en nyhetsredaksjon.
+ * dateModified utelates fordi innleggene bare har én dato.
+ */
 export function articleLd(lang: Lang, a: LocalizedArticle) {
-  const [d, m, y] = a.date.split('.');
-  const iso = y && m && d ? `${y}-${m}-${d}` : undefined;
+  const url = abs(localePath(lang, `/nyheter/${a.slug}`));
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -265,10 +345,12 @@ export function articleLd(lang: Lang, a: LocalizedArticle) {
     description: a.excerpt,
     // Forsidebilder fra admin er fulle adresser; de faste ligger i /public.
     image: /^https?:\/\//i.test(a.image) ? a.image : abs(a.image),
-    datePublished: iso,
-    dateModified: iso,
-    inLanguage: lang === 'no' ? 'nb-NO' : 'en',
-    mainEntityOfPage: abs(localePath(lang, `/nyheter/${a.slug}`)),
+    datePublished: isoDate(a.date),
+    articleSection: a.tag,
+    inLanguage: bcp47(lang),
+    url,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    isPartOf: { '@id': SITE_ID },
     author: { '@id': ORG_ID },
     publisher: { '@id': ORG_ID },
   };

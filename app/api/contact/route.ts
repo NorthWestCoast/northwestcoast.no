@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, isBot, isEmail, langOf, rateLimit, tr } from '@/lib/api-guard';
+import { clean, clientIp, gateHeaders, isBot, isEmail, langOf, line, rateLimit, readBody, rejected, tr } from '@/lib/api-guard';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { CONTACT_EMAIL, SUPPORT_PHONE, sendMail } from '@/lib/mail';
-import { contactInternal } from '@/lib/mail/templates';
+import { contactInternal, contactReceipt } from '@/lib/mail/templates';
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const body = await readBody(req);
+  if (!body) return rejected();
   const lang = langOf(body);
 
   if (isBot(body)) return NextResponse.json({ ok: true });
@@ -17,11 +18,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const name = clean(body.name, 120);
-  const email = clean(body.email, 160);
-  const phone = clean(body.phone, 40);
-  const company = clean(body.company, 160);
-  const product = clean(body.product, 120);
+  const name = line(body.name, 120);
+  const email = line(body.email, 160);
+  const phone = line(body.phone, 40);
+  const company = line(body.company, 160);
+  const product = line(body.product, 120);
   const message = clean(body.message, 4000);
 
   if (!name || !email) {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   let stored = false;
 
   try {
-    const supabase = await createServerSupabase();
+    const supabase = await createServerSupabase(gateHeaders(req));
     const { data, error } = await supabase.rpc('submit_contact_request', {
       payload: { name, email, phone, company, product, message },
     });
@@ -73,6 +74,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: tr(lang, `Vi klarte ikke å sende meldingen nå. Ring oss på ${SUPPORT_PHONE}.`, `We could not send your message right now. Please call us on ${SUPPORT_PHONE}.`) },
       { status: 502 },
+    );
+  }
+
+  // Bekreftelsen til avsenderen sendes bare når henvendelsen faktisk ligger
+  // lagret: da har databasens egne grenser (per adresse og totalt per time)
+  // sluppet den gjennom, og skjemaet kan ikke brukes til å pepre en fremmed
+  // adresse med e-post. Feiler bekreftelsen, er henvendelsen likevel mottatt.
+  if (stored) {
+    await sendMail(
+      { to: email, replyTo: CONTACT_EMAIL, ...contactReceipt({ name, lang }) },
+      { template: 'contact_receipt', relatedType: 'contact_request', relatedId: requestId },
     );
   }
 

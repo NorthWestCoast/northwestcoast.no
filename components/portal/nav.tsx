@@ -1,13 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Anchor, Bell, Boxes, Building2, ClipboardList, Factory, FileText, Inbox, KeyRound,
-  LayoutDashboard, LifeBuoy, ListChecks, Menu, Newspaper, Package, Ship, ShoppingCart,
-  Tags, Truck, UserCog, Users, Wrench, X,
+  Anchor, Archive, BadgeCheck, Bell, Boxes, Building2, ClipboardList, Factory, FileText, Images,
+  Inbox, KeyRound, LayoutDashboard, LifeBuoy, ListChecks, MapPin, Menu, Newspaper, Package, Ship,
+  ShoppingCart, Tags, Truck, UserCog, Users, Wrench, X,
 } from 'lucide-react';
+
+/**
+ * Samme logo som i toppmenyen på nettsiden. Bredde og høyde er filens eget
+ * sideforhold (1569 × 385); størrelsen på skjermen settes i portal.css.
+ */
+function Logo() {
+  return <Image src="/images/logo/NY-logo.png" alt="NorthWest Coast" width={163} height={40} priority />;
+}
 
 /**
  * Ikonene velges med navn. Serverkomponenter kan ikke sende selve
@@ -36,6 +45,10 @@ const ICONS = {
   staff: UserCog,
   jobs: Boxes,
   doc: FileText,
+  gallery: Images,
+  cabinet: Archive,
+  project: MapPin,
+  certificate: BadgeCheck,
 } as const;
 
 export type NavIcon = keyof typeof ICONS;
@@ -103,7 +116,7 @@ export default function PortalNav({
           <Menu size={20} />
         </button>
         <Link href={brandHref} className="pt-topbar-brand">
-          NorthWest <span>Coast</span>
+          <Logo />
         </Link>
         <Link href={notificationsHref} className="pt-icon-btn" aria-label={`Varsler (${unread} uleste)`}>
           <Bell size={18} />
@@ -116,7 +129,7 @@ export default function PortalNav({
       <aside id="pt-side" className="pt-side" data-open={open}>
         <div className="pt-side-head">
           <Link href={brandHref} className="pt-side-brand">
-            NorthWest <span>Coast</span>
+            <Logo />
           </Link>
           <button type="button" className="pt-icon-btn pt-side-close" aria-label="Lukk meny" onClick={() => setOpen(false)}>
             <X size={18} />

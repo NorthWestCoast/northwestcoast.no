@@ -1,10 +1,13 @@
 import { ImageResponse } from 'next/og';
-import { DEFAULT_LANG, getDict, isLang } from '@/lib/i18n';
+import { getDict, isLang } from '@/lib/i18n';
 
 // Delt forhåndsvisningsbilde for sosiale medier og søk (1200×630).
 export async function GET(_req: Request, { params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
-  const t = getDict(isLang(lang) ? lang : DEFAULT_LANG);
+  // Bare språkene vi har: ellers kunne hvem som helst få tegnet et nytt bilde
+  // for hver adresse de fant på.
+  if (!isLang(lang)) return new Response('Not found', { status: 404 });
+  const t = getDict(lang);
 
   return new ImageResponse(
     (

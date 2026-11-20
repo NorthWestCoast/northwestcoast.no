@@ -2,6 +2,7 @@ import { Alert, Card, PageHeader } from '@/components/portal/ui';
 import type { PortalContext } from '@/lib/portal/context';
 import { createCompany, requestLadderAccess } from '@/app/(portal)/minside/actions';
 import { CompanyForm, LadderAccessForm } from './forms';
+import Invitations from './invitations';
 import OwnRequestList from './request-list';
 import type { PortalSupabase } from './util';
 
@@ -24,10 +25,14 @@ export default async function Onboarding({ supabase, ctx }: { supabase: PortalSu
         description="Her følger du leiderne dine: service, vedlikeholdslogg, bestillinger og deling av tilstand med los."
       />
 
-      <Alert tone="info" title="Er du invitert av en kollega?">
-        Da får du tilgang automatisk første gang du logger inn med e-postadressen invitasjonen ble
-        sendt til. Du er logget inn som {ctx.email}.
-      </Alert>
+      <Invitations invitations={ctx.invitations} />
+
+      {ctx.invitations.length === 0 && (
+        <Alert tone="info" title="Er du invitert av en kollega?">
+          Da dukker invitasjonen opp her når du er logget inn med e-postadressen den ble sendt til,
+          og du får tilgang når du har godtatt den. Du er logget inn som {ctx.email}.
+        </Alert>
+      )}
 
       <div className="pt-grid pt-grid-2">
         <Card

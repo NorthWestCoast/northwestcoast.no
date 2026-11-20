@@ -6,35 +6,41 @@ export const en: Dict = {
   langName: 'English',
 
   meta: {
+    // Titles and descriptions for search engines and share cards. One per
+    // page, with the words people search for (embarkation ladder, lifeboat
+    // ladder, boat ladder) early. Only facts that are also on the pages.
     keywords: [
-      'maritime ladder',
       'embarkation ladder',
+      'lifeboat ladder',
+      'boat ladder',
+      'lightweight ladder',
+      'maritime ladder',
       'Argostep',
       'NorthWest Coast',
-      'lifeboat ladder',
       'Norwegian Maritime Authority',
-      'ISO 799',
+      'ISO 799-1:2019',
       'fishing vessel',
       'boarding',
     ],
     home: {
-      title: 'NorthWest Coast – Argostep Maritime Ladder',
+      title: 'Argostep – lightweight embarkation ladder | NorthWest Coast',
       description:
-        'Argostep – the lightweight, modular maritime ladder approved by the Norwegian Maritime Authority. Certified to ISO 799-1:2019. Made in Sunnmøre, Norway.',
-      ogDescription: 'Modular maritime ladder. Certified to ISO 799-1:2019. Made in Norway.',
+        'Argostep is a lightweight, modular embarkation and lifeboat ladder in glass-fibre reinforced plastic, from 2 to 15 metres. Approved by the Norwegian Maritime Authority. Made in Norway.',
+      // Also printed in the share image (app/og/[lang]/route.tsx): keep it short.
+      ogDescription: 'Lightweight, modular ladder for vessels. Certified to ISO 799-1:2019. Made in Norway.',
     },
     produkt: {
-      title: 'Argostep Lifeboat Ladder – Product | NorthWest Coast',
+      title: 'Argostep lifeboat ladder – modular, 2–15 m | NorthWest Coast',
       description:
-        'Argostep Lifeboat Ladder – a modular, lightweight and strong maritime ladder in glass-fibre reinforced plastic. Certified to ISO 799-1:2019 and approved by the Norwegian Maritime Authority. Available from 2 to 15 metres.',
+        'The Argostep lifeboat and embarkation ladder in glass-fibre reinforced plastic: modular, lightweight and strong. Certified to ISO 799-1:2019, approved by the Norwegian Maritime Authority. 2 to 15 metres.',
     },
     galleri: {
-      title: 'Gallery | NorthWest Coast',
+      title: 'Pictures of the Argostep ladder in use | NorthWest Coast',
       description:
         'See the Argostep lifeboat ladder in pictures – the product, storage cabinets and the ladder in daily use along the Norwegian coast.',
     },
     nyheter: {
-      title: 'News | NorthWest Coast',
+      title: 'News about maritime ladders | NorthWest Coast',
       description: 'News, cases and regulations for maritime ladders from NorthWest Coast.',
     },
     vedlikehold: {
@@ -43,8 +49,9 @@ export const en: Dict = {
         'See how to maintain the Argostep lifeboat ladder and log completed maintenance for your vessel – with an email receipt as documentation.',
     },
     faq: {
-      title: 'Frequently asked questions | NorthWest Coast',
-      description: 'Answers to the most common questions about the Argostep lifeboat ladder.',
+      title: 'Argostep ladder – questions and answers | NorthWest Coast',
+      description:
+        'Answers to common questions about the Argostep lifeboat ladder: approval, lengths, material, service life, mounting, delivery, spare parts and service.',
     },
     kalkulator: {
       title: 'Ladder calculator – find the right length | NorthWest Coast',
@@ -52,22 +59,22 @@ export const en: Dict = {
         'Work out which Argostep lifeboat ladder your vessel needs from freeboard and mounting point – and order the right length directly.',
     },
     bestill: {
-      title: 'Order the Argostep Lifeboat Ladder | NorthWest Coast',
+      title: 'Order the Argostep ladder – lengths and prices | NorthWest Coast',
       description:
-        'Order your Argostep Lifeboat Ladder. Choose a length between 2 and 15 metres plus accessories – and see the ladder in 3D as you configure it.',
+        'Order the Argostep lifeboat ladder: choose a length between 2 and 15 metres and a storage cabinet, see the indicative price excl. VAT and view the ladder in 3D as you configure it.',
     },
     omOss: {
-      title: 'About us | NorthWest Coast',
+      title: 'About us – maritime ladders from Sunnmøre | NorthWest Coast',
       description:
-        'Innovation from Ålesund. NorthWest Coast develops maritime safety products, made locally in Sunnmøre, Norway.',
+        'NorthWest Coast was founded by three entrepreneurs from Ålesund and develops maritime safety products. The Argostep ladder is made in Sunnmøre, Norway, with components from local suppliers.',
     },
     produkter: {
-      title: 'Products | NorthWest Coast',
+      title: 'Ladders, storage cabinets and spare parts | NorthWest Coast',
       description:
-        'Explore our range of maritime ladders and storage solutions: the Argostep embarkation and lifeboat ladder, storage cabinets, spare parts and service.',
+        'The Argostep embarkation and lifeboat ladder with standard lengths and indicative prices, storage cabinets, spare parts and service from NorthWest Coast.',
     },
     leider3d: {
-      title: 'Argostep in 3D – interactive model | NorthWest Coast',
+      title: 'Argostep ladder in 3D – interactive model | NorthWest Coast',
       description:
         'Interactive 3D model of the Argostep ladder. Rotate, zoom and explore it in detail – and view it in AR on your phone.',
     },
@@ -348,7 +355,7 @@ export const en: Dict = {
     placeholder: 'Your email address...',
     submit: 'Sign up',
     sending: 'Sending…',
-    success: '✓ You are signed up!',
+    success: 'Check your email: we have sent a link you need to use to confirm your subscription.',
   },
 
   footer: {
@@ -410,16 +417,35 @@ export const en: Dict = {
     checkoutSub: 'We confirm price and delivery time – no obligation.',
     sendRequest: 'Send request →',
     sendRequestValue: (amount: string) => `Send request · ${amount} kr →`,
-    confirmRequest: (units: number) => `✓ Thank you! We have received your request for ${units} ladder(s) and sent you a confirmation by email. We will be in touch with a final quote and delivery time.`,
+    confirmRequest: (what: string) => `✓ Thank you! We have received your request for ${what} and sent you a confirmation by email. We will be in touch with a final quote and delivery time.`,
     preferPhone: 'Prefer to talk to someone?',
     callUs: 'Call +47 904 07 341',
     vesselCompany: 'Vessel/Company',
     notesPlaceholderBase: 'Preferred delivery time, installation, special requirements…',
     onRequest: 'Price on request',
-    onRequestNote: 'Lengths marked “price on request” are agreed on request and are not included in the total.',
+    onRequestNote: 'Lines marked “price on request” are quoted separately and are not included in the total.',
+    onRequestShort: 'On request',
+    // Half-metre lengths and cabinets without a ladder (order page).
+    otherLength: 'Other length, e.g. 4.5 m',
+    otherLengthPick: 'Choose length',
+    otherLengthHint: 'Half-metre lengths are made to order. You get a quote with price and delivery time.',
+    customLabel: 'Custom length',
+    customName: (length: string) => `Argostep – ${length} m (custom length)`,
+    cabinetOnlyTitle: 'Storage cabinet without a ladder',
+    cabinetOnlySub: 'Already have a ladder? You can order the cabinet on its own.',
+    cabinetOnlyShow: 'Show cabinets',
+    cabinetOnlyHide: 'Hide cabinets',
+    fitsLadder: (range: string) => `Fits ${range} m ladders`,
+    withoutLadder: 'Without ladder',
+    add: 'Add',
+    unitCount: (ladders: number, cabinets: number) =>
+      [
+        ladders > 0 ? `${ladders} ${ladders === 1 ? 'ladder' : 'ladders'}` : '',
+        cabinets > 0 ? `${cabinets} ${cabinets === 1 ? 'cabinet' : 'cabinets'}` : '',
+      ].filter(Boolean).join(' and '),
     label: 'Ordering',
     title: 'Order your Argostep',
-    sub: 'Configure the ladder for your vessel. Choose a length between 2 and 15 metres plus accessories – and see it in 3D as you go.',
+    sub: 'Configure the ladder for your vessel. Choose a length between 2 and 15 metres plus accessories – and see it in 3D as you go. Half-metre lengths and storage cabinets without a ladder can be ordered here too.',
     configureLabel: 'Configure your ladder',
     productNo: 'Product no.',
     steps: 'steps',
@@ -435,7 +461,7 @@ export const en: Dict = {
     addToOrder: 'Add to order',
     yourOrder: 'Your order',
     total: 'Total',
-    emptyHint: 'Add at least one ladder',
+    emptyHint: 'Add a ladder or a cabinet',
     ladderCount: 'ladder(s)',
     rotateHint: 'Drag to rotate',
     leadTitle: 'Where should we send the quote?',
@@ -468,6 +494,20 @@ export const en: Dict = {
     navLabel: 'Calculator',
 
     vesselHeading: 'The vessel',
+    searchLabel: 'Find the vessel',
+    searchPlaceholder: 'Name, call sign, registration mark or IMO',
+    searchHint:
+      'The search uses the Norwegian Directorate of Fisheries vessel register, which only lists fishing vessels. For any other vessel, fill in the fields below yourself.',
+    search: {
+      loading: 'Searching …',
+      empty: 'No vessels found. The register only lists fishing vessels – fill in the details yourself.',
+      unavailable: 'The vessel register is not responding right now. Fill in the details yourself.',
+      count: '{n} results. Use the arrow keys and Enter to choose.',
+      owner: 'Owner',
+    },
+    registerName: 'the Norwegian Directorate of Fisheries vessel register',
+    fetchedCheck: 'Check the figures. Every field can be changed.',
+    fetchedNoWidth: 'The register has no beam for this vessel. Enter it yourself.',
     vesselName: 'Vessel name',
     vesselNamePlaceholder: 'e.g. MS Havbris',
     imo: 'IMO no.',
@@ -487,9 +527,19 @@ export const en: Dict = {
       'Vertical height from the waterline up to the deck where the ladder is deployed. Use the lightest seagoing condition – that gives the greatest freeboard.',
     mountHeight: 'Height from deck to mounting point',
     mountHeightHelp: 'Set 0 if the ladder is fastened at deck level. Otherwise the height up to the rail or bulwark.',
+    beam: 'Beam of the vessel',
+    beamHelp:
+      'Greatest breadth. Filled in when you pick the vessel in the search, or you enter it yourself. Used to work out the extension below the waterline.',
     margin: 'Extension below the waterline',
-    marginHelp:
-      'An assumption, not a figure from the regulations. Adjust it to the requirement from your class society or flag state.',
+    marginFormula: (beam: string, deg: number, margin: string) => `Beam ${beam} m ÷ 2 × tan ${deg}° = ${margin} m`,
+    marginNoBeam: (deg: number) =>
+      `Enter the beam and the extension is worked out for a ${deg}° heel. Until then the figure below is used.`,
+    marginOverride: 'Set the extension yourself',
+    marginManual: 'Extension set by hand',
+    marginManualHelp: 'Use this when your class society or flag state requires something other than the calculation.',
+    marginComputed: (margin: string) => `Worked out from the beam: ${margin} m.`,
+    marginHelp: (deg: number) =>
+      `The extension lets the ladder reach the water even when the vessel heels ${deg}°. The calculation assumes straight ship sides and is an assumption, not a figure from the regulations.`,
     metres: 'm',
 
     resultHeading: 'Result',
@@ -498,7 +548,10 @@ export const en: Dict = {
     breakdownFreeboard: 'Freeboard',
     breakdownMount: 'Mounting point above deck',
     breakdownMargin: 'Extension below the waterline',
+    breakdownManual: 'set by hand',
+    breakdownNoBeam: 'beam not entered',
     recommended: 'Recommended ladder',
+    chosen: 'Chosen ladder',
     slack: (metres: string) => `${metres} m longer than required`,
     steps: 'steps',
     productNo: 'Product no.',
@@ -512,9 +565,20 @@ export const en: Dict = {
       'The Norwegian Maritime Authority approval described here applies to vessels under 15 metres. Get in touch and we will confirm what applies to your vessel.',
     belowRequiredNote: 'This length is shorter than the calculation requires.',
 
+    halfName: (length: string) => `Argostep – ${length} m`,
+    halfMeta: 'Half-metre length – made on request',
+    halfOfferTitle: (half: string) => `Alternative: ${half} m on request`,
+    halfOffer: (half: string, standard: string) =>
+      `${half} m also covers the requirement and is shorter than the ${standard} m standard ladder. Half-metre lengths are made on request and have no list price.`,
+    halfChoose: (half: string) => `Choose ${half} m`,
+    useRecommended: (length: string) => `Use the recommended length (${length} m)`,
+    onRequestTag: 'on request',
+
     chooseLength: 'Choose the length yourself',
-    chooseLengthHelp: 'The recommendation is selected automatically. You can override it here.',
+    chooseLengthHelp: 'The recommendation is selected automatically. You can override it here. Half-metre lengths are made on request.',
     cabinet: 'Storage cabinet',
+    cabinetWish: 'Storage cabinet wanted',
+    cabinetOnRequest: 'On request',
     quantity: 'Number of ladders',
     quantityHelp: 'One per embarkation station.',
     total: 'Total',
@@ -524,11 +588,44 @@ export const en: Dict = {
       'This calculator is a sizing aid – not a certificate of compliance. Final requirements for length and installation are confirmed by your class society, flag state or the Norwegian Maritime Authority. We go through the measurements with you before any order is confirmed.',
 
     orderHeading: 'Order this ladder',
+    requestHeading: 'Ask for a price on this ladder',
+    requestNote: 'This length has no list price. We reply with price and delivery time.',
     orderSub: 'We send your calculation along with the order so we can double-check the measurements before confirming.',
     submit: 'Send order →',
     sending: 'Sending…',
     confirm:
       '✓ Thank you! We have received your order together with your calculation. You will get a receipt by email and we will be in touch with confirmation – normally within one business day.',
+    confirmRequest:
+      '✓ Thank you! We have received your request together with your calculation. You will get a receipt by email and we will be in touch with price and delivery time – normally within one business day.',
+
+    diagram: {
+      heading: 'How the length is worked out',
+      intro: (deg: number) =>
+        `The ladder follows the ship's side from the mounting point down. The extension below the waterline means it still reaches the water when the vessel heels ${deg}°.`,
+      exampleTag: 'Example',
+      exampleNote: (fields: string) => `The drawing uses example figures for ${fields} until you have entered your own.`,
+      exampleFreeboard: 'freeboard',
+      exampleMount: 'mounting point',
+      exampleBeam: 'beam',
+      and: 'and',
+      beam: 'Beam (B)',
+      freeboard: 'Freeboard (F)',
+      mount: 'Mounting point (h)',
+      margin: 'Extension',
+      ladder: 'Ladder',
+      reach: 'Lower end at the surface',
+      key: 'B = beam of the vessel · F = freeboard to embarkation deck · h = height from deck to mounting point',
+      play: 'Show heel',
+      stop: 'Stop',
+      reset: 'Upright',
+      angle: 'Heel angle',
+      statusUpright: (depth: string) => `With no heel, the lower end of the ladder is ${depth} m below the surface.`,
+      statusBelow: (deg: number, depth: string) => `At ${deg}° heel, the lower end is ${depth} m below the surface.`,
+      statusAt: (deg: number) => `At ${deg}° heel, the lower end just reaches the surface.`,
+      statusAbove: (deg: number, gap: string) => `At ${deg}° heel, the ladder ends ${gap} m above the surface.`,
+      alt: (v: { beam: string; freeboard: string; mount: string; margin: string; ladder: string; deg: number }) =>
+        `Cross-section of the vessel seen from ahead. Beam ${v.beam} m, freeboard ${v.freeboard} m, mounting point ${v.mount} m above deck and extension below the waterline ${v.margin} m. The ladder is ${v.ladder} m and follows the ship's side from the mounting point down. Heel ${v.deg}°.`,
+    },
   },
 
   maintenance: {

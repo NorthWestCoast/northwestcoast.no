@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clean, clientIp, langOf, rateLimit } from '@/lib/api-guard';
+import { clientIp, gateHeaders, langOf, line, rateLimit, readBody, rejected } from '@/lib/api-guard';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { finishMaintenance } from '../notify';
 
@@ -22,8 +22,9 @@ const MAX_IMAGES = 10;
  * lagret, og rapporten ligger igjen med notified_at = null.
  */
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-  const logId = clean(body.logId, 64).toLowerCase();
+  const body = await readBody(req);
+  if (!body) return rejected();
+  const logId = line(body.logId, 64).toLowerCase();
 
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(logId)) {
     return NextResponse.json({ error: 'Ugyldig id.' }, { status: 400 });
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
     .slice(0, MAX_IMAGES);
 
   try {
-    const supabase = await createServerSupabase();
+    const supabase = await createServerSupabase(gateHeaders(req));
     const result = await finishMaintenance(supabase, logId, paths, langOf(body));
     return NextResponse.json({ ok: result.ok, photos: result.photos });
   } catch (error) {

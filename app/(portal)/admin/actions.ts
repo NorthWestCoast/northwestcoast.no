@@ -1,16 +1,18 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { requireStaff } from '@/lib/supabase/staff';
 import { createInvitation } from '@/lib/portal/invite';
 import {
   type ActionResult, digits, err, fail, isEmail, isoDate, ok, optional, text, uuid,
 } from '@/lib/portal/forms';
-import { dato } from '@/lib/format';
+import { readVessel, vesselError } from '@/components/portal/vessel-values';
 
 /**
  * Server actions som brukes fra flere admin-sider: selskap, fartøy, tilgang,
- * leidere, servicerapporter og kobling av vedlikeholdsrapporter.
+ * leidere og kobling av vedlikeholdsrapporter. Registrering av service ligger
+ * i service/actions.ts.
  *
  * Alle skriver gjennom administratorens EGEN sesjon. RLS (app.is_staff()) er
  * autorisasjonslaget; requireStaff() her sparer bare et unødvendig kall.
@@ -47,6 +49,11 @@ function companyError(error: { code?: string; message: string }, orgNumber: stri
   return fail(error);
 }
 
+/**
+ * Oppretter en kunde, og – når fartøyfeltene i skjemaet er fylt ut
+ * («Finn kunde via fartøy») – det første fartøyet i samme arbeidsflyt.
+ * Etterpå åpnes kunden, der neste steg er å invitere en kontaktperson.
+ */
 export async function createCompany(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireStaff();
 
@@ -54,11 +61,40 @@ export async function createCompany(formData: FormData): Promise<ActionResult> {
   if (!fields.name) return err('Navn er påkrevd.');
   if (fields.contact_email && !isEmail(fields.contact_email)) return err('E-postadressen ser ikke gyldig ut.');
 
-  const { error } = await supabase.from('companies').insert(fields);
-  if (error) return companyError(error, fields.org_number);
+  // Fartøyet kontrolleres før kunden opprettes, så en tastefeil i fartøyet
+  // ikke etterlater en halvferdig kunde.
+  const withVessel = text(formData.get('vessel_name'), 160) !== '';
+  const vessel = withVessel ? readVessel(formData, 'vessel_') : null;
+  if (vessel && vessel.error !== null) return err(vessel.error);
+  if (vessel?.values.imo) {
+    const { data: taken } = await supabase
+      .from('vessels')
+      .select('name, companies(name)')
+      .eq('imo', vessel.values.imo)
+      .maybeSingle();
+    if (taken) {
+      return err(
+        `IMO ${vessel.values.imo} er allerede registrert på ${taken.name}${taken.companies ? ` (${taken.companies.name})` : ''}. Fjern fartøyet fra skjemaet, eller rett IMO-nummeret.`,
+      );
+    }
+  }
+
+  const { data: company, error } = await supabase.from('companies').insert(fields).select('id').single();
+  if (error || !company) return error ? companyError(error, fields.org_number) : fail(error);
+
+  let vesselFailed = false;
+  if (vessel) {
+    const { error: vesselInsertError } = await supabase
+      .from('vessels')
+      .insert({ company_id: company.id, ...vessel.values });
+    if (vesselInsertError) {
+      console.error('[admin] Kunden ble opprettet, men ikke fartøyet:', vesselInsertError.code, vesselInsertError.message);
+      vesselFailed = true;
+    }
+  }
 
   revalidatePath('/admin/selskap');
-  return ok(`${fields.name} er opprettet.`);
+  redirect(`/admin/selskap/${company.id}${vesselFailed ? '?fartoy=feilet' : ''}`);
 }
 
 export async function updateCompany(formData: FormData): Promise<ActionResult> {
@@ -85,31 +121,18 @@ export async function createVessel(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireStaff();
 
   const companyId = uuid(formData.get('company_id'));
-  const name = text(formData.get('name'), 160);
-  if (!companyId || !name) return err('Selskap og navn er påkrevd.');
+  if (!companyId) return err('Fant ikke selskapet.');
 
-  const imo = digits(formData.get('imo'));
+  const parsed = readVessel(formData);
+  if (parsed.error !== null) return err(parsed.error);
 
-  const { error } = await supabase.from('vessels').insert({
-    company_id: companyId,
-    name,
-    imo: imo || null,
-    call_sign: optional(formData.get('call_sign'), 20),
-    vessel_type: optional(formData.get('vessel_type'), 80),
-    home_port: optional(formData.get('home_port'), 80),
-  });
-
-  if (error) {
-    if (error.code === '23514' && /imo/.test(error.message)) {
-      return err(`«${imo}» er ikke et gyldig IMO-nummer (kontrollsifferet stemmer ikke).`);
-    }
-    if (error.code === '23505') return err('Et fartøy med dette IMO-nummeret er allerede registrert.');
-    return fail(error);
-  }
+  const { error } = await supabase.from('vessels').insert({ company_id: companyId, ...parsed.values });
+  if (error) return vesselError(error, 'Fartøyet kunne ikke lagres.');
 
   revalidatePath(`/admin/selskap/${companyId}`);
   revalidatePath('/admin/selskap');
-  return ok(`${name} er lagt til.`);
+  revalidatePath('/minside', 'layout');
+  return ok(`${parsed.values.name} er lagt til.`);
 }
 
 // ── Medlemmer og invitasjoner ──────────────────────────────────────────────
@@ -252,12 +275,18 @@ export async function registerLadders(formData: FormData): Promise<ActionResult>
 }
 
 /**
- * Knytter en leider til en kunde: et selskap, et fartøy, eller begge.
+ * Knytter en leider til en kunde og et sted: selskap, fartøy, prosjekt (kai,
+ * anlegg på land) eller flere av dem.
  *
- * Velges et fartøy, følger selskapet fartøyet (trigger i databasen). Med
- * monteringsdato regnes leideren som i bruk, og servicefristen begynner å
- * løpe; uten dato er den levert, men ikke montert. Velges bare selskap, tas
- * leideren av et fartøy som tilhører et annet selskap.
+ * Velges et fartøy eller et prosjekt, settes plasseringen akkurat slik den er
+ * valgt, og selskapet følger med (trigger i databasen). Med dato regnes
+ * leideren som i bruk, og servicefristen begynner å løpe; uten dato er den
+ * levert, men ikke tatt i bruk. Velges bare selskap, tas leideren ned hvis
+ * den står hos et annet selskap.
+ *
+ * Skjemaet på leidersiden viser plasseringen leideren har, og sender
+ * `exact`: da betyr tomt fartøy og tomt prosjekt at leideren skal tas ned.
+ * I skjemaet på leiderlista betyr tomme felt bare «ikke valgt».
  */
 export async function assignLadder(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireStaff();
@@ -265,14 +294,16 @@ export async function assignLadder(formData: FormData): Promise<ActionResult> {
   const ladderId = uuid(formData.get('ladder_id'));
   const companyId = uuid(formData.get('company_id'));
   const vesselId = uuid(formData.get('vessel_id'));
+  const projectId = uuid(formData.get('project_id'));
   const installedAt = isoDate(formData.get('installed_at'));
+  const exact = formData.get('exact') === 'true';
 
   if (!ladderId) return err('Velg en leider.');
-  if (!companyId && !vesselId) return err('Velg et selskap eller et fartøy.');
+  if (!companyId && !vesselId && !projectId) return err('Velg et selskap, et fartøy eller et prosjekt.');
 
   const { data: ladder } = await supabase
     .from('ladders')
-    .select('id, status, vessel_id, vessels(company_id)')
+    .select('id, status, company_id, vessel_id, project_id')
     .eq('id', ladderId)
     .maybeSingle();
   if (!ladder) return err('Fant ikke leideren.');
@@ -280,107 +311,70 @@ export async function assignLadder(formData: FormData): Promise<ActionResult> {
   let message: string;
   let error: { code?: string; message: string } | null;
 
-  if (vesselId) {
-    const { data: vessel } = await supabase
-      .from('vessels')
-      .select('id, name, company_id')
-      .eq('id', vesselId)
-      .maybeSingle();
-    if (!vessel) return err('Fant ikke fartøyet.');
-    if (companyId && vessel.company_id !== companyId) {
-      return err('Fartøyet tilhører et annet selskap enn det du valgte.');
+  if (vesselId || projectId) {
+    const [{ data: vessel }, { data: project }] = await Promise.all([
+      vesselId
+        ? supabase.from('vessels').select('id, name, company_id').eq('id', vesselId).maybeSingle()
+        : Promise.resolve({ data: null }),
+      projectId
+        ? supabase.from('projects').select('id, name, company_id').eq('id', projectId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    if (vesselId && !vessel) return err('Fant ikke fartøyet.');
+    if (projectId && !project) return err('Fant ikke prosjektet.');
+    if (vessel && project && vessel.company_id !== project.company_id) {
+      return err('Fartøyet og prosjektet tilhører ulike selskap.');
+    }
+    if (companyId && (vessel ?? project)?.company_id !== companyId) {
+      return err(`${vessel ? 'Fartøyet' : 'Prosjektet'} tilhører et annet selskap enn det du valgte.`);
     }
 
     ({ error } = await supabase
       .from('ladders')
       .update({
         vessel_id: vesselId,
+        project_id: projectId,
         installed_at: installedAt,
         status: installedAt ? 'installed' : 'delivered',
       })
       .eq('id', ladderId));
+
+    const where = [vessel?.name, project?.name].filter(Boolean).join(' · ');
     message = installedAt
-      ? `Leideren er montert på ${vessel.name}.`
-      : `Leideren er knyttet til ${vessel.name} (levert, ikke montert).`;
+      ? `Leideren er tatt i bruk: ${where}.`
+      : `Leideren er knyttet til ${where} (levert, ikke tatt i bruk).`;
   } else {
-    // Bare selskap: et fartøy i et annet selskap kan ikke bli stående.
-    const leavesVessel = ladder.vessel_id !== null && ladder.vessels?.company_id !== companyId;
+    // Bare selskap: leideren kan ikke bli stående på et fartøy eller i et
+    // prosjekt som tilhører et annet selskap.
+    const moves = ladder.company_id !== companyId;
+    const leaves = (ladder.vessel_id !== null || ladder.project_id !== null) && (exact || moves);
 
     ({ error } = await supabase
       .from('ladders')
       .update(
-        leavesVessel
+        leaves
           ? {
               company_id: companyId,
               vessel_id: null,
+              project_id: null,
               status: ladder.status === 'installed' ? 'delivered' : ladder.status,
             }
           : { company_id: companyId },
       )
       .eq('id', ladderId));
-    message = leavesVessel
-      ? 'Leideren er flyttet til selskapet og tatt av fartøyet den sto på.'
-      : 'Leideren er knyttet til selskapet.';
+    message = !leaves
+      ? 'Leideren er knyttet til selskapet.'
+      : moves
+        ? 'Leideren er flyttet til selskapet og tatt ned fra der den sto.'
+        : 'Leideren er tatt ned. Den står fortsatt hos selskapet.';
   }
 
   if (error) return fail(error);
 
   revalidatePath('/admin/leidere');
   revalidatePath('/admin');
-  revalidatePath(`/minside/leider/${ladderId}`);
+  revalidatePath('/minside', 'layout');
   return ok(message);
-}
-
-// ── Servicerapport ─────────────────────────────────────────────────────────
-
-/**
- * Registrerer en fagmessig service. Det er denne som teller ved tilsyn, og
- * den avslutter åpne servicebestillinger på leideren (trigger i databasen).
- */
-export async function recordService(formData: FormData): Promise<ActionResult> {
-  const { supabase, user } = await requireStaff();
-
-  const ladderId = uuid(formData.get('ladder_id'));
-  const performedAt = isoDate(formData.get('performed_at'));
-  const performedBy = text(formData.get('performed_by'), 120);
-  const result = text(formData.get('result'), 20);
-
-  if (!ladderId || !performedAt || !performedBy) return err('Leider, dato og utført av er påkrevd.');
-  if (result !== 'ok' && result !== 'ok_with_remarks' && result !== 'failed') return err('Velg et resultat.');
-
-  // Er ikke neste frist satt, beregnes den fra leiderens eget intervall –
-  // samme regel som ladder_status bruker.
-  let nextDue = isoDate(formData.get('next_service_due'));
-  if (nextDue && nextDue < performedAt) return err('Neste frist kan ikke være før servicen ble utført.');
-  if (!nextDue) {
-    const { data: ladder } = await supabase
-      .from('ladders')
-      .select('service_interval_months')
-      .eq('id', ladderId)
-      .maybeSingle();
-    if (!ladder) return err('Fant ikke leideren.');
-
-    const due = new Date(`${performedAt}T00:00:00Z`);
-    due.setUTCMonth(due.getUTCMonth() + ladder.service_interval_months);
-    nextDue = due.toISOString().slice(0, 10);
-  }
-
-  const { error } = await supabase.from('service_reports').insert({
-    ladder_id: ladderId,
-    performed_at: performedAt,
-    performed_by: performedBy,
-    technician_user_id: user.id,
-    findings: optional(formData.get('findings'), 4000),
-    result,
-    next_service_due: nextDue,
-  });
-  if (error) return fail(error);
-
-  revalidatePath('/admin');
-  revalidatePath('/admin/service');
-  revalidatePath('/admin/leidere');
-  revalidatePath(`/minside/leider/${ladderId}`);
-  return ok(`Servicerapporten er lagret. Neste frist: ${dato(nextDue)}.`);
 }
 
 // ── Ukoblede vedlikeholdsrapporter ─────────────────────────────────────────
@@ -392,7 +386,7 @@ export async function recordService(formData: FormData): Promise<ActionResult> {
  * råteksten selv når oppslaget bommer. Her ryddes de bommene opp.
  */
 export async function linkMaintenanceLog(formData: FormData): Promise<ActionResult> {
-  const { supabase } = await requireStaff();
+  const { supabase, ctx } = await requireStaff();
 
   const logId = uuid(formData.get('log_id'));
   const ladderId = uuid(formData.get('ladder_id'));
@@ -407,7 +401,9 @@ export async function linkMaintenanceLog(formData: FormData): Promise<ActionResu
 
   const { error } = await supabase
     .from('maintenance_logs')
-    .update({ ladder_id: ladder.id, vessel_id: ladder.vessel_id })
+    // Å koble meldingen til en leider er samtidig å bekrefte den: da teller
+    // den som vedlikehold og kan vises for los.
+    .update({ ladder_id: ladder.id, vessel_id: ladder.vessel_id, verified_at: new Date().toISOString(), verified_by: ctx.userId })
     .eq('id', logId);
   if (error) return fail(error);
 
@@ -415,4 +411,30 @@ export async function linkMaintenanceLog(formData: FormData): Promise<ActionResu
   revalidatePath('/admin/vedlikehold');
   revalidatePath(`/minside/leider/${ladder.id}`);
   return ok('Rapporten er koblet til leideren.');
+}
+
+/**
+ * Bekrefter en melding fra det åpne vedlikeholdsskjemaet. Skjemaet krever
+ * ikke innlogging, så meldingen teller ikke som vedlikehold og vises ikke i
+ * rapporter til los før NorthWest Coast har sett over den.
+ */
+export async function verifyMaintenanceLog(formData: FormData): Promise<ActionResult> {
+  const { supabase, ctx } = await requireStaff();
+
+  const logId = uuid(formData.get('log_id'));
+  if (!logId) return err('Fant ikke meldingen.');
+
+  const { data, error } = await supabase
+    .from('maintenance_logs')
+    .update({ verified_at: new Date().toISOString(), verified_by: ctx.userId })
+    .eq('id', logId)
+    .is('verified_at', null)
+    .select('ladder_id')
+    .maybeSingle();
+  if (error) return fail(error);
+  if (!data) return err('Meldingen er allerede bekreftet.');
+
+  revalidatePath('/admin/vedlikehold');
+  if (data.ladder_id) revalidatePath(`/minside/leider/${data.ladder_id}`);
+  return ok('Meldingen er bekreftet og teller nå som vedlikehold.');
 }

@@ -51,7 +51,8 @@ Postgres, Mac: `brew install postgresql@17`) uten å røre noen ekte database:
   som sammenlignes med `verify/expected-fingerprint.txt`
 
 `expected-fingerprint.txt` er fingeravtrykket av produksjon da det ble skrevet
-(2026-11-19, etter `20261118233152`). Kjør `verify/fingerprint.sql` i Supabase
+(2026-11-19, etter `20261119162558`, den siste av de fire migrasjonene fra
+sikkerhetsgjennomgangen). Kjør `verify/fingerprint.sql` i Supabase
 SQL-editor for å sammenligne med live-databasen.
 
 ### Lokalt miljø og demodata
@@ -111,6 +112,16 @@ og `next_order_number()` var kallbar for hvem som helst. Fra og med
 `portal_v2_access` er standardrettighetene slått av for nye objekter laget av
 `postgres`, så en glemt `revoke` gir «ingen tilgang» i stedet for «all tilgang».
 
+**Én fremmednøkkel per tabellpar.** Peker to kolonner i samme tabell på
+samme tabell (f.eks. `product_id` og `cabinet_product_id` → `products`), vet
+ikke API-et hvilken som menes i `order_lines(…, products(…))`, og oppslaget
+feiler med PGRST201 i koden som allerede er rullet ut. Det skjedde 2026-11-19
+og ble rettet to minutter senere i `single_product_relation`. Trenger du en
+slik kolonne: la den stå uten fremmednøkkel, eller rett alle oppslagene til
+`products!<navn på fremmednøkkel>(…)` og rull ut koden FØR migrasjonen.
+`npx tsc --noEmit` etter `npm run db:types` fanger det (typen blir
+`SelectQueryError`).
+
 ## Kjent rot
 
 - Tabellen `public.leads` er fra et tidligere forsøk (2026-07-31), er tom
@@ -123,6 +134,10 @@ og `next_order_number()` var kallbar for hvem som helst. Fra og med
   400-0xx-numrene må avklares med NWC.
 - 2 m-leideren ligger inne med plassholdernummeret `ARG-2ML` og «pris på
   forespørsel». Nummer, trinn og pris settes i `/admin/priser`.
+- `ARG-SPES` («Argostep – spesiallengde») er ikke et vanlig produkt, men
+  holderen for halvmetere og andre lengder på forespørsel. Lengden står på
+  ordrelinja (`custom_length_m`). Deaktiveres det, kan spesiallengder ikke
+  bestilles.
 - Produksjonsstegene i `production_step_templates` er et utgangspunkt, ikke
   NorthWest Coast sin faktiske prosess. De rettes i `/admin/produksjonssteg`.
 - Supabase-rådgiverne melder `multiple_permissive_policies` (de `*_manage`

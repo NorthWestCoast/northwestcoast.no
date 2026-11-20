@@ -2,10 +2,12 @@ import Link from 'next/link';
 import { Badge, Card, Empty, Timeline, type TimelineItem } from '@/components/portal/ui';
 import { PortalForm } from '@/components/portal/forms';
 import PhotoUploader from '@/components/portal/photo-uploader';
-import { LOG_KINDS, logKind, serviceResult } from '@/lib/portal/labels';
+import { CERTIFICATE_NAME, LOG_KINDS, logKind, serviceResult } from '@/lib/portal/labels';
 import { BUCKETS, signedUrls } from '@/lib/portal/storage';
 import { dato, datoTid, idag } from '@/lib/format';
+import CertificateList from '@/components/minside/certificate-list';
 import PhotoGrid from '@/components/minside/photo-grid';
+import { loadCertificates, loadServicePhotos } from '@/components/minside/service-records';
 import { isLogKind } from '@/components/minside/util';
 import { addLogEntry, attachLogPhotos } from '../actions';
 import type { SectionProps } from './types';
@@ -16,7 +18,8 @@ type Entry = { iso: string; created: string; item: TimelineItem };
 
 /**
  * Historikk: alt som er gjort på leideren i én kronologisk liste. Fagmessig
- * service og mannskapets egne loggføringer er merket tydelig hver for seg.
+ * service (med bilder og servicesertifikat) og mannskapets egne loggføringer
+ * er merket tydelig hver for seg. Sertifikatene står samlet øverst.
  */
 export default async function Historikk({ supabase, ctx, ladder, type }: SectionProps & { type?: string }) {
   const id = ladder.ladder_id;
@@ -28,26 +31,30 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
 
   const logQuery = supabase
     .from('maintenance_logs')
-    .select('id, performed_at, created_at, kind, title, notes, reporter_name, reported_by_user_id, source')
+    .select('id, performed_at, created_at, kind, title, notes, reporter_name, reported_by_user_id, source, verified_at')
     .eq('ladder_id', id)
     .order('performed_at', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(200);
 
-  const [{ data: reports }, { data: logs }] = await Promise.all([
-    filter && filter !== 'service'
-      ? Promise.resolve({ data: [] })
-      : supabase
+  // Service og sertifikater vises når det ikke er filtrert på en loggtype.
+  const showService = !filter || filter === 'service';
+
+  const [{ data: reports }, { data: logs }, certificates] = await Promise.all([
+    showService
+      ? supabase
           .from('service_reports')
           .select('id, performed_at, created_at, performed_by, result, findings, next_service_due, report_path')
           .eq('ladder_id', id)
           .order('performed_at', { ascending: false })
-          .limit(100),
+          .limit(100)
+      : Promise.resolve({ data: [] }),
     filter === 'service'
       ? Promise.resolve({ data: [] })
       : kindFilter
         ? logQuery.eq('kind', kindFilter)
         : logQuery,
+    showService ? loadCertificates(supabase, id) : Promise.resolve([]),
   ]);
 
   const logIds = (logs ?? []).map((log) => log.id);
@@ -60,9 +67,10 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
     : { data: [] };
 
   const reportPaths = (reports ?? []).map((r) => r.report_path).filter((p): p is string => Boolean(p));
-  const [photoUrls, reportUrls] = await Promise.all([
+  const [photoUrls, reportUrls, servicePhotos] = await Promise.all([
     signedUrls(supabase, BUCKETS.logs, (photoRows ?? []).map((p) => p.storage_path)),
     signedUrls(supabase, BUCKETS.reports, reportPaths),
+    loadServicePhotos(supabase, (reports ?? []).map((report) => report.id)),
   ]);
 
   const entries: Entry[] = [];
@@ -70,6 +78,13 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
   for (const report of reports ?? []) {
     const result = serviceResult(report.result);
     const pdf = report.report_path ? reportUrls.get(report.report_path) : undefined;
+    const photos = (servicePhotos.get(report.id) ?? []).map((photo, index) => ({
+      key: photo.id,
+      url: photo.url,
+      alt: photo.caption ?? `Bilde ${index + 1} fra service ${dato(report.performed_at)}`,
+      caption: photo.caption,
+    }));
+    const issued = certificates.filter((certificate) => certificate.service_report_id === report.id);
     entries.push({
       iso: report.performed_at,
       created: report.created_at,
@@ -87,8 +102,28 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
           report.findings,
           report.next_service_due ? `Neste service innen ${dato(report.next_service_due)}` : null,
         ].filter(Boolean).join('\n'),
-        extra: pdf ? (
-          <p><a href={pdf} target="_blank" rel="noopener noreferrer" className="pt-link">Åpne servicerapporten (PDF)</a></p>
+        extra: (pdf || photos.length > 0 || issued.length > 0) ? (
+          <div className="pt-stack" style={{ marginTop: '0.6rem' }}>
+            <PhotoGrid photos={photos} />
+            {(pdf || issued.length > 0) && (
+              <div>
+                {issued.map((certificate) => (
+                  <div key={certificate.id}>
+                    <a href={certificate.pdfUrl} target="_blank" rel="noopener noreferrer" className="pt-link">
+                      {CERTIFICATE_NAME} {certificate.certificate_number} (PDF)
+                    </a>
+                  </div>
+                ))}
+                {pdf && (
+                  <div>
+                    <a href={pdf} target="_blank" rel="noopener noreferrer" className="pt-link">
+                      Åpne servicerapporten (PDF)
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         ) : undefined,
       },
     });
@@ -121,7 +156,12 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
         ),
         text: [
           log.notes,
-          [log.reporter_name, log.source === 'web' ? 'meldt via nettskjema' : null].filter(Boolean).join(' · ') || null,
+          [
+            log.reporter_name,
+            log.source === 'web'
+              ? (log.verified_at ? 'meldt via nettskjema' : 'meldt via nettskjema, ikke bekreftet av NorthWest Coast')
+              : log.source === 'admin' ? 'lagt inn av NorthWest Coast' : null,
+          ].filter(Boolean).join(' · ') || null,
         ].filter(Boolean).join('\n') || undefined,
         extra: (photos.length > 0 || canAddPhotos) ? (
           <div className="pt-stack" style={{ marginTop: '0.6rem' }}>
@@ -150,6 +190,17 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
 
   return (
     <>
+      {certificates.length > 0 && (
+        <Card
+          id="sertifikat"
+          title={CERTIFICATE_NAME}
+          description="Utstedes av NorthWest Coast etter godkjent service. Statusen viser hvilket som gjelder."
+          flush
+        >
+          <CertificateList certificates={certificates} />
+        </Card>
+      )}
+
       <Card
         id="ny-logg"
         title="Ny loggføring"

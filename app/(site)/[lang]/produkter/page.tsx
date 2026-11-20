@@ -9,7 +9,7 @@ import { ClipboardCheck, User, Wrench } from 'lucide-react';
 import Nav from '@/components/nav';
 import Wave from '@/components/wave';
 import Footer from '@/components/footer';
-import { ORG } from '@/lib/site';
+import { ORG, portalHref } from '@/lib/site';
 import { DEFAULT_LANG, getDict, isLang, localePath, pageMetadata } from '@/lib/i18n';
 
 export async function generateMetadata({
@@ -292,7 +292,7 @@ export default async function ProdukterPage({
               <h3>{p.parts.cards.customer.title}</h3>
               <p>{p.parts.cards.customer.desc}</p>
               {/* Min side finnes bare på norsk. */}
-              <Link href="/logg-inn" className="news-link">{p.parts.cards.customer.cta}</Link>
+              <Link href={portalHref('/logg-inn')} className="news-link">{p.parts.cards.customer.cta}</Link>
             </div>
           </div>
         </div>

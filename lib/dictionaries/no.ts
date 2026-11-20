@@ -4,34 +4,44 @@ export const no = {
   langName: 'Norsk',
 
   meta: {
+    // Titler og beskrivelser til søkemotorer og delingskort. Hver side har
+    // sin egen, og ordene folk søker på (leider, leider til båt, livbåtleider)
+    // står tidlig. Bare opplysninger som også står på selve sidene.
     keywords: [
+      'leider',
+      'leider til båt',
+      'livbåtleider',
+      'entringsleider',
+      'redningsleider',
+      'lettvekts leider',
       'maritim leider',
+      'sjøleider',
       'Argostep',
       'NorthWest Coast',
-      'sjøleider',
       'Sjøfartsdirektoratet',
-      'ISO 799',
+      'ISO 799-1:2019',
       'fiskebåt',
       'ombordstigning',
     ],
     home: {
-      title: 'NorthWest Coast – Argostep Maritime Ladder',
+      title: 'Argostep – lettvekts leider til båt | NorthWest Coast',
       description:
-        'Argostep – den lette, modulære maritime leideren godkjent av Sjøfartsdirektoratet. ISO 799-1:2019 sertifisert. Norsk produksjon fra Sunnmøre.',
-      ogDescription: 'Modulær maritim leider. ISO 799-1:2019 sertifisert. Norsk produksjon.',
+        'Argostep er en lett, modulær leider til båt: entrings- og livbåtleider i glassfiberarmert plast, fra 2 til 15 meter. Godkjent av Sjøfartsdirektoratet. Produsert på Sunnmøre.',
+      // Står også som tekst i delingsbildet (app/og/[lang]/route.tsx): hold den kort.
+      ogDescription: 'Lett, modulær leider til båt. ISO 799-1:2019 sertifisert. Norsk produksjon.',
     },
     produkt: {
-      title: 'Argostep Livbåtleider – Produkt | NorthWest Coast',
+      title: 'Argostep livbåtleider – modulær leider, 2–15 m | NorthWest Coast',
       description:
-        'Argostep Livbåtleider – modulær, lett og sterk maritim leider i glassfiberarmert plast. ISO 799-1:2019 sertifisert og godkjent av Sjøfartsdirektoratet. Leveres fra 2 til 15 meter.',
+        'Argostep livbåtleider i glassfiberarmert plast: en modulær, lett og sterk leider til båt. ISO 799-1:2019 sertifisert og godkjent av Sjøfartsdirektoratet. Leveres fra 2 til 15 meter.',
     },
     galleri: {
-      title: 'Galleri | NorthWest Coast',
+      title: 'Bilder av Argostep-leideren i bruk | NorthWest Coast',
       description:
         'Se Argostep livbåtleider i bilder – produkt, oppbevaringsskap og leideren i daglig bruk langs norskekysten.',
     },
     nyheter: {
-      title: 'Nyheter | NorthWest Coast',
+      title: 'Nyheter om maritime leidere | NorthWest Coast',
       description: 'Nyheter, caser og forskrifter for maritime leidere fra NorthWest Coast.',
     },
     vedlikehold: {
@@ -40,8 +50,9 @@ export const no = {
         'Se hvordan du vedlikeholder Argostep livbåtleideren og registrer utført vedlikehold for ditt fartøy – med kvittering på e-post som dokumentasjon.',
     },
     faq: {
-      title: 'Ofte stilte spørsmål | NorthWest Coast',
-      description: 'Svar på de vanligste spørsmålene om Argostep livbåtleider.',
+      title: 'Spørsmål og svar om Argostep-leideren | NorthWest Coast',
+      description:
+        'Svar på vanlige spørsmål om Argostep livbåtleider: godkjenning, lengder, materiale, levetid, montering, levering, reservedeler og service.',
     },
     kalkulator: {
       title: 'Leiderkalkulator – finn riktig lengde | NorthWest Coast',
@@ -49,22 +60,22 @@ export const no = {
         'Regn ut hvilken Argostep livbåtleider fartøyet ditt trenger ut fra fribord og festepunkt – og bestill riktig lengde direkte.',
     },
     bestill: {
-      title: 'Bestill Argostep Livbåtleider | NorthWest Coast',
+      title: 'Bestill Argostep-leider – lengder og priser | NorthWest Coast',
       description:
-        'Bestill din Argostep Livbåtleider. Velg lengde mellom 2 og 15 meter og tilbehør – og se leideren i 3D mens du konfigurerer.',
+        'Bestill Argostep livbåtleider: velg lengde mellom 2 og 15 meter og oppbevaringsskap, se veiledende pris eks. mva. og leideren i 3D mens du konfigurerer.',
     },
     omOss: {
-      title: 'Om oss | NorthWest Coast',
+      title: 'Om oss – maritime leidere fra Sunnmøre | NorthWest Coast',
       description:
-        'Innovasjon fra Ålesund. NorthWest Coast utvikler maritime sikkerhetsprodukter med lokal produksjon på Sunnmøre.',
+        'NorthWest Coast ble etablert av tre gründere fra Ålesund og utvikler maritime sikkerhetsprodukter. Argostep-leideren produseres på Sunnmøre med komponenter fra lokale leverandører.',
     },
     produkter: {
-      title: 'Produkter | NorthWest Coast',
+      title: 'Leidere, oppbevaringsskap og reservedeler | NorthWest Coast',
       description:
-        'Utforsk vårt sortiment av maritime leidere og oppbevaringsløsninger: Argostep entrings- og livbåtleider, oppbevaringsskap, reservedeler og service.',
+        'Argostep entrings- og livbåtleider med standardlengder og veiledende priser, oppbevaringsskap, reservedeler og service fra NorthWest Coast.',
     },
     leider3d: {
-      title: 'Argostep i 3D – interaktiv modell | NorthWest Coast',
+      title: 'Argostep-leideren i 3D – interaktiv modell | NorthWest Coast',
       description:
         'Interaktiv 3D-modell av Argostep-leideren. Roter, zoom og utforsk i detalj – og se den i AR på mobil.',
     },
@@ -342,7 +353,7 @@ export const no = {
     placeholder: 'Din e-postadresse...',
     submit: 'Registrer',
     sending: 'Sender…',
-    success: '✓ Du er registrert!',
+    success: 'Sjekk e-posten din: vi har sendt en lenke du må trykke på for å bekrefte påmeldingen.',
   },
 
   footer: {
@@ -404,16 +415,35 @@ export const no = {
     checkoutSub: 'Vi bekrefter pris og leveringstid – ingen forpliktelse.',
     sendRequest: 'Send forespørsel →',
     sendRequestValue: (amount: string) => `Send forespørsel · ${amount} kr →`,
-    confirmRequest: (units: number) => `✓ Takk! Vi har mottatt forespørselen på ${units} leider(e) og sendt deg en bekreftelse på e-post. Vi tar kontakt for endelig tilbud og leveringstid.`,
+    confirmRequest: (what: string) => `✓ Takk! Vi har mottatt forespørselen på ${what} og sendt deg en bekreftelse på e-post. Vi tar kontakt for endelig tilbud og leveringstid.`,
     preferPhone: 'Foretrekker du å snakke med noen?',
     callUs: 'Ring +47 904 07 341',
     vesselCompany: 'Fartøy/Rederi',
     notesPlaceholderBase: 'Ønsket leveringstid, montering, spesialtilpasning…',
     onRequest: 'Pris på forespørsel',
-    onRequestNote: 'Lengder merket «pris på forespørsel» avtales på forespørsel og er ikke med i totalsummen.',
+    onRequestNote: 'Linjer merket «pris på forespørsel» får du tilbud på. De er ikke med i totalsummen.',
+    onRequestShort: 'På forespørsel',
+    // Halvmetere og skap uten leider (bestillingssiden).
+    otherLength: 'Annen lengde, f.eks. 4,5 m',
+    otherLengthPick: 'Velg lengde',
+    otherLengthHint: 'Halvmetere lages på bestilling. Du får tilbud med pris og leveringstid.',
+    customLabel: 'Spesiallengde',
+    customName: (length: string) => `Argostep – ${length} m (spesiallengde)`,
+    cabinetOnlyTitle: 'Oppbevaringsskap uten leider',
+    cabinetOnlySub: 'Har du leider fra før, kan du bestille skapet alene.',
+    cabinetOnlyShow: 'Vis skapene',
+    cabinetOnlyHide: 'Skjul skapene',
+    fitsLadder: (range: string) => `Passer leider ${range} m`,
+    withoutLadder: 'Uten leider',
+    add: 'Legg til',
+    unitCount: (ladders: number, cabinets: number) =>
+      [
+        ladders > 0 ? `${ladders} ${ladders === 1 ? 'leider' : 'leidere'}` : '',
+        cabinets > 0 ? `${cabinets} skap` : '',
+      ].filter(Boolean).join(' og '),
     label: 'Bestilling',
     title: 'Bestill din Argostep',
-    sub: 'Sett sammen leideren for ditt fartøy. Velg lengde mellom 2 og 15 meter og tilbehør – se den i 3D mens du konfigurerer.',
+    sub: 'Sett sammen leideren for ditt fartøy. Velg lengde mellom 2 og 15 meter og tilbehør – se den i 3D mens du konfigurerer. Halvmetere og oppbevaringsskap uten leider bestiller du samme sted.',
     configureLabel: 'Konfigurer din leider',
     productNo: 'Produktnr.',
     steps: 'trinn',
@@ -429,7 +459,7 @@ export const no = {
     addToOrder: 'Legg til i bestilling',
     yourOrder: 'Din bestilling',
     total: 'Totalsum',
-    emptyHint: 'Legg til minst én leider',
+    emptyHint: 'Legg til en leider eller et skap',
     ladderCount: 'leider(e)',
     rotateHint: 'Dra for å rotere',
     leadTitle: 'Hvor skal vi sende tilbudet?',
@@ -462,6 +492,20 @@ export const no = {
     navLabel: 'Kalkulator',
 
     vesselHeading: 'Fartøyet',
+    searchLabel: 'Finn fartøyet',
+    searchPlaceholder: 'Navn, kallesignal, registreringsmerke eller IMO',
+    searchHint:
+      'Søket går i Fiskeridirektoratets fartøyregister, som bare har fiskefartøy. Har du et annet fartøy, fyller du inn feltene under selv.',
+    search: {
+      loading: 'Søker …',
+      empty: 'Fant ingen fartøy. Registeret har bare fiskefartøy – fyll inn opplysningene selv.',
+      unavailable: 'Fartøyregisteret svarer ikke akkurat nå. Fyll inn opplysningene selv.',
+      count: '{n} treff. Velg med piltastene og Enter.',
+      owner: 'Eier',
+    },
+    registerName: 'Fiskeridirektoratets fartøyregister',
+    fetchedCheck: 'Kontroller tallene. Alle felt kan endres.',
+    fetchedNoWidth: 'Registeret har ikke bredden på dette fartøyet. Legg den inn selv.',
     vesselName: 'Navn på fartøy',
     vesselNamePlaceholder: 'F.eks. MS Havbris',
     imo: 'IMO nr',
@@ -481,9 +525,19 @@ export const no = {
       'Loddrett høyde fra vannlinjen opp til dekket der leideren settes ut. Bruk letteste seilingstilstand – det gir det største fribordet.',
     mountHeight: 'Høyde fra dekk til festepunkt',
     mountHeightHelp: 'Sett 0 hvis leideren festes i dekksnivå. Ellers høyden opp til rekke eller skansekledning.',
+    beam: 'Bredde på fartøyet',
+    beamHelp:
+      'Største bredde. Fylles inn når du velger fartøyet i søket, eller du legger den inn selv. Brukes til å regne ut tillegget under vannlinjen.',
     margin: 'Tillegg under vannlinjen',
-    marginHelp:
-      'Forutsetning, ikke et regelverkstall. Juster til kravet fra klasseselskapet eller flaggstaten din.',
+    marginFormula: (beam: string, deg: number, margin: string) => `Bredde ${beam} m ÷ 2 × tan ${deg}° = ${margin} m`,
+    marginNoBeam: (deg: number) =>
+      `Legg inn bredden, så regnes tillegget ut for ${deg}° krenging. Til da brukes tallet under.`,
+    marginOverride: 'Sett tillegget selv',
+    marginManual: 'Tillegg satt for hånd',
+    marginManualHelp: 'Bruk dette når klasseselskapet eller flaggstaten krever noe annet enn utregningen.',
+    marginComputed: (margin: string) => `Utregnet fra bredden: ${margin} m.`,
+    marginHelp: (deg: number) =>
+      `Tillegget gjør at leideren når vannet også når fartøyet krenger ${deg}°. Utregningen forutsetter rette skipssider og er en forutsetning, ikke et regelverkstall.`,
     metres: 'm',
 
     resultHeading: 'Resultat',
@@ -492,7 +546,10 @@ export const no = {
     breakdownFreeboard: 'Fribord',
     breakdownMount: 'Festepunkt over dekk',
     breakdownMargin: 'Tillegg under vannlinjen',
+    breakdownManual: 'satt for hånd',
+    breakdownNoBeam: 'bredden er ikke lagt inn',
     recommended: 'Anbefalt leider',
+    chosen: 'Valgt leider',
     slack: (metres: string) => `${metres} m lengre enn behovet`,
     steps: 'trinn',
     productNo: 'Produktnr.',
@@ -506,9 +563,20 @@ export const no = {
       'Godkjenningen fra Sjøfartsdirektoratet som er omtalt her gjelder fartøy under 15 meter. Ta kontakt, så bekrefter vi hva som gjelder for ditt fartøy.',
     belowRequiredNote: 'Denne lengden er kortere enn det utregningen krever.',
 
+    halfName: (length: string) => `Argostep – ${length} m`,
+    halfMeta: 'Halvmeter – lages på forespørsel',
+    halfOfferTitle: (half: string) => `Alternativ: ${half} m på forespørsel`,
+    halfOffer: (half: string, standard: string) =>
+      `${half} m dekker også behovet og er kortere enn standardleideren på ${standard} m. Halvmetere lages på forespørsel og har ingen listepris.`,
+    halfChoose: (half: string) => `Velg ${half} m`,
+    useRecommended: (length: string) => `Bruk anbefalt lengde (${length} m)`,
+    onRequestTag: 'på forespørsel',
+
     chooseLength: 'Velg lengde selv',
-    chooseLengthHelp: 'Anbefalingen er valgt automatisk. Du kan overstyre den her.',
+    chooseLengthHelp: 'Anbefalingen er valgt automatisk. Du kan overstyre den her. Halvmetere lages på forespørsel.',
     cabinet: 'Oppbevaringsskap',
+    cabinetWish: 'Ønsker oppbevaringsskap',
+    cabinetOnRequest: 'På forespørsel',
     quantity: 'Antall leidere',
     quantityHelp: 'Én per innstigningsstasjon.',
     total: 'Totalsum',
@@ -518,11 +586,44 @@ export const no = {
       'Kalkulatoren er et hjelpemiddel for å finne riktig lengde – ikke en godkjenning. Endelige krav til lengde og montering bekreftes av klasseselskap, flaggstat eller Sjøfartsdirektoratet. Vi går gjennom målene sammen med deg før bestillingen bekreftes.',
 
     orderHeading: 'Bestill denne leideren',
+    requestHeading: 'Be om pris på denne leideren',
+    requestNote: 'Denne lengden har ingen listepris. Vi svarer med pris og leveringstid.',
     orderSub: 'Vi sender utregningen din med bestillingen, så vi kan dobbeltsjekke målene før vi bekrefter.',
     submit: 'Send bestilling →',
     sending: 'Sender…',
     confirm:
       '✓ Takk! Vi har mottatt bestillingen med utregningen din. Du får kvittering på e-post, og vi tar kontakt med bekreftelse – normalt innen én virkedag.',
+    confirmRequest:
+      '✓ Takk! Vi har mottatt forespørselen med utregningen din. Du får kvittering på e-post, og vi tar kontakt med pris og leveringstid – normalt innen én virkedag.',
+
+    diagram: {
+      heading: 'Slik regnes lengden',
+      intro: (deg: number) =>
+        `Leideren følger skutesiden fra festepunktet og ned. Tillegget under vannlinjen gjør at den fortsatt når vannet når fartøyet krenger ${deg}°.`,
+      exampleTag: 'Eksempel',
+      exampleNote: (fields: string) => `Tegningen bruker eksempeltall for ${fields} til du har lagt inn dine egne.`,
+      exampleFreeboard: 'fribord',
+      exampleMount: 'festepunkt',
+      exampleBeam: 'bredde',
+      and: 'og',
+      beam: 'Bredde (B)',
+      freeboard: 'Fribord (F)',
+      mount: 'Festepunkt (h)',
+      margin: 'Tillegg',
+      ladder: 'Leider',
+      reach: 'Nedre ende i vannflaten',
+      key: 'B = bredde på fartøyet · F = fribord til innstigningsdekk · h = høyde fra dekk til festepunkt',
+      play: 'Vis krenging',
+      stop: 'Stopp',
+      reset: 'Rett opp',
+      angle: 'Krengevinkel',
+      statusUpright: (depth: string) => `Uten krenging er nedre ende av leideren ${depth} m under vannflaten.`,
+      statusBelow: (deg: number, depth: string) => `Ved ${deg}° krenging er nedre ende ${depth} m under vannflaten.`,
+      statusAt: (deg: number) => `Ved ${deg}° krenging når nedre ende akkurat ned til vannflaten.`,
+      statusAbove: (deg: number, gap: string) => `Ved ${deg}° krenging slutter leideren ${gap} m over vannflaten.`,
+      alt: (v: { beam: string; freeboard: string; mount: string; margin: string; ladder: string; deg: number }) =>
+        `Tverrsnitt av fartøyet sett forfra. Bredde ${v.beam} m, fribord ${v.freeboard} m, festepunkt ${v.mount} m over dekk og tillegg under vannlinjen ${v.margin} m. Leideren er ${v.ladder} m og følger skutesiden fra festepunktet og ned. Krenging ${v.deg}°.`,
+    },
   },
 
   maintenance: {

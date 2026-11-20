@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { track } from '@/lib/analytics';
+import { siteHref } from '@/lib/site';
+import { confirmCode } from '@/app/(portal)/auth/confirm/actions';
 
 const FEIL: Record<string, string> = {
   'manglende-kode': 'Lenken manglet en innloggingskode. Be om en ny nedenfor.',
@@ -17,6 +19,9 @@ export default function LoginForm() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(FEIL[params.get('feil') ?? ''] ?? null);
+  const [code, setCode] = useState('');
+  const [checking, setChecking] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,6 +34,10 @@ export default function LoginForm() {
       // egentlig skulle etter å ha klikket lenka i e-posten.
       const neste = params.get('neste') ?? '/minside';
       const redirectTo = `${window.location.origin}/auth/callback?neste=${encodeURIComponent(neste)}`;
+      // Lenken i e-posten går til /auth/confirm og bærer ikke `neste` med seg
+      // (den skal også virke på en annen enhet). Åpnes den i denne
+      // nettleseren, finner bekreftelsessiden målet her.
+      document.cookie = `nwc_neste=${encodeURIComponent(neste)}; path=/; max-age=3600; samesite=lax`;
 
       const { error: authError } = await supabase.auth.signInWithOtp({
         email,
@@ -50,6 +59,19 @@ export default function LoginForm() {
     }
   }
 
+  async function handleCode(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setCodeError(null);
+    setChecking(true);
+    try {
+      // Lykkes innløsningen, sender serveren oss videre og kallet returnerer aldri.
+      const result = await confirmCode(email, code);
+      if (result?.error) setCodeError(result.error);
+    } finally {
+      setChecking(false);
+    }
+  }
+
   if (sent) {
     return (
       <div className="auth-card">
@@ -59,8 +81,31 @@ export default function LoginForm() {
           å logge inn. Har du ikke konto fra før, opprettes den samtidig.
           Lenken virker i 60 minutter.
         </p>
+
+        <form onSubmit={handleCode} style={{ marginTop: '1.25rem' }}>
+          <div className="fg">
+            <label htmlFor="login-code">Eller skriv inn koden fra e-posten</label>
+            <input
+              id="login-code"
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9 ]{6,12}"
+              maxLength={12}
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              required
+            />
+          </div>
+          {codeError && <p className="config-error">{codeError}</p>}
+          <button type="submit" className="btn-primary auth-submit" disabled={checking}>
+            {checking ? 'Sjekker…' : 'Logg inn med kode'}
+          </button>
+        </form>
+
         <p className="auth-hint">
-          Finner du den ikke? Sjekk søppelpost, eller{' '}
+          Koden er nyttig når du leser e-posten på en annen enhet enn den du
+          logger inn på. Finner du ikke e-posten? Sjekk søppelpost, eller{' '}
           <button type="button" className="auth-link" onClick={() => setSent(false)}>
             prøv en annen adresse
           </button>.
@@ -99,7 +144,7 @@ export default function LoginForm() {
       <p className="auth-hint">
         Alle kan opprette konto. På Min side registrerer du selskapet ditt og
         legger til leiderne dine med produksjonsnummeret som står på leideren.
-        Spørsmål? <Link href="/#kontakt">Ta kontakt</Link>.
+        Spørsmål? <Link href={siteHref('/#kontakt')}>Ta kontakt</Link>.
       </p>
     </form>
   );

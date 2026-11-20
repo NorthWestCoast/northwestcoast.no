@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Velkommen til Min side hos NorthWest Coast</title>
+<style>
+  @media only screen and (max-width: 620px) {
+    .nwc-wrap { width: 100% !important; }
+    .nwc-pad { padding-left: 20px !important; padding-right: 20px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f2ece4;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">Bekreft e-postadressen og logg inn. Kontoen opprettes samtidig.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f2ece4;">
+  <tr>
+    <td align="center" style="padding:28px 12px 12px;">
+      <table role="presentation" class="nwc-wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border:1px solid #e2ddd3;">
+        <tr>
+          <td class="nwc-pad" bgcolor="#0a1628" style="background:#0a1628;padding:22px 36px;border-bottom:3px solid #7f2d36;">
+            <a href="{{ .SiteURL }}" style="text-decoration:none;"><img src="{{ .SiteURL }}/images/logo/NY-logo.png" width="163" height="40" alt="NorthWest Coast" style="display:block;border:0;outline:none;font:400 17px/40px Georgia, 'Times New Roman', serif;color:#ffffff;"></a>
+          </td>
+        </tr>
+        <tr>
+          <td class="nwc-pad" style="padding:34px 36px 14px;">
+            <h1 style="margin:0 0 18px;font:400 25px/1.3 Georgia, 'Times New Roman', serif;color:#0a1628;">Velkommen til Min side</h1>
+            <p style="margin:0 0 16px;font:400 16px/1.55 Arial, Helvetica, sans-serif;color:#16202e;">Trykk på knappen for å bekrefte e-postadressen og logge inn. Kontoen opprettes samtidig, og du trenger ikke passord.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 22px;">
+  <tr>
+    <td bgcolor="#2ecc71" style="background:#2ecc71;border-radius:3px;">
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email" style="display:inline-block;padding:13px 26px;font:700 16px/1.2 Arial, Helvetica, sans-serif;color:#0a1628;text-decoration:none;border-radius:3px;">Bekreft og logg inn</a>
+    </td>
+  </tr>
+</table><p style="margin:0 0 16px;font:400 16px/1.55 Arial, Helvetica, sans-serif;color:#16202e;">Åpner du e-posten på en annen enhet, kan du i stedet skrive inn denne koden på innloggingssiden:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px;">
+  <tr>
+    <td style="padding:12px 20px;background:#f8f5ef;border:1px solid #e2ddd3;border-radius:3px;font:700 26px/1.2 'Courier New', Courier, monospace;letter-spacing:4px;color:#0a1628;">{{ .Token }}</td>
+  </tr>
+</table><p style="margin:0 0 16px;font:400 16px/1.55 Arial, Helvetica, sans-serif;color:#16202e;">På Min side registrerer du selskapet ditt og legger til leiderne med serienummeret som står på leideren. Da får du servicefrister, vedlikeholdslogg og dokumentasjon samlet på ett sted.</p><p style="margin:0 0 14px;font:400 14px/1.5 Arial, Helvetica, sans-serif;color:#5b6675;">Lenken og koden kan brukes én gang og virker i 60 minutter. Ba du ikke om dette, kan du se bort fra e-posten. Ingen kommer inn uten lenken eller koden.</p>
+<p style="margin:0 0 16px;font:400 13px/1.5 Arial, Helvetica, sans-serif;color:#5b6675;">Virker ikke knappen? Kopier denne adressen inn i nettleseren:<br>
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email" style="color:#5b6675;text-decoration:underline;word-break:break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email</a></p><p style="margin:0 0 14px;font:400 14px/1.5 Arial, Helvetica, sans-serif;color:#5b6675;">In English: use the button above to confirm your email address and sign in to Min side at NorthWest Coast. Your account is created at the same time, and no password is needed. The link and the code can be used once and expire after 60 minutes.</p>
+          </td>
+        </tr>
+        <tr>
+          <td class="nwc-pad" style="padding:18px 36px 24px;border-top:1px solid #e2ddd3;font:400 13px/1.6 Arial, Helvetica, sans-serif;color:#5b6675;">
+            <strong style="color:#0a1628;">NorthWest Coast AS</strong><br>
+            Postboks 79, 6281 Søvik · Org.nr. 998 196 159<br>
+            Telefon <a href="tel:+4790407341" style="color:#5b6675;text-decoration:underline;">+47 904 07 341</a> ·
+            <a href="mailto:arve@astep.no" style="color:#5b6675;text-decoration:underline;">arve@astep.no</a> ·
+            <a href="{{ .SiteURL }}" style="color:#5b6675;text-decoration:underline;">{{ .SiteURL }}</a>
+          </td>
+        </tr>
+      </table>
+      <table role="presentation" class="nwc-wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+        <tr>
+          <td class="nwc-pad" style="padding:14px 36px 24px;font:400 12px/1.5 Arial, Helvetica, sans-serif;color:#7a7468;">Du får denne e-posten fordi noen ba om en konto med adressen {{ .Email }} på {{ .SiteURL }}.</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

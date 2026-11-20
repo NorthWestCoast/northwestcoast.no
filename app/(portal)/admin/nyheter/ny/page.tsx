@@ -1,10 +1,10 @@
-import { requireStaff } from '@/lib/supabase/staff';
+import { requireMedia } from '@/lib/portal/context';
 import { Card, PageHeader } from '@/components/portal/ui';
 import PostForm from '@/components/admin/post-form';
 import { savePost } from '../actions';
 
 export default async function NyttInnleggPage() {
-  await requireStaff();
+  await requireMedia('/admin/nyheter/ny');
 
   return (
     <>

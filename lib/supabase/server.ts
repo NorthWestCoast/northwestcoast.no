@@ -13,11 +13,15 @@ import { requireSupabaseEnv } from './config';
  * mer enn brukeren selv har lov til, gjøres av funksjoner i databasen som
  * autoriserer selv (se docs/PORTAL.md).
  */
-export async function createServerSupabase() {
+export async function createServerSupabase(headers?: Record<string, string>) {
   const { url, anonKey } = requireSupabaseEnv();
   const cookieStore = await cookies();
 
   return createServerClient<Database>(url, anonKey, {
+    // Ekstra hoder følger med på alle kall fra denne klienten. Brukes av
+    // /los/[token], som sender nøkkelen fra lenken så lagringen slipper
+    // bildene i rapporten gjennom (se app.can_read_share_photo).
+    ...(headers ? { global: { headers } } : {}),
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {

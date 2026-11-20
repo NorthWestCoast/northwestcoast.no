@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { Badge, Card, KV } from '@/components/portal/ui';
-import { logKind, serviceResult } from '@/lib/portal/labels';
+import Link from 'next/link';
+import { CERTIFICATE_NAME, logKind, projectKind, serviceResult } from '@/lib/portal/labels';
 import { BUCKETS, signedUrls } from '@/lib/portal/storage';
 import { dato, datoTid } from '@/lib/format';
 import PhotoGrid from '@/components/minside/photo-grid';
@@ -57,7 +58,9 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
     return <Message title="Lenken er ikke gyldig">Sjekk at du har fått med hele lenken.</Message>;
   }
 
-  const supabase = await createServerSupabase();
+  // Nøkkelen fra lenken sendes også som hode: bildene i rapporten ligger i en
+  // privat bøtte, og lagringen slipper dem bare gjennom for den som har den.
+  const supabase = await createServerSupabase({ 'x-share-token': token });
   const { data, error } = await supabase.rpc('get_ladder_share', { p_token: token });
   if (error) console.error('[los] get_ladder_share feilet:', error.message);
 
@@ -81,7 +84,7 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
     return <Message title="Lenken er ikke gyldig">Sjekk at du har fått med hele lenken, eller be fartøyet om en ny.</Message>;
   }
 
-  // Lagringen slipper bildene gjennom så lenge delingen er aktiv.
+  // Lagringen slipper bildene gjennom så lenge delingen er aktiv og nøkkelen stemmer.
   const urls = await signedUrls(supabase, BUCKETS.shares, share.photos.map((photo) => photo.path));
   const photos = share.photos.flatMap((photo, index) => {
     const url = urls.get(photo.path);
@@ -95,7 +98,7 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
       : [];
   });
 
-  const { ladder, vessel, lastService } = share;
+  const { ladder, vessel, project, certificate, lastService } = share;
   const result = lastService ? serviceResult(lastService.result) : null;
 
   return (
@@ -107,7 +110,7 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
           </div>
           <p>
             {[
-              vessel?.name,
+              vessel?.name ?? project?.name,
               ladder.serialNumber ? `leider ${ladder.serialNumber}` : null,
               share.recipient ? `til ${share.recipient}` : null,
             ].filter(Boolean).join(' · ')}
@@ -123,6 +126,18 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
               { label: 'Navn', value: vessel.name },
               { label: 'IMO', value: vessel.imo },
               { label: 'Kallesignal', value: vessel.callSign },
+            ]}
+          />
+        </Card>
+      )}
+
+      {project && (
+        <Card title="Sted">
+          <KV
+            items={[
+              { label: 'Navn', value: project.name },
+              { label: 'Type', value: projectKind(project.kind).label },
+              { label: 'Sted', value: project.location },
             ]}
           />
         </Card>
@@ -159,6 +174,37 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
           <p className="pt-hint">Det er ikke registrert service på leideren ennå.</p>
         )}
       </Card>
+
+      {certificate && (
+        <Card
+          title={CERTIFICATE_NAME}
+          description="Utstedt av NorthWest Coast etter service. Lenken viser om det fortsatt gjelder."
+        >
+          <KV
+            items={[
+              { label: 'Nummer', value: certificate.number },
+              { label: 'Utstedt', value: dato(certificate.issuedOn) },
+              {
+                label: 'Gyldig til',
+                value: (
+                  <>
+                    {dato(certificate.validUntil)}{' '}
+                    <Badge tone={certificate.expired ? 'danger' : 'ok'}>
+                      {certificate.expired ? 'Utløpt' : 'Gyldig'}
+                    </Badge>
+                  </>
+                ),
+              },
+              {
+                label: 'Kontroll',
+                value: certificate.verifyToken ? (
+                  <Link href={`/sertifikat/${certificate.verifyToken}`}>Kontroller dokumentet</Link>
+                ) : null,
+              },
+            ]}
+          />
+        </Card>
+      )}
 
       {share.checklist.length > 0 && (
         <Card title="Kontrollert av mannskapet" flush>
@@ -210,7 +256,7 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
       <p className="pt-hint">
         Rapporten er opprettet {datoTid(share.createdAt)}
         {share.createdByName ? ` av ${share.createdByName}` : ''} og er tilgjengelig til {datoTid(share.expiresAt)}.
-        Opplysningene er registrert av fartøyet og NorthWest Coast AS.
+        Opplysningene er registrert av {vessel ? 'fartøyet' : 'eieren'} og NorthWest Coast AS.
       </p>
     </Shell>
   );

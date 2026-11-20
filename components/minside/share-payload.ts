@@ -29,6 +29,16 @@ export type SharePayload =
         installedAt: string | null;
       };
       vessel: { name: string | null; imo: string | null; callSign: string | null } | null;
+      /** Stedet leideren står når det ikke er et fartøy (kai, anlegg på land). */
+      project: { name: string | null; kind: string | null; location: string | null } | null;
+      /** Det gjeldende servicesertifikatet, hvis leideren har et. */
+      certificate: {
+        number: string | null;
+        issuedOn: string | null;
+        validUntil: string | null;
+        expired: boolean;
+        verifyToken: string | null;
+      } | null;
       lastService: {
         performedAt: string | null;
         result: string | null;
@@ -61,6 +71,8 @@ export function parseSharePayload(data: Json | null | undefined): SharePayload {
 
   const ladder = obj(root.ladder) ?? {};
   const vessel = obj(root.vessel);
+  const project = obj(root.project);
+  const certificate = obj(root.certificate);
   const service = obj(root.last_service);
 
   return {
@@ -88,6 +100,18 @@ export function parseSharePayload(data: Json | null | undefined): SharePayload {
     },
     vessel: vessel
       ? { name: str(vessel.name), imo: str(vessel.imo), callSign: str(vessel.call_sign) }
+      : null,
+    project: project
+      ? { name: str(project.name), kind: str(project.kind), location: str(project.location) }
+      : null,
+    certificate: certificate
+      ? {
+          number: str(certificate.certificate_number),
+          issuedOn: str(certificate.issued_on),
+          validUntil: str(certificate.valid_until),
+          expired: certificate.expired === true,
+          verifyToken: str(certificate.verify_token),
+        }
       : null,
     lastService: service
       ? {

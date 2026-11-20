@@ -10,7 +10,26 @@ export type GalleryImage = {
   contain?: boolean;
 };
 
-/** Bildedata er språknøytralt – alt-tekst og bildetekst hentes fra ordboken. */
+/**
+ * Et bilde slik galleriet viser det: ferdig oversatt, uansett om det er et av
+ * de faste bildene her eller ett som er lastet opp i admin (lib/gallery.ts).
+ */
+export type GalleryItem = {
+  id: string;
+  src: string;
+  tag: ImageTag;
+  contain: boolean;
+  alt: string;
+  /** Bildeteksten nederst på bildet. Tom når bildet ikke har en. */
+  label: string;
+  /** Bildet ligger et sted next/image ikke henter fra, og vises som det er. */
+  unoptimized?: boolean;
+};
+
+/**
+ * De faste bildene. De ligger i koden og kan ikke endres i admin.
+ * Bildedata er språknøytralt – alt-tekst og bildetekst hentes fra ordboken.
+ */
 export const GALLERY_IMAGES: GalleryImage[] = [
   { src: '/images/leider_in_use.jpg',    key: 'inUse',       tag: 'inUse' },
   { src: '/images/leider_m2.jpg',        key: 'mounted',     tag: 'inUse' },
@@ -32,6 +51,23 @@ export const GALLERY_IMAGES: GalleryImage[] = [
 ];
 
 export const GALLERY_TABS: ImageTag[] = ['ladder', 'storage', 'inUse', 'references'];
+
+export const isImageTag = (value: string): value is ImageTag => (GALLERY_TABS as string[]).includes(value);
+
+/** Mappen i bøtta public-media som bildene fra admin lastes opp til. */
+export const GALLERY_FOLDER = 'galleri';
+
+/** De faste bildene med tekst på språket til ordboken. */
+export function fixedGalleryItems(t: Dict): GalleryItem[] {
+  return GALLERY_IMAGES.map((image) => ({
+    id: `fast:${image.key}`,
+    src: image.src,
+    tag: image.tag,
+    contain: image.contain ?? false,
+    alt: t.gallery.images[image.key].alt,
+    label: t.gallery.images[image.key].label,
+  }));
+}
 
 /** Bakgrunn for bilder uten egen bakgrunn (PNG-er med gjennomsiktighet). */
 export const CONTAIN_BG = 'var(--sand)';

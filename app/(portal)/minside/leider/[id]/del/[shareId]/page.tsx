@@ -10,8 +10,7 @@ import { uuid } from '@/lib/portal/forms';
 import { BUCKETS, signedUrls } from '@/lib/portal/storage';
 import { datoTid } from '@/lib/format';
 import { headers } from 'next/headers';
-import { SITE_URL } from '@/lib/site';
-import { requestOrigin } from '@/lib/portal/landing';
+import { portalOrigin } from '@/lib/portal/landing';
 import PhotoGrid from '@/components/minside/photo-grid';
 import { shareStatus } from '@/components/minside/util';
 import { attachSharePhotos, deleteSharePhoto, revokeShare } from './actions';
@@ -127,7 +126,7 @@ export default async function DelingPage({
               Av sikkerhetsgrunner lagrer vi bare et fingeravtrykk av lenken, ikke lenken selv. Den vises
               derfor bare denne ene gangen. Mister du den, oppretter du en ny rapport.
             </Alert>
-            <CopyField value={`${requestOrigin(await headers(), SITE_URL)}/los/${token}`} label="Kopier lenke" />
+            <CopyField value={`${portalOrigin(await headers())}/los/${token}`} label="Kopier lenke" />
             <p className="pt-hint">
               Alle som har lenken kan se rapporten uten å logge inn, fram til den utløper eller du trekker den tilbake.
               Legg gjerne til bilder under før du sender den.
