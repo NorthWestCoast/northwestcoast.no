@@ -478,6 +478,8 @@ a.pt-stat:hover { border-color: var(--pt-ink); }
   max-width: 100%;
 }
 .pt-field textarea { min-height: 96px; resize: vertical; }
+/* Nettsidens plassholderfarge er laget for mørke felt og forsvinner på hvitt. */
+.pt ::placeholder { color: var(--pt-faint); opacity: 1; }
 .pt-field input:focus, .pt-field select:focus, .pt-field textarea:focus, .pt-input:focus {
   outline: 2px solid var(--pt-navy);
   outline-offset: 1px;

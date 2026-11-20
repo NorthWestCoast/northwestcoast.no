@@ -5,9 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Anchor, Archive, BadgeCheck, Bell, Boxes, Building2, ClipboardList, Factory, FileText, Images,
-  Inbox, KeyRound, LayoutDashboard, LifeBuoy, ListChecks, MapPin, Menu, Newspaper, Package, Ship,
-  ShoppingCart, Tags, Truck, UserCog, Users, Wrench, X,
+  Anchor, Archive, BadgeCheck, BarChart3, Bell, Boxes, Building2, ClipboardList, Factory, FileText, Images,
+  Inbox, KeyRound, LayoutDashboard, LifeBuoy, ListChecks, ListTree, MapPin, Menu, Newspaper, Package,
+  PackagePlus, Ship, ShoppingCart, Tags, Truck, UserCog, Users, Warehouse, Wrench, X,
 } from 'lucide-react';
 
 /**
@@ -49,6 +49,10 @@ const ICONS = {
   cabinet: Archive,
   project: MapPin,
   certificate: BadgeCheck,
+  stock: Warehouse,
+  purchase: PackagePlus,
+  parts: ListTree,
+  usage: BarChart3,
 } as const;
 
 export type NavIcon = keyof typeof ICONS;
@@ -99,8 +103,15 @@ export default function PortalNav({
     };
   }, [open]);
 
-  const isActive = (item: NavItem) =>
+  // Den lengste stien som passer, vinner. Da lyser «Lager» på en vareside
+  // under /admin/lager, men ikke sammen med «Innkjøp» under samme sti.
+  const matches = (item: NavItem) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const current = groups
+    .flatMap((group) => group.items)
+    .filter(matches)
+    .reduce<NavItem | null>((best, item) => (best && best.href.length >= item.href.length ? best : item), null);
+  const isActive = (item: NavItem) => item.href === current?.href;
 
   return (
     <>

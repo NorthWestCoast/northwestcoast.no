@@ -18,6 +18,7 @@ export default async function ProduksjonLayout({ children }: { children: React.R
       items: [
         { href: '/produksjon', label: 'Tavle', icon: 'production', exact: true },
         { href: '/produksjon/ferdige', label: 'Sendt og levert', icon: 'deliveries' },
+        { href: '/produksjon/lager', label: 'Lager', icon: 'stock' },
       ],
     },
   ];

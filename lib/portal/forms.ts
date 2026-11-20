@@ -68,6 +68,8 @@ export function fail(error: DbError, fallback = 'Noe gikk galt. Prøv igjen.'): 
     case '23505':
       return err('Dette finnes allerede.');
     case '23503':
+    // PostgreSQL 18 gir 23001 der eldre versjoner ga 23503, når nøkkelen er «restrict».
+    case '23001':
       return err('Kan ikke fullføres fordi noe annet er knyttet til dette.');
     case '23514':
     case '22P02':

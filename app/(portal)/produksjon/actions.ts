@@ -22,9 +22,10 @@ import { CUSTOM_PRODUCT_NUMBER, fmtLength, isCustomLength } from '@/lib/pricing'
  * Handlinger i produksjonsområdet.
  *
  * Alt som flytter en jobb går gjennom funksjonene i databasen
- * (set_production_step, assign_job_serial, advance_job), som selv avgjør hvem
- * som har lov og holder bestilling, leider og varsler i takt. Vokteren her er
- * bare for å svare ryddig; det er databasen som beskytter.
+ * (set_production_step, assign_job_serial, advance_job, fulfil_job_from_stock),
+ * som selv avgjør hvem som har lov og holder bestilling, leider, lager og
+ * varsler i takt. Vokteren her er bare for å svare ryddig; det er databasen
+ * som beskytter.
  */
 
 const refresh = () => revalidatePath('/produksjon', 'layout');
@@ -117,6 +118,46 @@ export async function deliverJob(formData: FormData): Promise<ActionResult> {
   refresh();
   if (before?.order_id) await mailOrderDelivered(supabase, before.order_id, before.orders?.status ?? null);
   return ok('Jobben er markert som levert.');
+}
+
+/**
+ * Legger en ferdig enhet uten bestilling på lager som ferdigvare. Jobben er
+ * dermed avsluttet; enheten selges ved at den knyttes til en bestilling
+ * (fulfilFromStock).
+ */
+export async function stockJob(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireProduction();
+
+  const job = uuid(formData.get('job'));
+  if (!job) return err('Fant ikke jobben.');
+
+  const { error } = await supabase.rpc('advance_job', { p_job: job, p_status: 'stocked' });
+  if (error) return fail(error);
+
+  refresh();
+  return ok('Enheten er lagt på lager.');
+}
+
+/**
+ * Leverer en bestilling med en enhet som står på lager. Enheten tar plassen
+ * til jobben som ble opprettet for bestillingen: den jobben fjernes, og
+ * lagerjobben blir bestillingens jobb, med produksjonsnummer og historikk.
+ * Databasen kontrollerer at det er samme produkt og lengde, og delene trekkes
+ * ikke en gang til.
+ */
+export async function fulfilFromStock(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireProduction();
+
+  const job = uuid(formData.get('job'));
+  const stockJob = uuid(formData.get('stock_job'));
+  if (!job || !stockJob) return err('Fant ikke jobben.');
+
+  const { data, error } = await supabase.rpc('fulfil_job_from_stock', { p_job: job, p_stock_job: stockJob });
+  if (error) return fail(error);
+
+  refresh();
+  // Jobben brukeren sto på finnes ikke lenger.
+  redirect(`/produksjon/${typeof data === 'string' ? data : stockJob}`);
 }
 
 /** Kansellerer jobben. Bare administratorer. */

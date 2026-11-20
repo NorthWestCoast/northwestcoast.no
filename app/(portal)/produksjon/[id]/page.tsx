@@ -5,14 +5,61 @@ import { uuid } from '@/lib/portal/forms';
 import { jobStatus } from '@/lib/portal/labels';
 import { Alert, Badge, Card, KV, PageHeader, Progress } from '@/components/portal/ui';
 import { ActionButton, PortalForm } from '@/components/portal/forms';
-import { JobKindBadge, isCabinetJob, isCustomJob, isOverdue, meter, specLine } from '@/components/produksjon/job';
+import { JobKindBadge, datoOslo, isCabinetJob, isCustomJob, isOverdue, meter, specLine } from '@/components/produksjon/job';
+import { JobParts } from '@/components/produksjon/parts';
 import { StepSignoff } from '@/components/produksjon/step-signoff';
 import { dato, datoTid, idag } from '@/lib/format';
-import { assignSerial, cancelJob, deliverJob, setStep, shipJob, updateJob } from '../actions';
+import {
+  assignSerial,
+  cancelJob,
+  deliverJob,
+  fulfilFromStock,
+  setStep,
+  shipJob,
+  stockJob,
+  updateJob,
+} from '../actions';
+
+/** «Marker som levert», med forklaring når jobben leveres uten å være sendt. */
+function DeliverButton({ jobId, thing, shipped }: { jobId: string; thing: string; shipped: boolean }) {
+  return (
+    <div style={{ marginTop: '1rem' }}>
+      <ActionButton
+        action={deliverJob}
+        fields={{ job: jobId }}
+        label="Marker som levert"
+        pendingLabel="Lagrer…"
+        tone={shipped ? 'green' : 'ghost'}
+        size="md"
+        confirm="Marker jobben som levert til kunden? Dette kan ikke angres."
+      />
+      {!shipped && (
+        <p className="pt-hint" style={{ marginTop: '0.4rem' }}>
+          Bruk denne når kunden henter {thing} selv, uten forsendelse.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Sending og levering. Sammenslått når jobben er bygget for lager og sjelden skal sendes direkte. */
+function SendOptions({ fold, children }: { fold: boolean; children: React.ReactNode }) {
+  if (!fold) return <>{children}</>;
+  return (
+    <details className="pt-more">
+      <summary>Send eller lever uten å legge på lager</summary>
+      {children}
+    </details>
+  );
+}
 
 /**
- * Én produksjonsjobb: spesifikasjonen, stegene som kvitteres ut,
- * produksjonsnummeret og forsendelsen.
+ * Én produksjonsjobb: spesifikasjonen, delene den bruker, stegene som
+ * kvitteres ut, produksjonsnummeret og forsendelsen.
+ *
+ * En jobb uten bestilling kan legges på lager når den er ferdig. En jobb med
+ * bestilling kan i stedet for å bygges, leveres med en enhet som alt står på
+ * lager («Hent fra lager»).
  *
  * En jobb er enten en leider eller et oppbevaringsskap bestilt alene. Skapet
  * har verken lengde eller trinn, og kan sendes uten produksjonsnummer.
@@ -45,9 +92,13 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
 
   /** Ferdig levert eller kansellert: ingenting kan endres lenger. */
   const closed = job.status === 'delivered' || job.status === 'cancelled';
+  /** Ferdig bygget uten bestilling og lagt på lager som ferdigvare. */
+  const stocked = job.status === 'stocked';
   /** Stegene låses når jobben har forlatt produksjonen. */
-  const stepsLocked = closed || job.status === 'shipped';
+  const stepsLocked = closed || stocked || job.status === 'shipped';
   const overdue = isOverdue(job, idag());
+  /** Bygget uten bestilling: kan legges på lager når den er ferdig. */
+  const forStock = job.order_id === null;
 
   const cabinetJob = isCabinetJob(job);
   const customJob = isCustomJob(job);
@@ -55,6 +106,26 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
   const thing = cabinetJob ? 'skapet' : 'leideren';
   /** Skap kan sendes uten nummer; en leider må ha det. */
   const serialMissing = !cabinetJob && !job.serial_number;
+
+  // Ferdige enheter på lager av samme produkt og lengde, eldste først. De kan
+  // ta plassen til denne jobben så lenge den ikke har fått et eget
+  // produksjonsnummer; da er det ingenting å miste ved å bytte.
+  const canFulfil = !forStock
+    && (job.status === 'queued' || job.status === 'in_progress')
+    && !job.serial_number
+    && !job.ladder_id;
+  const { data: stockRows } = canFulfil
+    ? await supabase
+        .from('production_jobs')
+        .select('id, job_number, serial_number, length_m, completed_at')
+        .eq('status', 'stocked')
+        .eq('product_id', job.product_id)
+        .order('completed_at', { ascending: true, nullsFirst: false })
+        .limit(200)
+    : { data: null };
+  const sameLength = (value: number | null) =>
+    value === null || job.length_m === null ? value === job.length_m : Number(value) === Number(job.length_m);
+  const onShelf = (stockRows ?? []).filter((row) => sameLength(row.length_m));
 
   // Transportør og sporing ligger på leveransen, som hører til bestillingen.
   // Den er bare lesbar for administratorer.
@@ -141,6 +212,42 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
         </dl>
       </Card>
 
+      {onShelf.length > 0 && (
+        <Card
+          title="Hent fra lager"
+          description={`${onShelf.length === 1 ? 'Det står 1 ferdig enhet' : `Det står ${onShelf.length} ferdige enheter`} av samme produkt og lengde på lager. Velger du en av dem, tar den plassen til denne jobben: produksjonsnummeret og historikken følger med, og delene trekkes ikke en gang til.`}
+          flush
+        >
+          <ul className="pt-list">
+            {onShelf.map((unit) => (
+              <li key={unit.id}>
+                <div className="pt-list-main">
+                  <Link href={`/produksjon/${unit.id}`}>{unit.job_number}</Link>
+                  <div className="pt-list-sub">
+                    {unit.serial_number
+                      ? <>Prod.nr. <span className="pt-mono">{unit.serial_number}</span></>
+                      : 'Uten produksjonsnummer'}
+                    {unit.completed_at && <> · ferdig {datoOslo(unit.completed_at)}</>}
+                  </div>
+                </div>
+                <div className="pt-list-side">
+                  <ActionButton
+                    action={fulfilFromStock}
+                    fields={{ job: job.id, stock_job: unit.id }}
+                    label="Bruk denne"
+                    pendingLabel="Henter…"
+                    tone="green"
+                    confirm={`Levere bestilling ${job.order_number ?? ''} med ${unit.serial_number ?? unit.job_number} fra lager? Jobb ${job.job_number} fjernes, og ${unit.job_number} blir bestillingens jobb.`}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <JobParts supabase={supabase} job={job} isAdmin={isAdmin} />
+
       <div className="pt-grid pt-grid-main">
         <Card
           flush
@@ -218,23 +325,46 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
             )}
           </Card>
 
-          <Card title="Forsendelse">
+          <Card title={forStock ? 'Lager og forsendelse' : 'Forsendelse'}>
             {(job.status === 'queued' || job.status === 'in_progress') && (
               <p className="pt-hint">
-                {cabinetJob
-                  ? 'Jobben kan sendes når alle steg er kvittert ut. Skap trenger ikke produksjonsnummer.'
-                  : 'Jobben kan sendes når alle steg er kvittert ut og produksjonsnummeret er registrert.'}
+                {forStock
+                  ? `Jobben har ingen bestilling. Når alle steg er kvittert ut${cabinetJob ? '' : ' og produksjonsnummeret er registrert'}, kan ${thing} legges på lager.`
+                  : cabinetJob
+                    ? 'Jobben kan sendes når alle steg er kvittert ut. Skap trenger ikke produksjonsnummer.'
+                    : 'Jobben kan sendes når alle steg er kvittert ut og produksjonsnummeret er registrert.'}
               </p>
             )}
 
+            {job.status === 'ready' && serialMissing && (
+              <Alert tone="warn" title="Produksjonsnummeret mangler">
+                {forStock
+                  ? 'Registrer det før leideren legges på lager, sendes eller leveres.'
+                  : 'Registrer det før jobben sendes eller leveres.'}
+              </Alert>
+            )}
+
+            {job.status === 'ready' && forStock && (
+              <div style={{ marginBottom: '1rem' }}>
+                <ActionButton
+                  action={stockJob}
+                  fields={{ job: job.id }}
+                  label="Legg på lager"
+                  pendingLabel="Lagrer…"
+                  tone="green"
+                  size="md"
+                />
+                <p className="pt-hint" style={{ marginTop: '0.4rem' }}>
+                  Jobben har ingen bestilling. På lager står {thing} som ferdigvare til den knyttes til en bestilling,
+                  og jobben er avsluttet.
+                </p>
+              </div>
+            )}
+
             {job.status === 'ready' && (
-              <>
-                {serialMissing && (
-                  <Alert tone="warn" title="Produksjonsnummeret mangler">
-                    Registrer det før jobben sendes eller leveres.
-                  </Alert>
-                )}
-                <PortalForm action={shipJob} submitLabel="Marker som sendt" pendingLabel="Lagrer…" tone="green">
+              /* Uten bestilling er det sjelden noe å sende: valgene ligger sammenslått under «Legg på lager». */
+              <SendOptions fold={forStock}>
+                <PortalForm action={shipJob} submitLabel="Marker som sendt" pendingLabel="Lagrer…" tone={forStock ? 'primary' : 'green'}>
                   <input type="hidden" name="job" value={job.id} />
                   <div className="pt-field">
                     <label htmlFor="job-carrier">Transportør</label>
@@ -245,6 +375,21 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
                     <input id="job-tracking" name="tracking" maxLength={120} autoComplete="off" />
                   </div>
                 </PortalForm>
+                <DeliverButton jobId={job.id} thing={thing} shipped={false} />
+              </SendOptions>
+            )}
+
+            {stocked && (
+              <>
+                {/* Vanlig tekst, ikke nøkkel/verdi: kortet er for smalt til fire kolonner. */}
+                <p>
+                  {cabinetJob ? 'Skapet' : 'Leideren'} står på lager som ferdigvare
+                  {job.completed_at ? `, ferdig ${datoTid(job.completed_at)}` : ''}.
+                </p>
+                <p className="pt-hint" style={{ marginTop: '0.6rem' }}>
+                  Enheten leveres ved å knyttes til en bestilling: åpne jobben som bestillingen opprettet, og velg
+                  «Hent fra lager» der.
+                </p>
               </>
             )}
 
@@ -265,24 +410,7 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
 
             {job.status === 'cancelled' && <p className="pt-hint">Jobben er kansellert.</p>}
 
-            {(job.status === 'ready' || job.status === 'shipped') && (
-              <div style={{ marginTop: '1rem' }}>
-                <ActionButton
-                  action={deliverJob}
-                  fields={{ job: job.id }}
-                  label="Marker som levert"
-                  pendingLabel="Lagrer…"
-                  tone={job.status === 'shipped' ? 'green' : 'ghost'}
-                  size="md"
-                  confirm="Marker jobben som levert til kunden? Dette kan ikke angres."
-                />
-                {job.status === 'ready' && (
-                  <p className="pt-hint" style={{ marginTop: '0.4rem' }}>
-                    Bruk denne når kunden henter {thing} selv, uten forsendelse.
-                  </p>
-                )}
-              </div>
-            )}
+            {job.status === 'shipped' && <DeliverButton jobId={job.id} thing={thing} shipped />}
 
             {isAdmin && !closed && (
               <div style={{ marginTop: '1rem' }}>
@@ -292,13 +420,17 @@ export default async function JobbPage({ params }: { params: Promise<{ id: strin
                   label="Kanseller jobben"
                   pendingLabel="Kansellerer…"
                   tone="danger"
-                  confirm={`Kansellere jobb ${job.job_number}? Dette kan ikke angres.`}
+                  confirm={
+                    stocked
+                      ? `Kansellere jobb ${job.job_number}? Enheten blir stående i lagerbeholdningen: registrer svinn på lagervaren hvis den er kassert. Dette kan ikke angres.`
+                      : `Kansellere jobb ${job.job_number}? Dette kan ikke angres.`
+                  }
                 />
               </div>
             )}
           </Card>
 
-          {isAdmin && !closed && (
+          {isAdmin && !closed && !stocked && (
             <Card title="Frist og spesielle krav" description="Bare administratorer kan endre dette.">
               <PortalForm action={updateJob} submitLabel="Lagre" resetOnSuccess={false}>
                 <input type="hidden" name="job" value={job.id} />
