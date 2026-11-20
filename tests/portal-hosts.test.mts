@@ -26,6 +26,7 @@ type Rule = {
   source: string;
   destination?: string;
   permanent?: boolean;
+  statusCode?: number;
   has?: { type: string; key?: string; value?: string }[];
   missing?: { type: string; key?: string; value?: string }[];
   headers?: { key: string; value: string }[];
@@ -70,7 +71,7 @@ async function redirectFor(config: Config, host: string, url: string): Promise<s
   });
   const search = new URLSearchParams(to.query as Record<string, string>).toString();
   const origin = to.hostname ? `${to.protocol}//${to.hostname}${to.port ? `:${to.port}` : ''}` : '';
-  return `${hit.rule.permanent ? 308 : 307} ${origin}${to.pathname}${search ? `?${search}` : ''}${to.hash ?? ''}`;
+  return `${hit.rule.statusCode ?? (hit.rule.permanent ? 308 : 307)} ${origin}${to.pathname}${search ? `?${search}` : ''}${to.hash ?? ''}`;
 }
 
 /** Hodene et svar får. Samme nøkkel to ganger betyr at to regler traff. */
@@ -132,6 +133,7 @@ const expected: [host: string, url: string, answer: string | null][] = [
   [site, '/?code=x', '307 /auth/callback?code=x'],
   [site, '/no/products', '308 /produkter'],
   [site, '/no/login', '308 /logg-inn'],
+  [site, '/no/produkter', '301 /produkter'],
 
   // Portalen: svarer på sitt eget, resten hører til nettstedet.
   [portal, '/', '307 /minside'],
@@ -230,6 +232,42 @@ for (const [host, csp, robots] of [
     for (const key of ['X-Content-Type-Options', 'Referrer-Policy', 'Permissions-Policy']) {
       ok(headers.filter((h) => h.key === key).length === 1, `${key} på ${host}${url}`);
     }
+  }
+}
+
+// ── Adressene fra det gamle nettstedet, i rekkefølgen Vercel bruker ─────────
+// Vercels bygger (@vercel/next) tar en 308 som sender hele resten av stien
+// videre («/$1») for å være Next sin egen regel for skråstrek til slutt, og
+// flytter den foran alle andre regler. Lokalt skjer ikke det. Reglene må gi
+// samme svar i begge rekkefølger, ellers ender /no/products på /products.
+const movedFirst = (rule: Rule) => rule.permanent === true && /^\/:\w+[*+?]?\/?$/.test(rule.destination ?? '');
+const onVercel: Config = {
+  ...split,
+  redirects: async () => {
+    const rules = await split.redirects();
+    return [...rules.filter(movedFirst), ...rules.filter((rule) => !movedFirst(rule))];
+  },
+};
+ok(!(await split.redirects()).some(movedFirst), 'ingen regel er en 308 som Vercel flytter foran de andre');
+for (const [url, answer] of [
+  ['/no', '308 /'],
+  ['/no/about-us', '308 /om-oss'],
+  ['/no/products', '308 /produkter'],
+  ['/no/news', '308 /nyheter'],
+  ['/no/contact-us', '308 /#kontakt'],
+  ['/no/login', '308 /logg-inn'],
+  ['/no/register', '308 /logg-inn'],
+  ['/no/my-site', '308 /minside'],
+  ['/no/leveranse-ms-skar-senior', '308 /nyheter'],
+  ['/en/about-us', '308 /en/om-oss'],
+  ['/en/products', '308 /en/produkter'],
+  ['/en/contact-us', '308 /en#kontakt'],
+  ['/no/faq', '301 /faq'],
+  ['/no/produkt/los', '301 /produkt/los'],
+] as const) {
+  for (const [config, order] of [[split, 'lokalt'], [onVercel, 'på Vercel']] as const) {
+    const got = await redirectFor(config, site, url);
+    ok(got === answer, `${url} → ${answer} ${order} (fikk ${got ?? 'ingen videresending'})`);
   }
 }
 

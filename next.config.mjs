@@ -204,6 +204,7 @@ const nextConfig = {
       // Innlogging finnes fortsatt, nå som innloggingslenke på e-post.
       ['login', '/logg-inn', '/logg-inn'],
       ['register', '/logg-inn', '/logg-inn'],
+      ['my-site', '/minside', '/minside'],
       ['leveranse-ms-skar-senior', '/nyheter', '/en/nyheter'],
       ['hvordan-bruke-var-leider', '/nyheter', '/en/nyheter'],
       ['hvordan-installere-var-leider', '/nyheter', '/en/nyheter'],
@@ -232,7 +233,11 @@ const nextConfig = {
     });
     // Én kanonisk adresse per side: norsk ligger på rot, ikke under /no.
     rules.push({ source: '/no', destination: '/', permanent: true });
-    rules.push({ source: '/no/:path*', destination: '/:path*', permanent: true });
+    // 301 og ikke 308 med vilje. Vercels bygger tar en 308 som sender hele
+    // resten av stien videre («/$1») for å være Next sin egen regel for
+    // skråstrek til slutt, og flytter den foran alle andre regler. Da traff
+    // /no/products denne først og endte på /products, som ikke finnes.
+    rules.push({ source: '/no/:path*', destination: '/:path*', statusCode: 301 });
     return rules;
   },
 
