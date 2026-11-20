@@ -11,6 +11,7 @@
 import pathMatch from 'next/dist/shared/lib/router/utils/path-match.js';
 import destination from 'next/dist/shared/lib/router/utils/prepare-destination.js';
 import redirectStatus from 'next/dist/lib/redirect-status.js';
+import pathToRegexp from 'next/dist/compiled/path-to-regexp/index.js';
 
 const SITE = 'https://northwestcoast.no';
 const PORTAL = 'https://portal.northwestcoast.no';
@@ -269,6 +270,32 @@ for (const [url, answer] of [
     const got = await redirectFor(config, site, url);
     ok(got === answer, `${url} → ${answer} ${order} (fikk ${got ?? 'ingen videresending'})`);
   }
+}
+
+// ── Målet slik Vercel regner det ut ─────────────────────────────────────────
+// Vercels bygger gjør hvert navngitte ledd i kilden om til en plass ($1, $2 …)
+// og setter alltid plassen inn i målet, også når leddet er valgfritt og tomt.
+// Lokalt faller et tomt valgfritt ledd bort. Med «/:area/:path*» som mål ble
+// /logg-inn derfor sendt til /logg-inn/ på Vercel, og måtte videre én gang til.
+// Samme omregning som convertRedirects() i @vercel/routing-utils.
+function vercelTarget(rule: Rule, pathname: string): string | null {
+  const keys: { name: string | number }[] = [];
+  const source = pathToRegexp.pathToRegexp(rule.source, keys, { strict: true, sensitive: true, delimiter: '/' });
+  const hit = source.exec(pathname);
+  if (!hit) return null;
+  const [, origin = '', path = ''] = /^(https?:\/\/[^/]+)?([^?#]*)/.exec(rule.destination ?? '') ?? [];
+  const slots = Object.fromEntries(keys.map((key, index) => [key.name, `$${index + 1}`]));
+  const template: string = path.includes(':') ? pathToRegexp.compile(path, { validate: false })(slots) : path;
+  return origin + template.replace(/\$(\d+)/g, (_, n: string) => hit[Number(n)] ?? '');
+}
+
+for (const [host, url, answer] of expected) {
+  if (!answer) continue;
+  const { pathname } = new URL(url, 'http://x');
+  const [hit] = matching(await onVercel.redirects(), host, url, true);
+  const got = hit ? vercelTarget(hit.rule, pathname) : null;
+  const wanted = answer.slice(answer.indexOf(' ') + 1).split(/[?#]/)[0];
+  ok(got === wanted, `${host}${url} → ${wanted} på Vercel, uten ekstra hopp (fikk ${got ?? 'ingen videresending'})`);
 }
 
 // I utvikling trenger Next eval og en websocket til seg selv.
