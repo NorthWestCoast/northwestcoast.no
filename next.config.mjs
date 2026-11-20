@@ -99,11 +99,24 @@ function hostRedirects(hosts) {
     'favicon\\.ico', 'icon\\.png', 'apple-icon\\.png', 'manifest\\.webmanifest',
   ].join('|');
 
+  // Hver videresending mellom vertsnavnene står som to regler: én for første
+  // ledd alene, og én for første ledd med mer sti etter. Én regel med valgfri
+  // sti («/:area/:path*») gir riktig svar lokalt, men Vercels bygger setter
+  // alltid inn plassen for det valgfrie leddet, også når det er tomt. Da ble
+  // /logg-inn sendt til /logg-inn/, og måtte videre én gang til for å bli
+  // kvitt skråstreken.
+  const area = `/:area(${PORTAL_AREAS.join('|')})`;
+  // Alt annet enn det portalen svarer på selv, hører til nettstedet. Forbudet
+  // gjelder hele første ledd («/los/x» blir, «/losning» går), derfor (?:/|$)
+  // etter navnene.
+  const first = `/:first((?!(?:${served})(?:/|$))[^/]+)`;
+
   return [
+    { source: area, has: hosts.onSite, destination: `${hosts.portal}/:area`, permanent: false },
     {
-      source: `/:area(${PORTAL_AREAS.join('|')})/:path*`,
+      source: `${area}/:path+`,
       has: hosts.onSite,
-      destination: `${hosts.portal}/:area/:path*`,
+      destination: `${hosts.portal}/:area/:path+`,
       permanent: false,
     },
     {
@@ -113,12 +126,11 @@ function hostRedirects(hosts) {
       destination: '/minside',
       permanent: false,
     },
+    { source: first, has: hosts.onPortal, destination: `${hosts.site}/:first`, permanent: false },
     {
-      // Alt annet hører til nettstedet. Forbudet gjelder hele første ledd
-      // («/los/x» blir, «/losning» går), derfor (?:/|$) etter navnene.
-      source: `/:first((?!(?:${served})(?:/|$))[^/]+)/:path*`,
+      source: `${first}/:path+`,
       has: hosts.onPortal,
-      destination: `${hosts.site}/:first/:path*`,
+      destination: `${hosts.site}/:first/:path+`,
       permanent: false,
     },
   ];
