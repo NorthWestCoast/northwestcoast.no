@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -13,6 +13,35 @@ const FEIL: Record<string, string> = {
   'ugyldig-lenke': 'Lenken er brukt opp eller utløpt. Be om en ny nedenfor.',
 };
 
+/**
+ * Adressen det er bedt om lenke for, husket i fanen. Brukes bare til å vise
+ * kodefeltet igjen når siden lastes på nytt, så koden kan skrives inn uten å
+ * be om en ny e-post. Koden virker i 60 minutter.
+ */
+const SENT_KEY = 'nwc_innlogging_sendt';
+const SENT_TTL_MS = 60 * 60 * 1000;
+
+function rememberSent(email: string | null) {
+  try {
+    if (email) sessionStorage.setItem(SENT_KEY, JSON.stringify({ email, at: Date.now() }));
+    else sessionStorage.removeItem(SENT_KEY);
+  } catch {
+    // Lagring kan være slått av i nettleseren. Da husker vi ingenting.
+  }
+}
+
+function sentBeforeReload(): string | null {
+  try {
+    const [entry] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+    if (entry?.type !== 'reload') return null;
+    const saved = JSON.parse(sessionStorage.getItem(SENT_KEY) ?? 'null');
+    const fresh = typeof saved?.email === 'string' && Date.now() - Number(saved.at) < SENT_TTL_MS;
+    return fresh ? saved.email : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function LoginForm() {
   const params = useSearchParams();
   const [email, setEmail] = useState('');
@@ -22,6 +51,15 @@ export default function LoginForm() {
   const [code, setCode] = useState('');
   const [checking, setChecking] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [outdated, setOutdated] = useState(false);
+
+  // Etter en omlasting: vis kodefeltet igjen for adressen det nettopp ble bedt om lenke for.
+  useEffect(() => {
+    const address = sentBeforeReload();
+    if (!address) return;
+    setEmail(address);
+    setSent(true);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,6 +85,7 @@ export default function LoginForm() {
       if (authError) throw new Error(authError.message);
 
       track('Auth: Magic link requested');
+      rememberSent(email);
       setSent(true);
     } catch (err) {
       setError(
@@ -62,14 +101,24 @@ export default function LoginForm() {
   async function handleCode(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setCodeError(null);
+    setOutdated(false);
     setChecking(true);
     try {
-      // Lykkes innløsningen, sender serveren oss videre og kallet returnerer aldri.
       const result = await confirmCode(email, code);
-      if (result?.error) setCodeError(result.error);
-    } finally {
-      setChecking(false);
+      if ('next' in result) {
+        rememberSent(null);
+        // Full sidelasting, ikke en overgang inne i siden: se confirmCode.
+        // Knappen blir stående som «Sjekker…» til den nye siden er på plass.
+        window.location.assign(result.next);
+        return;
+      }
+      setCodeError(result.error);
+    } catch {
+      // Kallet nådde ikke fram til funksjonen på serveren. Det skjer når
+      // siden er eldre enn serveren, eller når nettet faller ut.
+      setOutdated(true);
     }
+    setChecking(false);
   }
 
   if (sent) {
@@ -98,6 +147,15 @@ export default function LoginForm() {
             />
           </div>
           {codeError && <p className="config-error">{codeError}</p>}
+          {outdated && (
+            <p className="config-error">
+              Vi fikk ikke sjekket koden. Siden kan være oppdatert siden du åpnet den.{' '}
+              <button type="button" className="auth-link" onClick={() => window.location.reload()}>
+                Last siden på nytt
+              </button>{' '}
+              og skriv inn koden igjen.
+            </p>
+          )}
           <button type="submit" className="btn-primary auth-submit" disabled={checking}>
             {checking ? 'Sjekker…' : 'Logg inn med kode'}
           </button>
@@ -106,7 +164,7 @@ export default function LoginForm() {
         <p className="auth-hint">
           Koden er nyttig når du leser e-posten på en annen enhet enn den du
           logger inn på. Finner du ikke e-posten? Sjekk søppelpost, eller{' '}
-          <button type="button" className="auth-link" onClick={() => setSent(false)}>
+          <button type="button" className="auth-link" onClick={() => { rememberSent(null); setSent(false); }}>
             prøv en annen adresse
           </button>.
         </p>
