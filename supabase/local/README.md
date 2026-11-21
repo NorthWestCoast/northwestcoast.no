@@ -22,8 +22,20 @@ npm run dev
 
 ## Logge inn
 
-Skriv inn en av testadressene på `/logg-inn`. Det sendes ingen e-post:
-innloggingslenken skrives ut i terminalen der `start.sh` kjører.
+Skriv inn en av testadressene på `/logg-inn`. Det sendes ingen e-post. Det
+som ville stått i e-posten, skrives ut i terminalen der `start.sh` kjører:
+
+- lenken til `/auth/confirm`, den samme siden med «Logg inn»-knapp som
+  brukerne får
+- engangskoden, som lokalt alltid er `12345678`, til kodefeltet på
+  innloggingssiden
+- en direkte lenke til `/auth/callback`, som logger inn uten mellomsteg
+
+Prøv innloggingen med nettsted og portal på hvert sitt vertsnavn før en
+endring i den rulles ut (`NEXT_PUBLIC_SITE_URL=http://localhost:<port>` og
+`NEXT_PUBLIC_PORTAL_URL=http://portal.localhost:<port>`), og gjør det mot
+`next build` og `next start`, ikke bare `next dev`. Det er der produksjon
+skiller seg fra utvikling.
 
 | Adresse | Rolle |
 |---|---|

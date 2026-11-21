@@ -20,6 +20,8 @@ const PORT = Number(process.env.LOCAL_SUPABASE_PORT ?? 54400);
 const REST_PORT = Number(process.env.LOCAL_POSTGREST_PORT ?? 54401);
 const SECRET = process.env.LOCAL_JWT_SECRET ?? 'lokal-utvikling-hemmelighet-minst-32-tegn-lang';
 const FILES = process.env.LOCAL_STORAGE_DIR ?? '/tmp/nwc-local-storage';
+// Engangskoden «e-posten» inneholder lokalt. Åtte sifre, som i produksjon.
+const LOCAL_CODE = '12345678';
 const PG = {
   PGHOST: process.env.PGHOST ?? '127.0.0.1',
   PGPORT: process.env.PGPORT ?? '54329',
@@ -166,8 +168,26 @@ async function handleAuth(req, res, url) {
   // og skrives ut her slik at man kan åpne lenken.
   if (path === '/otp' && req.method === 'POST') {
     userFor(body.email);
-    console.log(`\n[auth] Innloggingslenke for ${body.email}:\n       http://localhost:3000/auth/callback?code=${b64(body.email.toLowerCase())}\n`);
+    const key = b64(body.email.toLowerCase());
+    console.log(
+      `\n[auth] Innlogging for ${body.email}:\n` +
+      `       lenke fra e-posten: http://localhost:3000/auth/confirm?token_hash=${key}&type=email\n` +
+      `       engangskode:        ${LOCAL_CODE}\n` +
+      `       direkte:            http://localhost:3000/auth/callback?code=${key}\n`,
+    );
     return send(res, 200, {});
+  }
+
+  // Lenken (token_hash) og engangskoden fra e-posten. Lokalt er nøkkelen
+  // adressen selv, og koden er den samme for alle.
+  if (path === '/verify' && req.method === 'POST') {
+    const email = body.token_hash
+      ? unb64(body.token_hash)
+      : String(body.token ?? '') === LOCAL_CODE ? String(body.email ?? '').toLowerCase() : '';
+    if (!email.includes('@')) {
+      return send(res, 403, { code: 403, error_code: 'otp_expired', msg: 'Email link is invalid or has expired' });
+    }
+    return send(res, 200, session(userFor(email)));
   }
 
   if (path === '/token' && req.method === 'POST') {
