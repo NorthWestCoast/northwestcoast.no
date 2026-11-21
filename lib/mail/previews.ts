@@ -70,7 +70,7 @@ export function mailPreviews(): MailPreview[] {
       name: template.supabaseName,
       when: AUTH_WHEN[template.file] ?? '',
       to: 'Brukeren. Sendes av Supabase, malen ligger i supabase/templates/.',
-      subject: template.subject,
+      subject: fillAuth(template.subject),
       html: fillAuth(template.html),
     })),
     {

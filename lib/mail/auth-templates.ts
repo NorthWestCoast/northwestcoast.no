@@ -11,6 +11,7 @@
  * Importene har filendelse fordi fila også lastes av plain node.
  */
 import { CONTACT_EMAIL, SUPPORT_PHONE } from './config.ts';
+import { LOGIN_VALID_MINUTES } from '../site.ts';
 import { button, code, fallbackUrl, html, p, shell, small } from './layout.ts';
 
 export type AuthTemplate = {
@@ -18,7 +19,13 @@ export type AuthTemplate = {
   file: string;
   /** Navnet malen har i Supabase-dashbordet. */
   supabaseName: string;
-  /** Emnefeltet, som settes i dashbordet ved siden av malen. */
+  /**
+   * Emnefeltet, som settes i dashbordet ved siden av malen. Der e-posten har
+   * en engangskode, står koden også i emnet. Da får hver e-post sitt eget
+   * emne: Gmail og andre slår ellers sammen like e-poster til én tråd og
+   * skjuler teksten som gjentar seg, og da forsvinner knappen og koden i den
+   * nyeste. Koden kan dessuten leses uten å åpne e-posten.
+   */
   subject: string;
   html: string;
 };
@@ -37,14 +44,14 @@ const brand = { siteUrl: SITE, phone: SUPPORT_PHONE, email: CONTACT_EMAIL };
  */
 const confirmUrl = (type: string) => `${SITE}/auth/confirm?token_hash={{ .TokenHash }}&type=${type}`;
 
-const once = 'Lenken og koden kan brukes én gang og virker i 60 minutter.';
+const once = `Lenken og koden kan brukes én gang og virker i ${LOGIN_VALID_MINUTES} minutter.`;
 const ignore = 'Ba du ikke om dette, kan du se bort fra e-posten. Ingen kommer inn uten lenken eller koden.';
 
 export const AUTH_TEMPLATES: AuthTemplate[] = [
   {
     file: 'magic-link.html',
     supabaseName: 'Magic Link',
-    subject: 'Logg inn på Min side hos NorthWest Coast',
+    subject: 'Innloggingskode {{ .Token }} til Min side',
     html: shell({
       title: 'Logg inn på Min side hos NorthWest Coast',
       preheader: 'Trykk på knappen for å logge inn. Du trenger ikke passord.',
@@ -56,7 +63,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
         code('{{ .Token }}'),
         small(`${once} ${ignore}`),
         fallbackUrl('Virker ikke knappen? Kopier denne adressen inn i nettleseren:', confirmUrl('email')),
-        small('In English: use the button above to sign in to Min side at NorthWest Coast, or enter the code on the sign-in page. The link and the code can be used once and expire after 60 minutes. If you did not ask for this, you can ignore this email.'),
+        small(`In English: use the button above to sign in to Min side at NorthWest Coast, or enter the code on the sign-in page. The link and the code can be used once and expire after ${LOGIN_VALID_MINUTES} minutes. If you did not ask for this, you can ignore this email.`),
       ],
       reason: html`Du får denne e-posten fordi noen ba om innlogging med adressen {{ .Email }} på ${SITE}.`.value,
       brand,
@@ -65,7 +72,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
   {
     file: 'confirm-signup.html',
     supabaseName: 'Confirm signup',
-    subject: 'Velkommen til Min side hos NorthWest Coast',
+    subject: 'Velkommen til Min side. Innloggingskoden din er {{ .Token }}',
     html: shell({
       title: 'Velkommen til Min side hos NorthWest Coast',
       preheader: 'Bekreft e-postadressen og logg inn. Kontoen opprettes samtidig.',
@@ -78,7 +85,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
         p('På Min side registrerer du selskapet ditt og legger til leiderne med serienummeret som står på leideren. Da får du servicefrister, vedlikeholdslogg og dokumentasjon samlet på ett sted.'),
         small(`${once} ${ignore}`),
         fallbackUrl('Virker ikke knappen? Kopier denne adressen inn i nettleseren:', confirmUrl('email')),
-        small('In English: use the button above to confirm your email address and sign in to Min side at NorthWest Coast. Your account is created at the same time, and no password is needed. The link and the code can be used once and expire after 60 minutes.'),
+        small(`In English: use the button above to confirm your email address and sign in to Min side at NorthWest Coast. Your account is created at the same time, and no password is needed. The link and the code can be used once and expire after ${LOGIN_VALID_MINUTES} minutes.`),
       ],
       reason: html`Du får denne e-posten fordi noen ba om en konto med adressen {{ .Email }} på ${SITE}.`.value,
       brand,
@@ -114,9 +121,9 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
       body: [
         p('Min side bruker ikke passord. Trykk på knappen for å logge inn.'),
         button('Logg inn', confirmUrl('recovery')),
-        small(`Lenken kan brukes én gang og virker i 60 minutter. ${ignore}`),
+        small(`Lenken kan brukes én gang og virker i ${LOGIN_VALID_MINUTES} minutter. ${ignore}`),
         fallbackUrl('Virker ikke knappen? Kopier denne adressen inn i nettleseren:', confirmUrl('recovery')),
-        small('In English: Min side at NorthWest Coast does not use passwords. Use the button above to sign in. The link can be used once and expires after 60 minutes. If you did not ask for this, you can ignore this email.'),
+        small(`In English: Min side at NorthWest Coast does not use passwords. Use the button above to sign in. The link can be used once and expires after ${LOGIN_VALID_MINUTES} minutes. If you did not ask for this, you can ignore this email.`),
       ],
       reason: html`Du får denne e-posten fordi noen ba om tilgang med adressen {{ .Email }} på ${SITE}.`.value,
       brand,
