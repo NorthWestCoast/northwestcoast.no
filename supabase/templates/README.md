@@ -12,8 +12,8 @@ Forhåndsvisning med eksempeldata ligger i admin under **E-post**.
 |---|---|---|
 | `magic-link.html` | Magic Link | Innloggingskode {{ .Token }} til Min side |
 | `confirm-signup.html` | Confirm signup | Velkommen til Min side. Innloggingskoden din er {{ .Token }} |
-| `email-change.html` | Change Email Address | Bekreft ny e-postadresse hos NorthWest Coast |
-| `recovery.html` | Reset Password | Logg inn på Min side hos NorthWest Coast |
+| `email-change.html` | Change Email Address | Bekreft ny e-postadresse hos NorthWestCoast |
+| `recovery.html` | Reset Password | Logg inn på Min side hos NorthWestCoast |
 
 For hver mal: lim hele filen inn i feltet for innholdet, og sett emnefeltet
 som i tabellen. «Invite user» og «Reauthentication» brukes ikke av nettstedet.
@@ -67,5 +67,5 @@ av den som leser e-posten på en annen enhet.
 **Authentication → Emails → SMTP Settings**
 
 - Vert `smtp.resend.com`, port 465, bruker `resend`, passord: en API-nøkkel
-  fra Resend. Avsender: `noreply@northwestcoast.no`, navn «NorthWest Coast».
+  fra Resend. Avsender: `noreply@northwestcoast.no`, navn «NorthWestCoast».
   Uten egen SMTP leverer Supabase bare til medlemmer av organisasjonen.

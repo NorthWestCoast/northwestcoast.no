@@ -1,5 +1,5 @@
 /**
- * Felles HTML-oppsett for all e-post fra NorthWest Coast.
+ * Felles HTML-oppsett for all e-post fra NorthWestCoast.
  *
  * Fila har bevisst ingen importer: den brukes både av appen (lib/mail/templates)
  * og av scripts/build-auth-mail.mts, som lager innloggingsmalene til Supabase
@@ -299,7 +299,7 @@ export function shell(args: EmailShell): string {
       <table role="presentation" class="nwc-wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:${COLOR.paper};border:1px solid ${COLOR.line};">
         <tr>
           <td class="nwc-pad" bgcolor="${COLOR.navy}" style="background:${COLOR.navy};padding:22px 36px;border-bottom:3px solid ${COLOR.burgundy};">
-            <a href="${siteUrl}" style="text-decoration:none;"><img src="${siteUrl}/images/logo/NY-logo.png" width="163" height="40" alt="NorthWest Coast" style="display:block;border:0;outline:none;font:400 17px/40px ${raw(SERIF)};color:#ffffff;"></a>
+            <a href="${siteUrl}" style="text-decoration:none;"><img src="${siteUrl}/images/logo/NY-logo.png" width="163" height="40" alt="NorthWestCoast" style="display:block;border:0;outline:none;font:400 17px/40px ${raw(SERIF)};color:#ffffff;"></a>
           </td>
         </tr>
         <tr>
@@ -310,7 +310,7 @@ export function shell(args: EmailShell): string {
         </tr>
         <tr>
           <td class="nwc-pad" style="padding:18px 36px 24px;border-top:1px solid ${COLOR.line};font:400 13px/1.6 ${raw(SANS)};color:${COLOR.muted};">
-            <strong style="color:${COLOR.navy};">NorthWest Coast AS</strong><br>
+            <strong style="color:${COLOR.navy};">NorthWestCoast AS</strong><br>
             ${t.address} · ${t.org}<br>
             ${t.phone} <a href="tel:${tel}" style="color:${COLOR.muted};text-decoration:underline;">${phone}</a> ·
             <a href="mailto:${email}" style="color:${COLOR.muted};text-decoration:underline;">${email}</a> ·

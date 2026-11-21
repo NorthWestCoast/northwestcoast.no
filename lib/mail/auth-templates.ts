@@ -53,7 +53,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
     supabaseName: 'Magic Link',
     subject: 'Innloggingskode {{ .Token }} til Min side',
     html: shell({
-      title: 'Logg inn på Min side hos NorthWest Coast',
+      title: 'Logg inn på Min side hos NorthWestCoast',
       preheader: 'Trykk på knappen for å logge inn. Du trenger ikke passord.',
       heading: 'Logg inn på Min side',
       body: [
@@ -63,7 +63,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
         code('{{ .Token }}'),
         small(`${once} ${ignore}`),
         fallbackUrl('Virker ikke knappen? Kopier denne adressen inn i nettleseren:', confirmUrl('email')),
-        small(`In English: use the button above to sign in to Min side at NorthWest Coast, or enter the code on the sign-in page. The link and the code can be used once and expire after ${LOGIN_VALID_MINUTES} minutes. If you did not ask for this, you can ignore this email.`),
+        small(`In English: use the button above to sign in to Min side at NorthWestCoast, or enter the code on the sign-in page. The link and the code can be used once and expire after ${LOGIN_VALID_MINUTES} minutes. If you did not ask for this, you can ignore this email.`),
       ],
       reason: html`Du får denne e-posten fordi noen ba om innlogging med adressen {{ .Email }} på ${SITE}.`.value,
       brand,
@@ -74,7 +74,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
     supabaseName: 'Confirm signup',
     subject: 'Velkommen til Min side. Innloggingskoden din er {{ .Token }}',
     html: shell({
-      title: 'Velkommen til Min side hos NorthWest Coast',
+      title: 'Velkommen til Min side hos NorthWestCoast',
       preheader: 'Bekreft e-postadressen og logg inn. Kontoen opprettes samtidig.',
       heading: 'Velkommen til Min side',
       body: [
@@ -85,7 +85,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
         p('På Min side registrerer du selskapet ditt og legger til leiderne med serienummeret som står på leideren. Da får du servicefrister, vedlikeholdslogg og dokumentasjon samlet på ett sted.'),
         small(`${once} ${ignore}`),
         fallbackUrl('Virker ikke knappen? Kopier denne adressen inn i nettleseren:', confirmUrl('email')),
-        small(`In English: use the button above to confirm your email address and sign in to Min side at NorthWest Coast. Your account is created at the same time, and no password is needed. The link and the code can be used once and expire after ${LOGIN_VALID_MINUTES} minutes.`),
+        small(`In English: use the button above to confirm your email address and sign in to Min side at NorthWestCoast. Your account is created at the same time, and no password is needed. The link and the code can be used once and expire after ${LOGIN_VALID_MINUTES} minutes.`),
       ],
       reason: html`Du får denne e-posten fordi noen ba om en konto med adressen {{ .Email }} på ${SITE}.`.value,
       brand,
@@ -94,9 +94,9 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
   {
     file: 'email-change.html',
     supabaseName: 'Change Email Address',
-    subject: 'Bekreft ny e-postadresse hos NorthWest Coast',
+    subject: 'Bekreft ny e-postadresse hos NorthWestCoast',
     html: shell({
-      title: 'Bekreft ny e-postadresse hos NorthWest Coast',
+      title: 'Bekreft ny e-postadresse hos NorthWestCoast',
       preheader: 'Bekreft at kontoen din på Min side skal bruke den nye adressen.',
       heading: 'Bekreft ny e-postadresse',
       body: [
@@ -104,7 +104,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
         button('Bekreft ny adresse', confirmUrl('email_change')),
         small('Lenken kan brukes én gang. Ba du ikke om dette, skal du ikke trykke på knappen. Gi oss gjerne beskjed, så ser vi på kontoen.'),
         fallbackUrl('Virker ikke knappen? Kopier denne adressen inn i nettleseren:', confirmUrl('email_change')),
-        small('In English: a change of email address has been requested for your account at NorthWest Coast. Use the button above to confirm it. If you did not ask for this, do not use the link.'),
+        small('In English: a change of email address has been requested for your account at NorthWestCoast. Use the button above to confirm it. If you did not ask for this, do not use the link.'),
       ],
       reason: html`Du får denne e-posten fordi det er bedt om å endre e-postadressen på en konto på ${SITE}.`.value,
       brand,
@@ -113,9 +113,9 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
   {
     file: 'recovery.html',
     supabaseName: 'Reset Password',
-    subject: 'Logg inn på Min side hos NorthWest Coast',
+    subject: 'Logg inn på Min side hos NorthWestCoast',
     html: shell({
-      title: 'Logg inn på Min side hos NorthWest Coast',
+      title: 'Logg inn på Min side hos NorthWestCoast',
       preheader: 'Min side bruker ikke passord. Trykk på knappen for å logge inn.',
       heading: 'Logg inn på Min side',
       body: [
@@ -123,7 +123,7 @@ export const AUTH_TEMPLATES: AuthTemplate[] = [
         button('Logg inn', confirmUrl('recovery')),
         small(`Lenken kan brukes én gang og virker i ${LOGIN_VALID_MINUTES} minutter. ${ignore}`),
         fallbackUrl('Virker ikke knappen? Kopier denne adressen inn i nettleseren:', confirmUrl('recovery')),
-        small(`In English: Min side at NorthWest Coast does not use passwords. Use the button above to sign in. The link can be used once and expires after ${LOGIN_VALID_MINUTES} minutes. If you did not ask for this, you can ignore this email.`),
+        small(`In English: Min side at NorthWestCoast does not use passwords. Use the button above to sign in. The link can be used once and expires after ${LOGIN_VALID_MINUTES} minutes. If you did not ask for this, you can ignore this email.`),
       ],
       reason: html`Du får denne e-posten fordi noen ba om tilgang med adressen {{ .Email }} på ${SITE}.`.value,
       brand,
