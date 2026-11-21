@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { track } from '@/lib/analytics';
-import { siteHref } from '@/lib/site';
+import { LOGIN_VALID_MINUTES, siteHref } from '@/lib/site';
 import { confirmCode } from '@/app/(portal)/auth/confirm/actions';
 
 const FEIL: Record<string, string> = {
@@ -16,10 +16,10 @@ const FEIL: Record<string, string> = {
 /**
  * Adressen det er bedt om lenke for, husket i fanen. Brukes bare til å vise
  * kodefeltet igjen når siden lastes på nytt, så koden kan skrives inn uten å
- * be om en ny e-post. Koden virker i 60 minutter.
+ * be om en ny e-post. Husker ikke lenger enn koden virker.
  */
 const SENT_KEY = 'nwc_innlogging_sendt';
-const SENT_TTL_MS = 60 * 60 * 1000;
+const SENT_TTL_MS = LOGIN_VALID_MINUTES * 60 * 1000;
 
 function rememberSent(email: string | null) {
   try {
@@ -128,7 +128,7 @@ export default function LoginForm() {
         <p>
           Vi har sendt en lenke til <strong>{email}</strong>. Klikk på den for
           å logge inn. Har du ikke konto fra før, opprettes den samtidig.
-          Lenken virker i 60 minutter.
+          Lenken virker i {LOGIN_VALID_MINUTES} minutter.
         </p>
 
         <form onSubmit={handleCode} style={{ marginTop: '1.25rem' }}>

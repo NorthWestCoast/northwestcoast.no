@@ -108,6 +108,14 @@ export const ORG = {
 } as const;
 
 /**
+ * Hvor lenge lenken og koden i en innloggings-e-post virker, i minutter.
+ * Tekstene i e-postene og på innloggingssiden bruker tallet. Selve grensen
+ * settes i Supabase (Authentication → Sign In / Providers → Email → «Email
+ * OTP Expiration», i sekunder) og må endres samtidig.
+ */
+export const LOGIN_VALID_MINUTES = 10;
+
+/**
  * Fargen nettleseren får på adresselinja (themeColor) og manifestets
  * bakgrunn. Samme marineblå som toppen av sidene (--navy i globals.css).
  */
