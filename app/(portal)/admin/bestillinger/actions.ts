@@ -81,7 +81,8 @@ export async function linkOrderCompany(formData: FormData): Promise<ActionResult
       .from('ladders')
       .update({ company_id: company.id })
       .in('id', ladderIds)
-      .is('vessel_id', null);
+      .is('vessel_id', null)
+      .is('project_id', null);
     if (ladderError) return fail(ladderError, 'Bestillingen er knyttet til selskapet, men leiderne ble ikke flyttet.');
   }
 

@@ -20,7 +20,7 @@ export default async function ProfilPage() {
     managed.length
       ? supabase
           .from('companies')
-          .select('id, name, org_number, address, postal_code, city, contact_name, contact_email, contact_phone')
+          .select('id, name, org_number, address, postal_code, city, contact_name, contact_email, contact_phone, verified_at')
           .in('id', managed.map((company) => company.id))
           .order('name')
       : Promise.resolve({ data: [] }),
@@ -79,7 +79,21 @@ export default async function ProfilPage() {
             <input type="hidden" name="company_id" value={company.id} />
             <div className="pt-field">
               <label htmlFor={`company-name-${company.id}`}>Navn på selskapet</label>
-              <input id={`company-name-${company.id}`} name="name" required minLength={2} maxLength={160} defaultValue={company.name} />
+              <input
+                id={`company-name-${company.id}`}
+                name="name"
+                required
+                minLength={2}
+                maxLength={160}
+                defaultValue={company.name}
+                readOnly={Boolean(company.verified_at)}
+                aria-describedby={company.verified_at ? `company-name-hint-${company.id}` : undefined}
+              />
+              {company.verified_at && (
+                <p id={`company-name-hint-${company.id}`} className="pt-hint">
+                  Selskapet er kontrollert av NorthWestCoast. Ta kontakt med oss hvis navnet skal endres.
+                </p>
+              )}
             </div>
             <div className="pt-field">
               <label htmlFor={`company-address-${company.id}`}>Adresse</label>

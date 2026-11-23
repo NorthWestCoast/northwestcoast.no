@@ -205,6 +205,8 @@ export type Database = {
           org_number: string | null
           postal_code: string | null
           updated_at: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           address?: string | null
@@ -219,6 +221,8 @@ export type Database = {
           org_number?: string | null
           postal_code?: string | null
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           address?: string | null
@@ -233,6 +237,8 @@ export type Database = {
           org_number?: string | null
           postal_code?: string | null
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
@@ -2520,6 +2526,7 @@ export type Database = {
       issue_ladder_certificate: { Args: { p_ladder: string; p_service_report?: string; p_valid_until?: string; p_remarks?: string }; Returns: string }
       mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number }
       next_order_number: { Args: never; Returns: string }
+      orphan_maintenance_photos: { Args: never; Returns: unknown[] }
       place_cabinet: { Args: { p_cabinet: string; p_vessel: string; p_project: string; p_installed_at?: string; p_location?: string }; Returns: undefined }
       place_order: { Args: { payload: Json }; Returns: Json }
       portal_bootstrap: { Args: never; Returns: Json }

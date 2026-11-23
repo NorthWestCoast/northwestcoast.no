@@ -115,6 +115,31 @@ export async function updateCompany(formData: FormData): Promise<ActionResult> {
   return ok('Selskapet er oppdatert.');
 }
 
+/**
+ * Merker et selskap som kontrollert (navn og organisasjonsnummer stemmer med
+ * den som registrerte det), eller fjerner merket. Databasen fører hvem som
+ * gjorde det, og låser navn og org.nr. for kunden når selskapet er verifisert.
+ */
+export async function setCompanyVerified(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+
+  const id = uuid(formData.get('company_id'));
+  if (!id) return err('Fant ikke selskapet.');
+  const verified = formData.get('verified') === 'true';
+
+  const { data, error } = await supabase
+    .from('companies')
+    .update({ verified_at: verified ? new Date().toISOString() : null })
+    .eq('id', id)
+    .select('id');
+  if (error) return fail(error);
+  if (!data?.length) return err('Fant ikke selskapet.');
+
+  revalidatePath('/admin/selskap');
+  revalidatePath(`/admin/selskap/${id}`);
+  return ok(verified ? 'Selskapet er merket som verifisert.' : 'Verifiseringen er fjernet.');
+}
+
 // ── Fartøy ─────────────────────────────────────────────────────────────────
 
 export async function createVessel(formData: FormData): Promise<ActionResult> {

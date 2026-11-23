@@ -47,7 +47,7 @@ export default async function BestillingPage({ params }: { params: Promise<{ id:
       .select('id, job_id, shipped_at, delivered_at, carrier, tracking_reference, created_at')
       .eq('order_id', id)
       .order('created_at', { ascending: false }),
-    supabase.from('companies').select('id, name').order('name'),
+    supabase.from('companies').select('id, name, org_number, verified_at').order('name'),
     // Skapet på en linje er lagret som en id uten relasjon; navnet slås opp her.
     supabase.from('products').select('id, name').eq('kind', 'cabinet'),
   ]);
@@ -348,7 +348,11 @@ export default async function BestillingPage({ params }: { params: Promise<{ id:
                 >
                   <option value="" disabled>Velg selskap</option>
                   {companies?.map((company) => (
-                    <option key={company.id} value={company.id}>{company.name}</option>
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                      {company.org_number ? ` (${company.org_number})` : ''}
+                      {company.verified_at ? '' : ' – ikke verifisert'}
+                    </option>
                   ))}
                 </Select>
               </PortalForm>

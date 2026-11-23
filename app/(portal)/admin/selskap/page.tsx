@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/supabase/staff';
-import { Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
+import { Badge, Card, Disclosure, Empty, PageHeader, Td } from '@/components/portal/ui';
 import { PortalForm } from '@/components/portal/forms';
 import { SearchForm } from '@/components/admin/fields';
 import CompanyFields from '@/components/admin/company-fields';
@@ -18,7 +18,7 @@ export default async function SelskapPage({
 
   let query = supabase
     .from('companies')
-    .select('id, name, org_number, city, contact_name, contact_email, contact_phone, vessels(count), ladders(count)')
+    .select('id, name, org_number, city, contact_name, contact_email, contact_phone, verified_at, vessels(count), ladders(count)')
     .order('name')
     .limit(300);
   if (q) query = query.or(anyColumnMatches(['name', 'org_number', 'contact_name', 'contact_email', 'city'], q));
@@ -76,6 +76,7 @@ export default async function SelskapPage({
                 <tr key={company.id}>
                   <Td label="Navn" className="pt-table-strong">
                     <Link href={`/admin/selskap/${company.id}`}>{company.name}</Link>
+                    {!company.verified_at && <> <Badge tone="warn">Ikke verifisert</Badge></>}
                   </Td>
                   <Td label="Org.nr." className="pt-nowrap">{company.org_number ?? '–'}</Td>
                   <Td label="Kontakt">

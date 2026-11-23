@@ -84,6 +84,7 @@ Typene ligger i `lib/supabase/database.types.ts` (generert, `npm run db:types`).
 | `get_ladder_share(p_token)` | alle | henter delt rapport |
 | `submit_contact_request`, `subscribe_newsletter`, `submit_maintenance_report`, `finish_maintenance_report` | alle | skjemaene på nettsiden |
 | `mark_notifications_read(p_ids)` | innlogget | varsler lest |
+| `orphan_maintenance_photos()` | admin | bilder i `maintenance-photos` som ikke hører til noen rapport (eldre enn et døgn) |
 
 ## Lagring
 
@@ -199,6 +200,28 @@ endret hvordan portalen oppfører seg:
   felles grense per skjema, som før.
 - **Ingen passord**: en trigger på `auth.users` tømmer passordfeltet, så
   innlogging med passord aldri virker, heller ikke rett mot Auth-API-et.
+
+## Etter gjennomgangen 23.11.2026
+
+Én migrasjon (`security_hardening_followup`) tok med det som manglet. Testene
+står sist i `supabase/verify/flows.sql`.
+
+- **Medlemmer på fartøy og leidere** settes heller aldri inn direkte. Tilgang
+  kommer bare ved at mottakeren godtar en invitasjon, eller ved at en
+  forespørsel blir godkjent. På et medlemskap kan bare rollen endres.
+- **Verifiserte selskap** (`companies.verified_at`, `verified_by`): en
+  administrator merker et selskap som kontrollert på selskapssiden i admin.
+  Selskap ansatte oppretter, er verifisert med en gang. Kunden kan aldri
+  endre organisasjonsnummeret, og heller ikke navnet når selskapet er
+  verifisert. Velgeren «Knytt til selskap» på en bestilling viser hvilke
+  selskap som ikke er verifisert.
+- **Nyhetene**: besøkende ser ikke `author_id` eller `author_name`.
+- **Bilder fra det åpne vedlikeholdsskjemaet**: høyst 10 per rapport og
+  200 MB per døgn til sammen. Når kvoten er brukt opp, lagres rapporten uten
+  bilder. Filer som aldri ble knyttet til en rapport, vises nederst under
+  Vedlikeholdsrapporter, og bare de kan en administrator slette.
+- **Bestillinger fra nettsiden**: høyst 5 i timen per besøkende når
+  skjemanøkkelen er satt opp (se DEPLOYMENT.md).
 
 ## Lager
 
