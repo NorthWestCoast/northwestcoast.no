@@ -1,12 +1,7 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
-import {
-  ARTICLES,
-  DEFAULT_ARTICLE_IMAGE,
-  localizeArticle,
-  type LocalizedArticle,
-} from './articles';
+import { DEFAULT_ARTICLE_IMAGE, type LocalizedArticle } from './articles';
 import type { Lang } from './i18n';
 import { POSTS_TAG } from './portal/tags';
 import type { Database } from './supabase/database.types';
@@ -20,8 +15,9 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL, noteSupabaseMissing, supabaseConfigure
  * POSTS_TAG. Når et innlegg lagres i admin kalles revalidateTag(POSTS_TAG),
  * og sidene bygges på nytt ved neste besøk – ingen deploy nødvendig.
  *
- * Innleggene som fulgte med nettstedet (lib/articles.ts) flettes inn. De er
- * også reserven: svarer ikke databasen, vises de alene.
+ * Databasen er eneste kilde, så det som slettes i admin forsvinner også fra
+ * nettsiden. Svarer ikke databasen, vises ingen nyheter (forsiden hopper da
+ * over nyhetskortet).
  */
 
 type PostRow = Pick<
@@ -77,7 +73,7 @@ const cached = unstable_cache(
 
 /** Én lesing per forespørsel, også når metadata og side spør hver for seg. */
 const loadPosts = cache(async (): Promise<PostRow[]> => {
-  // Uten Supabase er de faste innleggene det forventede svaret, ikke en feil.
+  // Uten Supabase er ingen nyheter det forventede svaret, ikke en feil.
   if (!supabaseConfigured) {
     noteSupabaseMissing();
     return [];
@@ -85,7 +81,7 @@ const loadPosts = cache(async (): Promise<PostRow[]> => {
   try {
     return await cached();
   } catch (error) {
-    console.error('[posts] Viser bare de faste innleggene:', error instanceof Error ? error.message : error);
+    console.error('[posts] Viser ingen nyheter:', error instanceof Error ? error.message : error);
     return [];
   }
 });
@@ -96,7 +92,7 @@ const filled = (value: string | null | undefined) => (value && value.trim() ? va
 const localized = (lang: Lang, no: string | null, en: string | null) =>
   (lang === 'en' && filled(en)) || filled(no);
 
-/** DD.MM.YYYY i norsk tid, samme format som de faste innleggene. */
+/** DD.MM.YYYY i norsk tid. */
 function formatDate(iso: string): string {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return '';
@@ -155,33 +151,10 @@ function fromRow(row: PostRow, lang: Lang): LocalizedArticle {
   };
 }
 
-/** «30.08.2026» → «2026-08-30», så faste innlegg kan sorteres sammen med de fra databasen. */
-function isoFromDate(date: string): string {
-  const [day, month, year] = date.split('.');
-  return year && month && day ? `${year}-${month}-${day}` : '';
-}
-
-/**
- * Alle publiserte innlegg, nyeste først. Innlegg fra databasen og de faste
- * flettes; finnes samme slug begge steder, gjelder den fra databasen.
- */
+/** Alle publiserte innlegg, nyeste først. */
 export async function getArticles(lang: Lang): Promise<LocalizedArticle[]> {
   const rows = await loadPosts();
-  const taken = new Set(rows.map((row) => row.slug));
-
-  const merged = [
-    ...rows.map((row) => ({ key: row.published_at ?? '', article: fromRow(row, lang) })),
-    ...ARTICLES.filter((article) => !taken.has(article.slug)).map((article) => ({
-      key: isoFromDate(article.date),
-      article: localizeArticle(article, lang),
-    })),
-  ];
-
-  // ISO-tidspunkt sorterer riktig som ren tekst. Sorteringen er stabil, så
-  // rekkefølgen fra databasen beholdes der nøklene er like.
-  return merged
-    .sort((a, b) => (a.key < b.key ? 1 : a.key > b.key ? -1 : 0))
-    .map((entry) => entry.article);
+  return rows.map((row) => fromRow(row, lang));
 }
 
 /** Ett innlegg på slug, eller null når det ikke finnes (eller ikke er publisert). */
