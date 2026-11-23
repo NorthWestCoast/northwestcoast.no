@@ -9,7 +9,7 @@ import { BUCKETS, orphanPhotos } from '@/lib/portal/storage';
 import { isLogKind } from '@/components/minside/util';
 
 /**
- * Vedlikeholdsrapporter som NorthWest Coast legger inn selv: arbeid vi har
+ * Vedlikeholdsrapporter som NorthWestCoast legger inn selv: arbeid vi har
  * utført, eller noe kunden har meldt på telefon eller e-post.
  *
  * Rapporten er en vanlig rad i maintenance_logs med kilde «admin», så kunden

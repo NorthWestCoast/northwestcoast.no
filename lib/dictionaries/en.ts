@@ -16,65 +16,65 @@ export const en: Dict = {
       'lightweight ladder',
       'maritime ladder',
       'Argostep',
-      'NorthWest Coast',
+      'NorthWestCoast',
       'Norwegian Maritime Authority',
       'ISO 799-1:2019',
       'fishing vessel',
       'boarding',
     ],
     home: {
-      title: 'Argostep – lightweight embarkation ladder | NorthWest Coast',
+      title: 'Argostep – lightweight embarkation ladder | NorthWestCoast',
       description:
         'Argostep is a lightweight, modular embarkation and lifeboat ladder in glass-fibre reinforced plastic, from 2 to 15 metres. Approved by the Norwegian Maritime Authority. Made in Norway.',
       // Also printed in the share image (app/og/[lang]/route.tsx): keep it short.
       ogDescription: 'Lightweight, modular ladder for vessels. Certified to ISO 799-1:2019. Made in Norway.',
     },
     produkt: {
-      title: 'Argostep lifeboat ladder – modular, 2–15 m | NorthWest Coast',
+      title: 'Argostep lifeboat ladder – modular, 2–15 m | NorthWestCoast',
       description:
         'The Argostep lifeboat and embarkation ladder in glass-fibre reinforced plastic: modular, lightweight and strong. Certified to ISO 799-1:2019, approved by the Norwegian Maritime Authority. 2 to 15 metres.',
     },
     galleri: {
-      title: 'Pictures of the Argostep ladder in use | NorthWest Coast',
+      title: 'Pictures of the Argostep ladder in use | NorthWestCoast',
       description:
         'See the Argostep lifeboat ladder in pictures – the product, storage cabinets and the ladder in daily use along the Norwegian coast.',
     },
     nyheter: {
-      title: 'News about maritime ladders | NorthWest Coast',
-      description: 'News, cases and regulations for maritime ladders from NorthWest Coast.',
+      title: 'News about maritime ladders | NorthWestCoast',
+      description: 'News, cases and regulations for maritime ladders from NorthWestCoast.',
     },
     vedlikehold: {
-      title: 'Ladder maintenance | NorthWest Coast',
+      title: 'Ladder maintenance | NorthWestCoast',
       description:
         'See how to maintain the Argostep lifeboat ladder and log completed maintenance for your vessel – with an email receipt as documentation.',
     },
     faq: {
-      title: 'Argostep ladder – questions and answers | NorthWest Coast',
+      title: 'Argostep ladder – questions and answers | NorthWestCoast',
       description:
         'Answers to common questions about the Argostep lifeboat ladder: approval, lengths, material, service life, mounting, delivery, spare parts and service.',
     },
     kalkulator: {
-      title: 'Ladder calculator – find the right length | NorthWest Coast',
+      title: 'Ladder calculator – find the right length | NorthWestCoast',
       description:
         'Work out which Argostep lifeboat ladder your vessel needs from freeboard and mounting point – and order the right length directly.',
     },
     bestill: {
-      title: 'Order the Argostep ladder – lengths and prices | NorthWest Coast',
+      title: 'Order the Argostep ladder – lengths and prices | NorthWestCoast',
       description:
         'Order the Argostep lifeboat ladder: choose a length between 2 and 15 metres and a storage cabinet, see the indicative price excl. VAT and view the ladder in 3D as you configure it.',
     },
     omOss: {
-      title: 'About us – maritime ladders from Sunnmøre | NorthWest Coast',
+      title: 'About us – maritime ladders from Sunnmøre | NorthWestCoast',
       description:
-        'NorthWest Coast was founded by three entrepreneurs from Ålesund and develops maritime safety products. The Argostep ladder is made in Sunnmøre, Norway, with components from local suppliers.',
+        'NorthWestCoast was founded by three entrepreneurs from Ålesund and develops maritime safety products. The Argostep ladder is made in Sunnmøre, Norway, with components from local suppliers.',
     },
     produkter: {
-      title: 'Ladders, storage cabinets and spare parts | NorthWest Coast',
+      title: 'Ladders, storage cabinets and spare parts | NorthWestCoast',
       description:
-        'The Argostep embarkation and lifeboat ladder with standard lengths and indicative prices, storage cabinets, spare parts and service from NorthWest Coast.',
+        'The Argostep embarkation and lifeboat ladder with standard lengths and indicative prices, storage cabinets, spare parts and service from NorthWestCoast.',
     },
     leider3d: {
-      title: 'Argostep ladder in 3D – interactive model | NorthWest Coast',
+      title: 'Argostep ladder in 3D – interactive model | NorthWestCoast',
       description:
         'Interactive 3D model of the Argostep ladder. Rotate, zoom and explore it in detail – and view it in AR on your phone.',
     },
@@ -250,6 +250,13 @@ export const en: Dict = {
     back: '← Back to news',
     pageLabel: 'From the blog',
     pageTitle: 'Latest news',
+    slides: {
+      prev: 'Previous image',
+      next: 'Next image',
+      enlarge: 'Show larger image',
+      count: 'Image {n} of {total}',
+      label: 'Images',
+    },
   },
 
   faq: {
@@ -274,44 +281,6 @@ export const en: Dict = {
       certification: 'Certification',
       installation: 'Installation',
       delivery: 'Delivery',
-    },
-    items: {
-      approved: {
-        q: 'Is the ladder approved for Norwegian ships?',
-        a: 'Yes. The Argostep embarkation and lifeboat ladder is tested and certified to ISO 799-1:2019 and approved by the Norwegian Maritime Authority for Norwegian vessels.',
-      },
-      lengths: {
-        q: 'Which lengths are available?',
-        a: 'The Argostep Lifeboat Ladder comes in standard lengths from 2 to 15 metres. Get in touch if you need something else and we will put together a package for you.',
-      },
-      lifetime: {
-        q: 'How long does a ladder last?',
-        a: 'It is designed for a long service life with replaceable components. Storing it in a cabinet from Northwestcoast increases that life considerably.',
-      },
-      mounting: {
-        q: 'How do I mount the ladder?',
-        a: 'Argostep is designed for easy mounting and dismounting without special tools. The ladder is mounted the same way as a traditional ladder.',
-      },
-      delivery: {
-        q: 'What is the delivery time for Argostep?',
-        a: 'Delivery time varies with the specification. Contact us for an exact quote and an estimated delivery time for your vessel.',
-      },
-      material: {
-        q: 'What material is the ladder made of?',
-        a: 'The steps and fittings are injection-moulded glass-fibre reinforced plastic – a material that combines low weight, high strength and excellent corrosion resistance in saltwater environments.',
-      },
-      weight: {
-        q: 'What does a standard Argostep weigh?',
-        a: 'You will find all the weights for the Argostep ladder under Order now.',
-      },
-      selfMount: {
-        q: 'Can I mount the ladder myself?',
-        a: 'Yes, Argostep is built for self-installation. The included mounting instructions and the click coupling system make it possible to mount the ladder without a professional.',
-      },
-      parts: {
-        q: 'Do you offer spare parts and service?',
-        a: 'Yes. One of the main advantages of Argostep is the modular system – individual steps and components can be ordered separately. Contact us for spare parts or a service agreement.',
-      },
     },
   },
 
@@ -382,7 +351,7 @@ export const en: Dict = {
 
   product: {
     answerTitle: 'What is Argostep?',
-    answerBody: 'Argostep is a lightweight, modular embarkation and lifeboat ladder in glass-fibre reinforced plastic from NorthWest Coast. It is tested to ISO 799-1:2019, approved by the Norwegian Maritime Authority for Norwegian vessels under 15 metres, and comes in standard lengths from 2 to 15 metres. Worn steps can be replaced individually, and the ladder is mounted without special tools.',
+    answerBody: 'Argostep is a lightweight, modular embarkation and lifeboat ladder in glass-fibre reinforced plastic from NorthWestCoast. It is tested to ISO 799-1:2019, approved by the Norwegian Maritime Authority for Norwegian vessels under 15 metres, and comes in standard lengths from 2 to 15 metres. Worn steps can be replaced individually, and the ladder is mounted without special tools.',
     lengthTitle: 'Which length does my vessel need?',
     lengthBody: 'The length depends on the freeboard, the height up to the mounting point and how far the ladder must reach below the waterline. Enter your measurements in the ladder calculator to get a recommended length and order it directly.',
     lengthCta: 'Open the ladder calculator →',
@@ -669,7 +638,7 @@ export const en: Dict = {
     sending: 'Sending…',
     successTitle: 'Maintenance logged',
     successBody:
-      'Thank you! The report has been sent to NorthWest Coast. If you entered an email address, you have received a receipt you can use as documentation at inspection.',
+      'Thank you! The report has been sent to NorthWestCoast. If you entered an email address, you have received a receipt you can use as documentation at inspection.',
     tooLarge: (fileName: string) => `The image “${fileName}” is too large (max 5 MB).`,
   },
 
@@ -694,10 +663,10 @@ export const en: Dict = {
 
   about: {
     navLabel: 'About us',
-    label: 'About NorthWest Coast',
+    label: 'About NorthWestCoast',
     title: 'Innovation from Ålesund',
     intro:
-      'NorthWest Coast was founded by three entrepreneurs from Ålesund. With support from local investors and organisations such as Innovation Norway and the Municipality of Ålesund, we have developed a ladder that sets new standards for safety and efficiency.',
+      'NorthWestCoast was founded by three entrepreneurs from Ålesund. With support from local investors and organisations such as Innovation Norway and the Municipality of Ålesund, we have developed a ladder that sets new standards for safety and efficiency.',
     production: {
       label: 'Made in Sunnmøre',
       title: 'Local production',

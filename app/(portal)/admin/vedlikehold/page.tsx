@@ -17,7 +17,7 @@ const COLUMNS = 'id, kind, title, serial_number_raw, vessel_name_raw, imo_raw, r
 const SOURCES: Record<string, string> = {
   web: 'Skjemaet på nettsiden',
   portal: 'Min side',
-  admin: 'Lagt inn av NorthWest Coast',
+  admin: 'Lagt inn av NorthWestCoast',
 };
 
 const LADDER_COLUMNS = 'ladder_id, serial_number, product_name, company_name, vessel_name, project_name';
@@ -39,7 +39,7 @@ function Photos({ photos, urls }: { photos: { storage_path: string; caption: str
 
 /**
  * Vedlikeholdsrapporter: de som kommer fra det åpne skjemaet og fra Min side,
- * og de NorthWest Coast legger inn selv («Ny rapport»).
+ * og de NorthWestCoast legger inn selv («Ny rapport»).
  *
  * Skjemaet på nettsiden tar imot hvilket som helst produksjonsnummer og lagrer
  * råteksten selv når oppslaget bommer, så en innsending aldri går tapt. De som
@@ -103,13 +103,13 @@ export default async function VedlikeholdPage({
     <>
       <PageHeader
         title="Vedlikeholdsrapporter"
-        description="Det mannskapet har loggført, fra skjemaet på nettsiden og fra Min side, og det NorthWest Coast legger inn selv."
+        description="Det mannskapet har loggført, fra skjemaet på nettsiden og fra Min side, og det NorthWestCoast legger inn selv."
       />
 
       <Card
         id="ny"
         title="Ny rapport"
-        description="Vedlikehold NorthWest Coast har utført, eller noe kunden har meldt på telefon eller e-post. Kunden ser rapporten i historikken til leideren."
+        description="Vedlikehold NorthWestCoast har utført, eller noe kunden har meldt på telefon eller e-post. Kunden ser rapporten i historikken til leideren."
         flush
       >
         {selected?.ladder_id ? (

@@ -6,7 +6,7 @@ import { pageMetadata, SITE_URL } from '@/lib/site';
 const base = pageMetadata({
   title: 'Personvernerklæring',
   description:
-    'Hvilke personopplysninger NorthWest Coast behandler, hvorfor, hvor lenge de lagres og hvilke rettigheter du har.',
+    'Hvilke personopplysninger NorthWestCoast behandler, hvorfor, hvor lenge de lagres og hvilke rettigheter du har.',
   path: '/personvern',
 });
 

@@ -111,7 +111,7 @@ export default async function ProsjekterPage() {
         <p className="pt-hint">
           Bare eiere og administratorer i et selskap kan opprette prosjekter.
           {ctx.staffRole === 'admin' && (
-            <> Som administrator i NorthWest Coast oppretter du prosjekter for kunder under{' '}
+            <> Som administrator i NorthWestCoast oppretter du prosjekter for kunder under{' '}
               <Link href="/admin/prosjekter">Admin</Link>.</>
           )}
         </p>

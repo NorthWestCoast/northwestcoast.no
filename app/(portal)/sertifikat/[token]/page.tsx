@@ -100,7 +100,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="pt">
       <div className="pt-public">
         <div className="pt-public-brand">
-          <strong>NorthWest Coast</strong>
+          <strong>NorthWestCoast</strong>
           <span className="pt-hint">Argostep · {CERTIFICATE_NAME_LOWER}</span>
         </div>
         {children}

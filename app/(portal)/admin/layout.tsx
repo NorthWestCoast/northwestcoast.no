@@ -14,7 +14,9 @@ export const dynamic = 'force-dynamic';
 /** Det medierollen styrer. Samme punkter står under «Innhold» for administratorer. */
 const MEDIA_ITEMS: NavGroup['items'] = [
   { href: '/admin/nyheter', label: 'Nyheter', icon: 'news' },
+  { href: '/admin/bibliotek', label: 'Bibliotek', icon: 'library' },
   { href: '/admin/galleri', label: 'Galleri', icon: 'gallery' },
+  { href: '/admin/faq', label: 'Spørsmål og svar', icon: 'faq' },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -23,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // man går fra side til side, og RLS stopper uansett det rollen ikke får se.
   const { supabase, ctx } = await requireMedia('/admin');
 
-  // Media får bare nyheter og galleri. Tellingene under gjelder bestillinger,
+  // Media får bare nyheter, biblioteket, galleriet og spørsmålene. Tellingene under gjelder bestillinger,
   // saker og tilgang, som rollen ikke har innsyn i, så de hentes ikke.
   if (ctx.staffRole !== 'admin') {
     return (

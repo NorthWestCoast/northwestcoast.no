@@ -10,7 +10,7 @@ import { createInvitation } from '@/lib/portal/invite';
 import { readVessel, vesselError } from '@/components/portal/vessel-values';
 
 /** Vises når IMO-nummeret alt står på et annet fartøy. */
-const IMO_TAKEN = 'Ta kontakt med NorthWest Coast hvis det er ditt.';
+const IMO_TAKEN = 'Ta kontakt med NorthWestCoast hvis det er ditt.';
 
 function refresh() {
   revalidatePath('/minside', 'layout');

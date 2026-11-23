@@ -114,7 +114,7 @@ export default function Nav() {
         <Link className="nav-logo" href={site('/')}>
           <Image
             src="/images/logo/NY-logo.png"
-            alt="NorthWest Coast"
+            alt="NorthWestCoast"
             width={140}
             height={42}
             priority

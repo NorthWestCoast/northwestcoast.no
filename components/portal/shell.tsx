@@ -50,7 +50,7 @@ export default function PortalShell({
     .flatMap((key) => areas[key] ?? []);
 
   const role = ctx.staffRole
-    ? `${staffRoleLabel(ctx.staffRole).label}, NorthWest Coast`
+    ? `${staffRoleLabel(ctx.staffRole).label}, NorthWestCoast`
     : ctx.companies.map((c) => c.name).join(', ') || 'Ingen selskap ennå';
 
   return (

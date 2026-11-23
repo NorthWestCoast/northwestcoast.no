@@ -2945,6 +2945,112 @@ footer {
   border-top: 1px solid rgba(10, 22, 40, 0.1);
 }
 
+/* Lysbildeshow fra en bildeblokk i et innlegg (components/post-slideshow.tsx). */
+.post-slides {
+  margin: 2rem 0 2.25rem;
+}
+
+.post-slides-frame {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: var(--navy);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.post-slide {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: zoom-in;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.post-slide[data-active='true'] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s ease;
+}
+
+.post-slides-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: rgba(10, 22, 40, 0.72);
+  color: #fff;
+  cursor: pointer;
+}
+
+.post-slides-nav:hover { background: var(--navy); }
+.post-slides-nav[data-dir='prev'] { left: 0.75rem; }
+.post-slides-nav[data-dir='next'] { right: 0.75rem; }
+
+.post-slides-nav:focus-visible,
+.post-slide:focus-visible,
+.post-slides-thumbs button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.post-slides-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-top: 0.6rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #3a4a5c;
+}
+
+.post-slides-count {
+  flex-shrink: 0;
+  font-family: var(--font-dm-mono), 'DM Mono', monospace;
+  font-size: 0.78rem;
+  color: rgba(10, 22, 40, 0.55);
+}
+
+.post-slides-thumbs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  overflow-x: auto;
+  padding: 2px;
+}
+
+.post-slides-thumbs button {
+  position: relative;
+  flex: 0 0 4.5rem;
+  aspect-ratio: 3 / 2;
+  border: 0;
+  padding: 0;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--sand);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+
+.post-slides-thumbs button:hover { opacity: 0.85; }
+
+.post-slides-thumbs button[aria-current='true'] {
+  opacity: 1;
+  outline: 2px solid var(--navy);
+  outline-offset: -2px;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 960px) {
   nav { padding: 1rem 1.5rem; }

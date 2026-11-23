@@ -282,15 +282,44 @@ Rekkefølgen er avhengighetsstyrt – hvert steg låser opp det neste.
   `products` og vedlikeholdes i **`/admin/priser`**. Ordresummen regnes ut av
   `place_order()` i databasen, aldri av det klienten sender.
 - Nyhetene leses fra `posts` og skrives i **`/admin/nyheter`**. Nye innlegg
-  får sin egen side første gang noen åpner den.
+  får sin egen side første gang noen åpner den. Databasen er eneste kilde:
+  svarer den ikke, vises ingen nyheter.
+- Tekstformatet for innleggene står i `lib/post-markdown.ts` (testes med
+  `npm run test:posts`). Bilder i en bildeblokk (`:::bilder` … `:::`) vises
+  som lysbildeshow. I admin kan media laste ned en mal og en veiledning for
+  AI, importere en ferdig .md-fil med bildene, og forhåndsvise innlegget før
+  det lagres. Bilder som ikke er lastet opp, stopper lagringen.
+- Bildebiblioteket (**`/admin/bibliotek`**, tabellen `media_library`) er
+  felles for nyhetene. Alle bilder som lastes opp til nyhetene (på
+  bibliotekssiden, med «Legg til bilder», som forsidebilde eller med
+  .md-importen) havner i mappa `bibliotek/` og i lista, og velges med
+  «Legg til bilder» og «Velg fra biblioteket» i skjemaet. Beskrivelsen på
+  norsk og engelsk blir bildeteksten. Bilder som brukes i et innlegg, kan
+  ikke slettes.
+- Hver lagring av et innlegg blir en versjon (`post_revisions`, skrevet av
+  en trigger i databasen). Under «Versjoner» på innlegget kan en eldre
+  versjon vises og hentes tilbake (`restore_post_revision`); et slettet
+  innlegg hentes tilbake som kladd under «Slettede innlegg» på nyhetslista.
+- Nyhetsskjemaet lagres automatisk mens man skriver, i en kopi per person
+  (`post_autosaves`). Det publiserte innlegget endres først når man trykker
+  Lagre. Åpnes innlegget igjen med ulagrede endringer, tilbys de hentet inn.
+- Spørsmål og svar (`/faq`, de fire første på forsiden, strukturert data og
+  `llms-full.txt`) leses fra `faq_items` og redigeres i **`/admin/faq`**.
+  Databasen er eneste kilde, som for nyhetene.
+- Søk og AI: nyhetssidene har `datePublished`, `dateModified` (sist lagret)
+  og alle bildene i den strukturerte dataen, sitemapet har siste endring og
+  bildene per innlegg, og `llms.txt`/`llms-full.txt` har de siste nyhetene.
+  Merkenavnet skrives «NorthWestCoast»; «NorthWest Coast» står som
+  `alternateName` i organisasjonsdataen (`lib/seo.ts`).
 - Begge mellomlagres i inntil en time og nullstilles når admin lagrer
   (`revalidateTag('catalog')` og `revalidateTag('posts')`).
-- `lib/pricing.ts` og `lib/articles.ts` er bare RESERVE hvis databasen ikke
-  svarer. Ikke endre priser eller skriv nyheter der. Reserveprislista kan ikke
-  bestilles fra: uten databasen avviser `/api/order` bestillingen med beskjed
-  om å ringe.
-- Forsidebilder til nyheter ligger i bøtta `public-media`. `next.config.mjs`
-  slipper bare `*.supabase.co/storage/v1/object/public/**` gjennom
+- `lib/pricing.ts` er bare RESERVE hvis databasen ikke svarer. Ikke endre
+  priser der. Reserveprislista kan ikke bestilles fra: uten databasen avviser
+  `/api/order` bestillingen med beskjed om å ringe.
+- Bilder til nyheter ligger i bøtta `public-media` (mappa `bibliotek/`, og
+  `posts/` for bilder fra før biblioteket) eller i
+  `/public/images`. Andre nettsteder godtas ikke. `next.config.mjs` slipper
+  bare `*.supabase.co/storage/v1/object/public/**` gjennom
   bildeoptimaliseringen.
 
 ## 9. Kjent status på prosjektet

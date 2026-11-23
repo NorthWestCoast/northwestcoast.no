@@ -1,5 +1,8 @@
-import { FAQ_ITEMS } from './faq-items';
-import { getDict, localePath, SITE_NAME, SITE_URL, type Lang } from './i18n';
+import type { LocalizedArticle } from './articles';
+import { getFaq, type FaqEntry } from './faq';
+import { getDict, LANGS, localePath, SITE_NAME, SITE_URL, type Lang } from './i18n';
+import { parseBody } from './post-markdown';
+import { getArticles } from './posts';
 import type { PriceTable } from './pricing';
 import { ORG } from './site';
 
@@ -7,10 +10,42 @@ import { ORG } from './site';
  * Teksten til /llms.txt og /llms-full.txt: en oversikt AI-assistenter kan
  * lese og sitere (llmstxt.org).
  *
- * Alt innhold hentes fra ordbøkene, FAQ-en, prislista og lib/site.ts, altså
- * den samme teksten som står på sidene. Ikke skriv nye påstander her: endres
- * en opplysning, endres den i ordboken, og da følger disse filene med.
+ * Alt innhold hentes fra ordbøkene, prislista, lib/site.ts og databasen
+ * (spørsmål og svar, nyheter), altså den samme teksten som står på sidene.
+ * Ikke skriv nye påstander her: endres en opplysning, endres den i ordboken
+ * eller i admin, og da følger disse filene med.
  */
+
+/** Det som skrives i admin: nyhetene og spørsmålene, på begge språk. */
+export type LlmsContent = {
+  news: Record<Lang, LocalizedArticle[]>;
+  faq: Record<Lang, FaqEntry[]>;
+};
+
+/** Så mange nyheter som tas med i oversikten og i fulltekstfila. */
+const NEWS_IN_LIST = 10;
+const NEWS_IN_FULL = 20;
+
+/** «2026-08-30» fra publiseringstidspunktet, eller den norske datoen slik den står. */
+const newsDate = (a: LocalizedArticle) => (a.publishedAt ? a.publishedAt.slice(0, 10) : a.date);
+
+/** Én linje per nyhet: tittel med lenke, dato og ingress. */
+function newsLines(lang: Lang, news: LocalizedArticle[]): string[] {
+  return news
+    .slice(0, NEWS_IN_LIST)
+    .map((a) => `- [${a.title}](${abs(lang, `/nyheter/${a.slug}`)}) (${newsDate(a)}): ${a.excerpt}`);
+}
+
+/** Brødteksten som ren markdown under en `####`-overskrift. Bildeblokkene blir bildetekstene. */
+function newsBody(body: string): string[] {
+  return parseBody(body).flatMap((block) => {
+    if (block.kind === 'heading') return [`**${block.text}**`, ''];
+    if (block.kind === 'paragraph') return [block.lines.join(' '), ''];
+    if (block.kind === 'list') return [...block.items.map((item) => `- ${item}`), ''];
+    const captions = block.images.map((image) => image.caption).filter(Boolean);
+    return captions.length ? [`(${captions.join(' · ')})`, ''] : [];
+  });
+}
 
 const abs = (lang: Lang, path: string) => `${SITE_URL}${localePath(lang, path)}`;
 
@@ -113,7 +148,7 @@ function pageLinks(lang: Lang): string[] {
 }
 
 /** /llms.txt: kort oversikt med lenker. Engelsk først, norsk under. */
-export function llmsTxt(table: PriceTable): string {
+export function llmsTxt(table: PriceTable, content: LlmsContent): string {
   const no = getDict('no');
   const en = getDict('en');
   const { min, max } = lengthRange(table);
@@ -164,20 +199,22 @@ export function llmsTxt(table: PriceTable): string {
     '',
     ...pageLinks('no'),
     '',
+    ...(content.news.en.length ? ['## News', '', ...newsLines('en', content.news.en), ''] : []),
+    ...(content.news.no.length ? ['## Nyheter', '', ...newsLines('no', content.news.no), ''] : []),
     `## ${L.en.contact}`,
     '',
     ...contactLines('en'),
     '',
     '## Optional',
     '',
-    `- [llms-full.txt](${SITE_URL}/llms-full.txt): the full text behind this overview in Norwegian and English – product description, specifications, prices, storage cabinets, all questions and answers, and the company`,
+    `- [llms-full.txt](${SITE_URL}/llms-full.txt): the full text behind this overview in Norwegian and English – product description, specifications, prices, storage cabinets, all questions and answers, news, and the company`,
     `- [Sitemap](${SITE_URL}/sitemap.xml)`,
     '',
   ].join('\n');
 }
 
 /** Hele innholdet på ett språk, som markdown under en `##`-overskrift. */
-function fullSection(lang: Lang, table: PriceTable): string[] {
+function fullSection(lang: Lang, table: PriceTable, content: LlmsContent): string[] {
   const t = getDict(lang);
   const l = L[lang];
   const { min, max } = lengthRange(table);
@@ -256,7 +293,21 @@ function fullSection(lang: Lang, table: PriceTable): string[] {
     '',
     `### ${t.faq.title}`,
     '',
-    ...FAQ_ITEMS.flatMap(({ key }) => [`**${t.faq.items[key].q}**`, '', t.faq.items[key].a, '']),
+    ...content.faq[lang].flatMap((item) => [`**${item.q}**`, '', item.a, '']),
+    ...(content.news[lang].length
+      ? [
+          `### ${t.nav.nyheter}`,
+          '',
+          ...content.news[lang].slice(0, NEWS_IN_FULL).flatMap((a) => [
+            `#### ${a.title}`,
+            '',
+            `${newsDate(a)} · ${abs(lang, `/nyheter/${a.slug}`)}`,
+            '',
+            ...(a.excerpt ? [a.excerpt, ''] : []),
+            ...newsBody(a.body),
+          ]),
+        ]
+      : []),
     `### ${t.about.label}`,
     '',
     t.about.intro,
@@ -275,16 +326,28 @@ function fullSection(lang: Lang, table: PriceTable): string[] {
 }
 
 /** /llms-full.txt: all teksten bak oversikten, på norsk og engelsk. */
-export function llmsFullTxt(table: PriceTable): string {
+export function llmsFullTxt(table: PriceTable, content: LlmsContent): string {
   const en = getDict('en');
   return [
     `# ${SITE_NAME} – Argostep (full text)`,
     '',
     `> ${en.product.answerBody}`,
     '',
-    `This file holds the text of ${SITE_URL} in Norwegian and English: what the product is, specifications, lengths and indicative prices, storage cabinets, how to order, all questions and answers, and who makes it. The short overview with links is at ${SITE_URL}/llms.txt.`,
+    `This file holds the text of ${SITE_URL} in Norwegian and English: what the product is, specifications, lengths and indicative prices, storage cabinets, how to order, all questions and answers, the latest news, and who makes it. The short overview with links is at ${SITE_URL}/llms.txt.`,
     '',
-    ...fullSection('no', table),
-    ...fullSection('en', table),
+    ...fullSection('no', table, content),
+    ...fullSection('en', table, content),
   ].join('\n');
+}
+
+/** Nyhetene og spørsmålene på begge språk, til llms.txt og llms-full.txt. */
+export async function getLlmsContent(): Promise<LlmsContent> {
+  const entries = await Promise.all(
+    LANGS.map(async (lang) => [lang, { news: await getArticles(lang), faq: await getFaq(lang) }] as const),
+  );
+  const byLang = Object.fromEntries(entries) as Record<Lang, { news: LocalizedArticle[]; faq: FaqEntry[] }>;
+  return {
+    news: { no: byLang.no.news, en: byLang.en.news },
+    faq: { no: byLang.no.faq, en: byLang.en.faq },
+  };
 }

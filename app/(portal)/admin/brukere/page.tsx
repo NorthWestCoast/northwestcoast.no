@@ -109,7 +109,7 @@ export default async function BrukerePage({
                     <Td label="Navn" className="pt-table-strong">
                       <span>
                         {profile.full_name ?? 'Uten navn'}
-                        {staffRole && <> <Badge tone="info">NorthWest Coast: {staffRoleLabel(staffRole).label}</Badge></>}
+                        {staffRole && <> <Badge tone="info">NorthWestCoast: {staffRoleLabel(staffRole).label}</Badge></>}
                       </span>
                     </Td>
                     <Td label="E-post">{profile.email}</Td>

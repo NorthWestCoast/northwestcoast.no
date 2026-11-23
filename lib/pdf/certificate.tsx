@@ -5,7 +5,7 @@ import { ORG } from '@/lib/site';
 /**
  * Servicesertifikatet som PDF.
  *
- * Dokumentet sier det det kan stå inne for, og ikke mer: at NorthWest Coast
+ * Dokumentet sier det det kan stå inne for, og ikke mer: at NorthWestCoast
  * har utført service på leideren, når, og med hvilket resultat. Det er ikke
  * en godkjenning fra myndighetene, og det viser ikke til standarder.
  *

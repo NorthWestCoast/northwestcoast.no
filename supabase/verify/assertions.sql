@@ -23,8 +23,8 @@ begin
     raise exception E'Regel 1 brutt - farlige tabellrettigheter:\n%', bad;
   end if;
 
-  -- 2) anon skal bare kunne lese produktkatalogen, nyhetene og galleriet (RLS
-  --    slipper bare publiserte innlegg og bilder gjennom). Alt annet går
+  -- 2) anon skal bare kunne lese produktkatalogen, nyhetene, galleriet og
+  --    spørsmålene og svarene (RLS slipper bare det publiserte gjennom). Alt annet går
   --    gjennom innlogget bruker eller en av funksjonene i regel 4.
   select string_agg(format('%s: anon har %s', c.relname, p.priv), E'\n' order by c.relname)
     into bad
@@ -33,7 +33,7 @@ begin
   where c.relnamespace = 'public'::regnamespace
     and c.relkind in ('r', 'v')
     and has_table_privilege('anon', c.oid, p.priv)
-    and not (c.relname in ('products', 'posts', 'gallery_images') and p.priv = 'SELECT');
+    and not (c.relname in ('products', 'posts', 'gallery_images', 'faq_items') and p.priv = 'SELECT');
   if bad is not null then
     raise exception E'Regel 2 brutt - anon har for mye tilgang:\n%', bad;
   end if;

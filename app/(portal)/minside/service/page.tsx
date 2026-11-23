@@ -45,7 +45,7 @@ export default async function ServicePage() {
     <>
       <PageHeader
         title="Service"
-        description="Fagmessig service utføres av NorthWest Coast. Bestill i god tid før fristen."
+        description="Fagmessig service utføres av NorthWestCoast. Bestill i god tid før fristen."
       />
 
       <Card title="Forfaller snart eller er forfalt" flush>
@@ -87,7 +87,7 @@ export default async function ServicePage() {
 
       <Card
         title="Bestill service"
-        description="NorthWest Coast tar kontakt for å avtale tidspunkt og sted."
+        description="NorthWestCoast tar kontakt for å avtale tidspunkt og sted."
       >
         {bookable.length > 0 ? (
           <ServiceRequestForm action={requestService} ladders={bookable} minDate={idag()} />

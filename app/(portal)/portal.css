@@ -161,14 +161,33 @@
   width: fit-content;
 }
 .pt-nav { display: flex; flex-direction: column; padding: 0 0.6rem; gap: 2px; }
+.pt-nav-section, .pt-nav-items { display: flex; flex-direction: column; gap: 2px; }
+.pt-nav-items[hidden] { display: none; }
+/* Gruppetittelen er en knapp som legger gruppen sammen (components/portal/nav.tsx). */
 .pt-nav-group {
-  margin: 0.9rem 0.5rem 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0.6rem 0 0.1rem;
+  padding: 0.3rem 0.5rem;
+  border: 0;
+  border-radius: var(--pt-radius);
+  background: none;
   font-family: var(--font-dm-mono), monospace;
   font-size: 0.64rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  text-align: left;
   color: rgba(255, 255, 255, 0.42);
+  cursor: pointer;
 }
+.pt-nav-group:hover { color: rgba(255, 255, 255, 0.75); }
+.pt-nav-group:focus-visible { outline: 2px solid #2ecc71; outline-offset: 1px; }
+.pt-nav-group .pt-nav-count { margin-left: auto; letter-spacing: 0; font-family: inherit; }
+.pt-nav-chevron { flex: none; margin-left: auto; transition: transform 0.15s; }
+.pt-nav-group .pt-nav-count + .pt-nav-chevron { margin-left: 0; }
+.pt-nav-group[aria-expanded='false'] .pt-nav-chevron { transform: rotate(-90deg); }
 .pt-nav a {
   display: flex;
   align-items: center;
@@ -784,3 +803,261 @@ a.pt-stat:hover { border-color: var(--pt-ink); }
    stå på linje, ikke strekkes for å fylle høyden til naboen. */
 .pt-form-row > .pt-combo { align-content: start; }
 /* ── Slutt: Prosjekter, oppbevaringsskap og registeroppslag ── */
+
+/* ── Nyhetsinnlegg: bilder, forhåndsvisning og .md-import ── */
+.pt-post-images {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  background: var(--pt-sunken);
+}
+.pt-post-images-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.pt-post-images-list { display: grid; gap: 0.5rem; list-style: none; margin: 0; padding: 0; }
+.pt-post-images-list li {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+.pt-post-images-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border: 1px solid var(--pt-line);
+  border-radius: 2px;
+  background: var(--pt-surface);
+  font-size: 0.7rem;
+  color: var(--pt-red);
+  text-align: center;
+}
+.pt-post-images-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pt-post-images-tools { display: flex; gap: 0.3rem; }
+@media (max-width: 640px) {
+  .pt-post-images-list li { grid-template-columns: 64px minmax(0, 1fr); }
+  .pt-post-images-tools { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+.pt-post-steps { list-style: decimal; margin: 0.2rem 0 0.4rem 1.2rem; display: grid; gap: 0.3rem; font-size: 0.9rem; color: var(--pt-muted); }
+.pt-post-preview-notes {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.8rem 0.6rem 1.8rem;
+  border: 1px solid #ecd9ad;
+  border-radius: var(--pt-radius);
+  background: var(--pt-amber-bg);
+  color: var(--pt-amber);
+  font-size: 0.86rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.pt-post-preview { display: grid; gap: 0.75rem; min-width: 0; }
+.pt-post-preview-lang { display: inline-flex; border: 1px solid var(--pt-line-strong); border-radius: var(--pt-radius); overflow: hidden; }
+.pt-post-preview-lang button {
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  color: var(--pt-muted);
+}
+.pt-post-preview-lang button + button { border-left: 1px solid var(--pt-line-strong); }
+.pt-post-preview-lang button[aria-pressed='true'] { background: var(--pt-navy); color: #fff; }
+/* Nettsidens egne stiler (globals.css); bare høyden på toppbildet er mindre her. */
+.pt-post-preview-page {
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  overflow: hidden;
+}
+.pt-post-preview-page .article-hero { height: 320px; min-height: 0; }
+/* «.pt h1» i portalen gjør overskriftene mørke; på toppbildet skal tittelen være hvit som på nettsiden. */
+.pt-post-preview-page .article-hero-content h1 { color: #fff; }
+.pt-post-preview-page .article-hero-content { padding: 2rem; }
+.pt-post-preview-page .article-section { padding: 2.5rem 1.5rem 3rem; }
+/* ── Slutt: Nyhetsinnlegg ── */
+
+/* ── Bildebiblioteket og velgeren ── */
+.pt-library-drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px dashed var(--pt-line-strong);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface);
+}
+.pt-library-drop > div { display: grid; gap: 0.2rem; max-width: 60ch; }
+.pt-library-drop[data-over] { border-color: var(--pt-navy); background: var(--pt-blue-bg); }
+
+.pt-library-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+.pt-library-toolbar .pt-input { flex: 1 1 240px; max-width: 420px; }
+
+.pt-library-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: var(--pt-sunken);
+}
+.pt-library-missing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--pt-red);
+}
+.pt-library-meta { margin: 0; font-size: 0.75rem; color: var(--pt-faint); display: grid; gap: 0.1rem; min-width: 0; }
+.pt-library-file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Sida /admin/bibliotek */
+.pt-library-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pt-library-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface);
+}
+.pt-library-card-body { display: grid; align-content: start; gap: 0.6rem; padding: 0.75rem; min-width: 0; }
+.pt-library-card-form { display: grid; gap: 0.3rem; }
+.pt-library-card-form textarea { resize: vertical; min-height: 3.2rem; }
+.pt-library-card-form .pt-actions { margin-top: 0.2rem; align-items: center; }
+.pt-library-uses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin: 0;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--pt-line);
+  font-size: 0.82rem;
+}
+
+/* Velgeren (dialog) i nyhetsskjemaet */
+.pt-library-dialog {
+  /* Nullstillingen i globals.css tar bort margin: auto, som midtstiller en dialog. */
+  margin: auto;
+  width: min(980px, calc(100vw - 2rem));
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--pt-line-strong);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface);
+  color: var(--pt-ink);
+}
+.pt-library-dialog::backdrop { background: rgb(10 22 40 / 0.5); }
+.pt-library-dialog-inner {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  max-height: calc(100dvh - 2rem);
+}
+.pt-library-dialog-head,
+.pt-library-dialog-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+}
+.pt-library-dialog-head { border-bottom: 1px solid var(--pt-line); }
+.pt-library-dialog-head h2 { margin: 0; font-size: 1.05rem; }
+.pt-library-dialog-foot { border-top: 1px solid var(--pt-line); background: var(--pt-sunken); }
+.pt-library-dialog .pt-library-toolbar { padding: 0.8rem 1rem 0; }
+.pt-library-dialog-body { overflow-y: auto; padding: 0.8rem 1rem 1rem; display: grid; align-content: start; gap: 0.6rem; }
+
+.pt-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.7rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pt-library-item {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  height: 100%;
+  align-content: start;
+  padding: 0.35rem;
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pt-library-item:hover { border-color: var(--pt-line-strong); }
+.pt-library-item[aria-pressed='true'] { border-color: var(--pt-navy); box-shadow: inset 0 0 0 1px var(--pt-navy); background: var(--pt-sunken); }
+.pt-library-badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  background: var(--pt-navy);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.pt-library-caption {
+  font-size: 0.8rem;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.pt-library-caption[data-missing] { color: var(--pt-amber); }
+.pt-library-item .pt-library-meta { display: block; }
+@media (max-width: 640px) {
+  .pt-library-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pt-library-dialog { width: 100vw; max-height: 100dvh; margin: 0; }
+  .pt-library-dialog-inner { max-height: 100dvh; }
+}
+/* ── Slutt: Bildebiblioteket ── */
+
+/* ── Automatisk lagring av nyhetsskjemaet ── */
+/* Kroken står nederst i skjemaet; tilbudet om å hente inn endringer flyttes øverst. */
+.pt-autosave { display: contents; }
+.pt-autosave-offer { order: -1; margin-bottom: 0; }
+.pt-autosave-status { margin: 0; }
+.pt-autosave-status[data-state='error'] { color: var(--pt-red); }
+
+/* ── Spørsmål og svar (admin) ── */
+.pt-faq-answer {
+  display: -webkit-box;
+  margin-top: 0.2rem;
+  font-weight: 400;
+  font-size: 0.85rem;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

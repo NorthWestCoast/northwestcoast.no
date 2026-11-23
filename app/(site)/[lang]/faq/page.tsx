@@ -5,6 +5,7 @@ import Nav from '@/components/nav';
 import Footer from '@/components/footer';
 import FaqPageContent from '@/components/faq-page';
 import { DEFAULT_LANG, getDict, isLang, pageMetadata } from '@/lib/i18n';
+import { getFaq } from '@/lib/faq';
 
 export async function generateMetadata({
   params,
@@ -23,10 +24,16 @@ export default async function FaqPage({
   const { lang } = await params;
   const l = isLang(lang) ? lang : DEFAULT_LANG;
   const t = getDict(l);
+  const faq = await getFaq(l);
 
   return (
     <>
-      <JsonLd data={[faqLd(l), breadcrumbLd(l, [{ name: t.nav.faq, path: '/faq' }])]} />
+      <JsonLd
+        data={[
+          ...(faq.length ? [faqLd(l, faq)] : []),
+          breadcrumbLd(l, [{ name: t.nav.faq, path: '/faq' }]),
+        ]}
+      />
 
       <Nav />
 
@@ -36,7 +43,7 @@ export default async function FaqPage({
         <p>{t.faq.pageSub}</p>
       </div>
 
-      <FaqPageContent />
+      <FaqPageContent items={faq} />
 
       <Footer />
     </>

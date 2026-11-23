@@ -45,15 +45,15 @@ export const metadata: Metadata = {
   // ikke har eget vertsnavn.
   metadataBase: new URL(PORTAL_URL),
   title: {
-    default: 'NorthWest Coast – Argostep leider til båt',
-    template: '%s | NorthWest Coast',
+    default: 'NorthWestCoast – Argostep leider til båt',
+    template: '%s | NorthWestCoast',
   },
   description: no.meta.home.description,
-  applicationName: 'NorthWest Coast',
+  applicationName: 'NorthWestCoast',
   openGraph: {
-    title: 'NorthWest Coast – Argostep leider til båt',
+    title: 'NorthWestCoast – Argostep leider til båt',
     description: no.meta.home.ogDescription,
-    siteName: 'NorthWest Coast',
+    siteName: 'NorthWestCoast',
     locale: 'nb_NO',
     type: 'website',
     // Delingsbildet lages på nettstedet, ikke på portalens vertsnavn.

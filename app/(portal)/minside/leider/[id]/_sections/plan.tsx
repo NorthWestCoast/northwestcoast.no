@@ -86,7 +86,7 @@ export default async function Plan({ supabase, ctx, ladder, canManage }: Section
                       ].filter(Boolean).join(' · ')}
                     </div>
                     {booking.notes && <div className="pt-list-sub">Kommentar: {booking.notes}</div>}
-                    {booking.staff_note && <div className="pt-list-sub">Fra NorthWest Coast: {booking.staff_note}</div>}
+                    {booking.staff_note && <div className="pt-list-sub">Fra NorthWestCoast: {booking.staff_note}</div>}
                   </div>
                   <div className="pt-list-side">
                     <Badge tone={status.tone}>{status.label}</Badge>
@@ -115,7 +115,7 @@ export default async function Plan({ supabase, ctx, ladder, canManage }: Section
         description={
           hasOpenBooking
             ? 'Det ligger allerede en bestilling som venter på bekreftelse. Avbestill den først hvis du vil endre.'
-            : 'NorthWest Coast tar kontakt for å avtale tidspunkt og sted.'
+            : 'NorthWestCoast tar kontakt for å avtale tidspunkt og sted.'
         }
       >
         {!hasOpenBooking && (

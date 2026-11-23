@@ -66,7 +66,7 @@ export function buildAlternates(pathname: string) {
 }
 
 /** Navnet nettstedet går under i delingskort og strukturerte data. */
-export const SITE_NAME = 'NorthWest Coast';
+export const SITE_NAME = 'NorthWestCoast';
 
 /** Delingsbildet (1200×630) som app/og/[lang]/route.tsx tegner. */
 export function ogImage(lang: Lang) {

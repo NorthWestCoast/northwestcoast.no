@@ -19,7 +19,7 @@ type Props = {
 };
 
 /**
- * Vedlikeholdsrapport lagt inn av NorthWest Coast, med bilder.
+ * Vedlikeholdsrapport lagt inn av NorthWestCoast, med bilder.
  *
  * Rapporten lagres først, så lastes bildene opp i mappen med rapportens id.
  * Feiler bildene, sier skjemaet det og låser feltene: «Prøv igjen» gjelder

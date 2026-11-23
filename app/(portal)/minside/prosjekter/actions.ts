@@ -10,7 +10,7 @@ import { readProject } from '@/components/portal/project-values';
  * Prosjekter: steder og oppdrag som ikke er et fartøy (kai, anlegg på land).
  *
  * RLS avgjør hvem som får opprette og endre: eiere og administratorer i
- * selskapet, og administratorer i NorthWest Coast. Et prosjekt slettes ikke;
+ * selskapet, og administratorer i NorthWestCoast. Et prosjekt slettes ikke;
  * det avsluttes.
  */
 

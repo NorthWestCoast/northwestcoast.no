@@ -26,7 +26,7 @@ export default function Footer() {
         <div className="fbrand">
           <Image
             src="/images/logo/NY-logo.png"
-            alt="NorthWest Coast"
+            alt="NorthWestCoast"
             width={140}
             height={42}
           />

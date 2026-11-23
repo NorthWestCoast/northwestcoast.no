@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Nav from '@/components/nav';
 import Footer from '@/components/footer';
+import Lightbox from '@/components/lightbox';
 import PostBody from '@/components/post-body';
 import { canOptimizeImage } from '@/lib/articles';
 import { getArticle, getArticles } from '@/lib/posts';
@@ -15,6 +16,7 @@ import {
   getDict,
   isLang,
   localePath,
+  SITE_NAME,
   SITE_URL,
 } from '@/lib/i18n';
 
@@ -46,7 +48,7 @@ export async function generateMetadata({
 
   return {
     metadataBase: new URL(SITE_URL),
-    title: `${article.title} | NorthWest Coast`,
+    title: `${article.title} | ${SITE_NAME}`,
     description: article.excerpt,
     alternates: {
       ...buildAlternates(path),
@@ -56,10 +58,13 @@ export async function generateMetadata({
       title: article.title,
       description: article.excerpt,
       url: `${SITE_URL}${localePath(lang, path)}`,
-      siteName: 'NorthWest Coast',
-      images: [article.image],
+      siteName: SITE_NAME,
+      images: [{ url: article.image, alt: article.title }],
       locale: getDict(lang).ogLocale,
       type: 'article',
+      ...(article.publishedAt ? { publishedTime: article.publishedAt } : {}),
+      ...(article.modifiedAt ? { modifiedTime: article.modifiedAt } : {}),
+      section: article.tag,
     },
   };
 }
@@ -111,7 +116,7 @@ export default async function ArticlePage({
 
       <section className="article-section">
         <article className="article-body">
-          <PostBody body={article.body} />
+          <PostBody body={article.body} lang={lang} />
         </article>
         <div className="article-footer">
           <Link href={localePath(lang, '/nyheter')} className="news-link">{t.news.back}</Link>
@@ -119,6 +124,7 @@ export default async function ArticlePage({
       </section>
 
       <Footer />
+      <Lightbox />
     </>
   );
 }

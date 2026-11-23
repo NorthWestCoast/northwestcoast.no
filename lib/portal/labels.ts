@@ -104,7 +104,7 @@ const STAFF_ROLE: Record<string, Label> = {
 
 /**
  * Dokumentet som utstedes etter godkjent service. Navnet står bare her, så
- * det byttes ett sted hvis NorthWest Coast kaller det noe annet.
+ * det byttes ett sted hvis NorthWestCoast kaller det noe annet.
  */
 export const CERTIFICATE_NAME = 'Servicesertifikat';
 export const CERTIFICATE_NAME_LOWER = 'servicesertifikat';
@@ -137,7 +137,7 @@ export const serviceState = (s: string | null | undefined) => pick(SERVICE_STATE
 export const serviceResult = (s: string | null | undefined) => pick(SERVICE_RESULT, s);
 export const requestStatus = (s: string | null | undefined) => pick(REQUEST, s);
 
-/** Sett fra NorthWest Coast venter saken på kunden, ikke «på deg». */
+/** Sett fra NorthWestCoast venter saken på kunden, ikke «på deg». */
 export const ticketStatusStaff = (s: string | null | undefined): Label =>
   s === 'waiting_customer' ? { label: 'Venter på kunde', tone: 'neutral' } : pick(TICKET, s);
 

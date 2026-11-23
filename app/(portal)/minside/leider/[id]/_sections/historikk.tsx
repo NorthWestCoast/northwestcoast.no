@@ -159,8 +159,8 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
           [
             log.reporter_name,
             log.source === 'web'
-              ? (log.verified_at ? 'meldt via nettskjema' : 'meldt via nettskjema, ikke bekreftet av NorthWest Coast')
-              : log.source === 'admin' ? 'lagt inn av NorthWest Coast' : null,
+              ? (log.verified_at ? 'meldt via nettskjema' : 'meldt via nettskjema, ikke bekreftet av NorthWestCoast')
+              : log.source === 'admin' ? 'lagt inn av NorthWestCoast' : null,
           ].filter(Boolean).join(' · ') || null,
         ].filter(Boolean).join('\n') || undefined,
         extra: (photos.length > 0 || canAddPhotos) ? (
@@ -194,7 +194,7 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
         <Card
           id="sertifikat"
           title={CERTIFICATE_NAME}
-          description="Utstedes av NorthWest Coast etter godkjent service. Statusen viser hvilket som gjelder."
+          description="Utstedes av NorthWestCoast etter godkjent service. Statusen viser hvilket som gjelder."
           flush
         >
           <CertificateList certificates={certificates} />

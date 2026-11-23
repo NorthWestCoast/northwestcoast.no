@@ -6,6 +6,7 @@ import { requireMedia } from '@/lib/portal/context';
 import { type ActionResult, err, fail, isoDate, ok, optional, text, uuid } from '@/lib/portal/forms';
 import { POSTS_TAG } from '@/lib/portal/tags';
 import { dato, idag } from '@/lib/format';
+import { invalidImageRefs, resolveImage } from '@/lib/post-markdown';
 
 /** Nyhetene vises på forsiden og på /nyheter; begge bygges på nytt etter en endring. */
 function refresh() {
@@ -59,8 +60,19 @@ export async function savePost(formData: FormData): Promise<ActionResult> {
   if (dateRaw && !date) return err('Publiseringsdatoen er ikke gyldig.');
 
   const cover = text(formData.get('cover_image_url'), 600);
-  if (cover && !/^(https:\/\/|\/)\S+$/.test(cover)) {
-    return err('Forsidebildet må være en adresse som starter med https://.');
+  if (cover && !resolveImage(cover)) {
+    return err('Forsidebildet må være lastet opp her eller ligge på nettstedet (/images/…). Bilder fra andre nettsteder vises ikke.');
+  }
+
+  const bodyNo = text(formData.get('body_no'), 40_000);
+  const bodyEn = optional(formData.get('body_en'), 40_000);
+  const badImages = [...new Set([...invalidImageRefs(bodyNo), ...invalidImageRefs(bodyEn ?? '')])];
+  if (badImages.length) {
+    const list = badImages.slice(0, 5).map((ref) => `«${ref}»`).join(', ');
+    return err(
+      `Bildeblokken viser til ${badImages.length === 1 ? 'et bilde' : 'bilder'} som ikke er lastet opp: ${list}. ` +
+        'Bruk «Legg til bilder» eller importer .md-fila sammen med bildene.',
+    );
   }
 
   let existing: string | null = null;
@@ -78,8 +90,8 @@ export async function savePost(formData: FormData): Promise<ActionResult> {
     tag_en: text(formData.get('tag_en'), 40) || 'News',
     excerpt_no: optional(formData.get('excerpt_no'), 500),
     excerpt_en: optional(formData.get('excerpt_en'), 500),
-    body_no: text(formData.get('body_no'), 40_000),
-    body_en: optional(formData.get('body_en'), 40_000),
+    body_no: bodyNo,
+    body_en: bodyEn,
     cover_image_url: cover || null,
     status,
     published_at: publishedAt(date, existing, status === 'published'),
@@ -90,6 +102,9 @@ export async function savePost(formData: FormData): Promise<ActionResult> {
   if (postId) {
     const { error } = await supabase.from('posts').update(fields).eq('id', postId);
     if (error) return slugTaken(error) ? err(`Adressen «${slug}» er allerede i bruk på et annet innlegg.`) : fail(error);
+
+    // Den automatisk lagrede kopien er nå lagret i innlegget.
+    await supabase.from('post_autosaves').delete().eq('post_key', postId);
 
     refresh();
     revalidatePath('/admin/nyheter');
@@ -110,9 +125,35 @@ export async function savePost(formData: FormData): Promise<ActionResult> {
     .single();
   if (error) return slugTaken(error) ? err(`Adressen «${slug}» er allerede i bruk på et annet innlegg.`) : fail(error);
 
+  await supabase.from('post_autosaves').delete().eq('post_key', 'ny');
+
   refresh();
   revalidatePath('/admin/nyheter');
   redirect(`/admin/nyheter/${created.id}?lagret=1`);
+}
+
+/**
+ * Henter tilbake en versjon (public.restore_post_revision). Finnes innlegget,
+ * erstattes innholdet og status beholdes; er det slettet, kommer det tilbake
+ * som kladd. Det som sto der før, blir liggende som en versjon.
+ */
+export async function restorePostRevision(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireMedia();
+
+  const revisionId = uuid(formData.get('revision_id'));
+  if (!revisionId) return err('Fant ikke versjonen.');
+
+  const { data: postId, error } = await supabase.rpc('restore_post_revision', { p_revision: revisionId });
+  if (error) {
+    return error.code === '23505'
+      ? err('Adressen (slug) i denne versjonen brukes nå av et annet innlegg. Endre adressen på det andre innlegget først.')
+      : fail(error);
+  }
+
+  refresh();
+  revalidatePath('/admin/nyheter');
+  revalidatePath(`/admin/nyheter/${postId}`);
+  redirect(`/admin/nyheter/${postId}?hentet=1`);
 }
 
 export async function deletePost(formData: FormData): Promise<ActionResult> {

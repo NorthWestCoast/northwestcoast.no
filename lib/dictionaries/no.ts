@@ -17,65 +17,65 @@ export const no = {
       'maritim leider',
       'sjøleider',
       'Argostep',
-      'NorthWest Coast',
+      'NorthWestCoast',
       'Sjøfartsdirektoratet',
       'ISO 799-1:2019',
       'fiskebåt',
       'ombordstigning',
     ],
     home: {
-      title: 'Argostep – lettvekts leider til båt | NorthWest Coast',
+      title: 'Argostep – lettvekts leider til båt | NorthWestCoast',
       description:
         'Argostep er en lett, modulær leider til båt: entrings- og livbåtleider i glassfiberarmert plast, fra 2 til 15 meter. Godkjent av Sjøfartsdirektoratet. Produsert på Sunnmøre.',
       // Står også som tekst i delingsbildet (app/og/[lang]/route.tsx): hold den kort.
       ogDescription: 'Lett, modulær leider til båt. ISO 799-1:2019 sertifisert. Norsk produksjon.',
     },
     produkt: {
-      title: 'Argostep livbåtleider – modulær leider, 2–15 m | NorthWest Coast',
+      title: 'Argostep livbåtleider – modulær leider, 2–15 m | NorthWestCoast',
       description:
         'Argostep livbåtleider i glassfiberarmert plast: en modulær, lett og sterk leider til båt. ISO 799-1:2019 sertifisert og godkjent av Sjøfartsdirektoratet. Leveres fra 2 til 15 meter.',
     },
     galleri: {
-      title: 'Bilder av Argostep-leideren i bruk | NorthWest Coast',
+      title: 'Bilder av Argostep-leideren i bruk | NorthWestCoast',
       description:
         'Se Argostep livbåtleider i bilder – produkt, oppbevaringsskap og leideren i daglig bruk langs norskekysten.',
     },
     nyheter: {
-      title: 'Nyheter om maritime leidere | NorthWest Coast',
-      description: 'Nyheter, caser og forskrifter for maritime leidere fra NorthWest Coast.',
+      title: 'Nyheter om maritime leidere | NorthWestCoast',
+      description: 'Nyheter, caser og forskrifter for maritime leidere fra NorthWestCoast.',
     },
     vedlikehold: {
-      title: 'Vedlikehold av leider | NorthWest Coast',
+      title: 'Vedlikehold av leider | NorthWestCoast',
       description:
         'Se hvordan du vedlikeholder Argostep livbåtleideren og registrer utført vedlikehold for ditt fartøy – med kvittering på e-post som dokumentasjon.',
     },
     faq: {
-      title: 'Spørsmål og svar om Argostep-leideren | NorthWest Coast',
+      title: 'Spørsmål og svar om Argostep-leideren | NorthWestCoast',
       description:
         'Svar på vanlige spørsmål om Argostep livbåtleider: godkjenning, lengder, materiale, levetid, montering, levering, reservedeler og service.',
     },
     kalkulator: {
-      title: 'Leiderkalkulator – finn riktig lengde | NorthWest Coast',
+      title: 'Leiderkalkulator – finn riktig lengde | NorthWestCoast',
       description:
         'Regn ut hvilken Argostep livbåtleider fartøyet ditt trenger ut fra fribord og festepunkt – og bestill riktig lengde direkte.',
     },
     bestill: {
-      title: 'Bestill Argostep-leider – lengder og priser | NorthWest Coast',
+      title: 'Bestill Argostep-leider – lengder og priser | NorthWestCoast',
       description:
         'Bestill Argostep livbåtleider: velg lengde mellom 2 og 15 meter og oppbevaringsskap, se veiledende pris eks. mva. og leideren i 3D mens du konfigurerer.',
     },
     omOss: {
-      title: 'Om oss – maritime leidere fra Sunnmøre | NorthWest Coast',
+      title: 'Om oss – maritime leidere fra Sunnmøre | NorthWestCoast',
       description:
-        'NorthWest Coast ble etablert av tre gründere fra Ålesund og utvikler maritime sikkerhetsprodukter. Argostep-leideren produseres på Sunnmøre med komponenter fra lokale leverandører.',
+        'NorthWestCoast ble etablert av tre gründere fra Ålesund og utvikler maritime sikkerhetsprodukter. Argostep-leideren produseres på Sunnmøre med komponenter fra lokale leverandører.',
     },
     produkter: {
-      title: 'Leidere, oppbevaringsskap og reservedeler | NorthWest Coast',
+      title: 'Leidere, oppbevaringsskap og reservedeler | NorthWestCoast',
       description:
-        'Argostep entrings- og livbåtleider med standardlengder og veiledende priser, oppbevaringsskap, reservedeler og service fra NorthWest Coast.',
+        'Argostep entrings- og livbåtleider med standardlengder og veiledende priser, oppbevaringsskap, reservedeler og service fra NorthWestCoast.',
     },
     leider3d: {
-      title: 'Argostep-leideren i 3D – interaktiv modell | NorthWest Coast',
+      title: 'Argostep-leideren i 3D – interaktiv modell | NorthWestCoast',
       description:
         'Interaktiv 3D-modell av Argostep-leideren. Roter, zoom og utforsk i detalj – og se den i AR på mobil.',
     },
@@ -248,6 +248,13 @@ export const no = {
     back: '← Tilbake til nyheter',
     pageLabel: 'Fra bloggen',
     pageTitle: 'Siste nytt',
+    slides: {
+      prev: 'Forrige bilde',
+      next: 'Neste bilde',
+      enlarge: 'Vis bildet større',
+      count: 'Bilde {n} av {total}',
+      label: 'Bilder',
+    },
   },
 
   faq: {
@@ -272,44 +279,6 @@ export const no = {
       certification: 'Sertifisering',
       installation: 'Montering',
       delivery: 'Leveranse',
-    },
-    items: {
-      approved: {
-        q: 'Er stigen godkjent for norske skip?',
-        a: 'Ja, Argostep Entrings- og Livbåtleider er testet og godkjent etter ISO 799-1:2019 og godkjent av Sjøfartsdirektoratet for norske fartøy.',
-      },
-      lengths: {
-        q: 'Hvilke lengder er tilgjengelige?',
-        a: 'Argostep Livbåtleider leveres som standard lengder fra 2 - 15 meter. Ta kontakt ved andre behov så skreddersyr vi en pakke for deg.',
-      },
-      lifetime: {
-        q: 'Hvor lenge varer en leider?',
-        a: 'Designet for lang levetid med utskiftbare komponenter. Ved oppbevaring i skap fra Northwestcoast vil levetiden øke betraktlig.',
-      },
-      mounting: {
-        q: 'Hvordan monterer jeg leideren?',
-        a: 'Argostep er designet for enkel montering og demontering uten spesialverktøy. Leideren monteres på samme måte som den tradisjonelle leideren.',
-      },
-      delivery: {
-        q: 'Hva er leveringstiden for Argostep?',
-        a: 'Leveringstiden varierer avhengig av spesifikasjoner. Kontakt oss for et nøyaktig tilbud og estimert leveringstid for ditt fartøy.',
-      },
-      material: {
-        q: 'Av hvilket materiale er leideren laget?',
-        a: 'Trinnene og festene er laget av sprøytestøpt glassfiberarmert plast – et materiale som kombinerer lav vekt, høy styrke og utmerket korrosjonsbestandighet i saltvannsmiljø.',
-      },
-      weight: {
-        q: 'Hva veier en standard Argostep?',
-        a: 'Alle vektene for Argostep leider finner du under Bestill nå.',
-      },
-      selfMount: {
-        q: 'Kan jeg montere leideren selv?',
-        a: 'Ja, Argostep er konstruert for selvmontering. Medfølgende monteringsveiledning og klikk-koblingssystemet gjør det mulig å montere leideren uten fagfolk.',
-      },
-      parts: {
-        q: 'Tilbyr dere reservedeler og service?',
-        a: 'Ja. Et av hovedfordelene med Argostep er det modulære systemet – enkelttrinn og komponenter kan bestilles separat. Kontakt oss for reservedeler eller serviceavtale.',
-      },
     },
   },
 
@@ -380,7 +349,7 @@ export const no = {
 
   product: {
     answerTitle: 'Hva er Argostep?',
-    answerBody: 'Argostep er en lett, modulær entrings- og livbåtleider i glassfiberarmert plast fra NorthWest Coast. Den er testet etter ISO 799-1:2019, godkjent av Sjøfartsdirektoratet for norske fartøy under 15 meter, og leveres i standardlengder fra 2 til 15 meter. Slitte trinn kan byttes enkeltvis, og leideren monteres uten spesialverktøy.',
+    answerBody: 'Argostep er en lett, modulær entrings- og livbåtleider i glassfiberarmert plast fra NorthWestCoast. Den er testet etter ISO 799-1:2019, godkjent av Sjøfartsdirektoratet for norske fartøy under 15 meter, og leveres i standardlengder fra 2 til 15 meter. Slitte trinn kan byttes enkeltvis, og leideren monteres uten spesialverktøy.',
     lengthTitle: 'Hvilken lengde trenger fartøyet mitt?',
     lengthBody: 'Lengden avhenger av fribordet, høyden opp til festepunktet og hvor langt leideren skal nå under vannlinjen. Legg inn målene i leiderkalkulatoren, så får du anbefalt lengde og kan bestille den direkte.',
     lengthCta: 'Åpne leiderkalkulatoren →',
@@ -666,7 +635,7 @@ export const no = {
     sending: 'Sender…',
     successTitle: 'Vedlikehold registrert',
     successBody:
-      'Takk! Rapporten er sendt til NorthWest Coast. Oppga du e-post, har du fått en kvittering du kan bruke som dokumentasjon ved tilsyn.',
+      'Takk! Rapporten er sendt til NorthWestCoast. Oppga du e-post, har du fått en kvittering du kan bruke som dokumentasjon ved tilsyn.',
     tooLarge: (fileName: string) => `Bildet "${fileName}" er for stort (maks 5 MB).`,
   },
 
@@ -693,10 +662,10 @@ export const no = {
 
   about: {
     navLabel: 'Om oss',
-    label: 'Om NorthWest Coast',
+    label: 'Om NorthWestCoast',
     title: 'Innovasjon fra Ålesund',
     intro:
-      'NorthWest Coast ble etablert av tre gründere fra Ålesund. Med støtte fra lokale investorer og organisasjoner som Innovasjon Norge og Ålesund kommune har vi utviklet en leider som setter nye standarder for sikkerhet og effektivitet.',
+      'NorthWestCoast ble etablert av tre gründere fra Ålesund. Med støtte fra lokale investorer og organisasjoner som Innovasjon Norge og Ålesund kommune har vi utviklet en leider som setter nye standarder for sikkerhet og effektivitet.',
     production: {
       label: 'Produsert på Sunnmøre',
       title: 'Lokal produksjon',

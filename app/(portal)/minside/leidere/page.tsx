@@ -66,7 +66,7 @@ export default async function LeiderePage() {
   );
 
   // Skap plasseres av eiere og administratorer i selskapet. Administratorer i
-  // NorthWest Coast gjør det under Admin, der alle kunders skap står samlet.
+  // NorthWestCoast gjør det under Admin, der alle kunders skap står samlet.
   const placeableCabinets = cabinets.filter(
     (c) => c.company_id !== null && managedCompanyIds.has(c.company_id),
   );
@@ -175,7 +175,7 @@ export default async function LeiderePage() {
         <Disclosure summary="Legg til leider" open={ladders.length === 0}>
           <p className="pt-hint" style={{ marginBottom: '0.9rem' }}>
             Skriv inn produksjonsnummeret som står på leideren. Den som styrer tilgangen til leideren
-            godkjenner forespørselen. Har den ingen eier ennå, behandler NorthWest Coast den.
+            godkjenner forespørselen. Har den ingen eier ennå, behandler NorthWestCoast den.
           </p>
           <LadderAccessForm action={requestLadderAccess} />
         </Disclosure>

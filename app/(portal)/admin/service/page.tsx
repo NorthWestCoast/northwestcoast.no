@@ -213,7 +213,7 @@ export default async function ServicePage({
       <Card
         id="registrer"
         title="Registrer utført service"
-        description={`Fagmessig kontroll utført av NorthWest Coast. Rapporten avslutter åpne servicebestillinger på leideren og setter ny frist. Legg ved bilder, og utsted ${CERTIFICATE_NAME_LOWER} når leideren er godkjent.`}
+        description={`Fagmessig kontroll utført av NorthWestCoast. Rapporten avslutter åpne servicebestillinger på leideren og setter ny frist. Legg ved bilder, og utsted ${CERTIFICATE_NAME_LOWER} når leideren er godkjent.`}
       >
         <ServiceForm
           ladders={(ladders ?? []).flatMap((ladder) =>

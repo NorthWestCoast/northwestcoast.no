@@ -6,7 +6,7 @@ Tre innloggede områder oppå samme database og samme designsystem.
 |---|---|---|---|
 | Min side | `/minside` | Kunder (og ansatte) | `requireUser()` |
 | Admin | `/admin` | Administratorer i NorthWest Coast | `requireAdmin()` |
-| Media | `/admin/nyheter`, `/admin/galleri` | Media og administratorer | `requireMedia()` |
+| Media | `/admin/nyheter`, `/admin/bibliotek`, `/admin/galleri`, `/admin/faq` | Media og administratorer | `requireMedia()` |
 | Produksjon | `/produksjon` | Produksjon og administratorer | `requireProduction()` |
 | Delt rapport | `/los/[token]` | Alle med lenken (uten innlogging) | token i URL |
 | Kontroll av sertifikat | `/sertifikat/[token]` | Alle med lenken (uten innlogging) | token i URL |
@@ -93,7 +93,7 @@ Typene ligger i `lib/supabase/database.types.ts` (generert, `npm run db:types`).
 | `maintenance-photos` | loggføringens id | den som loggførte (1 døgn), admin, åpent skjema (30 min) | tilgang til leideren, admin |
 | `ladder-state-photos` | delingens id | tilgang til leideren | tilgang til leideren, og alle mens delingen er aktiv |
 | `service-reports` | leiderens id (`<leider>/<rapport>/<fil>` for bilder) | admin | tilgang til leideren |
-| `public-media` | fritt (`galleri/` for galleribilder) | admin og media | offentlig |
+| `public-media` | `bibliotek/` (bildebiblioteket, nyhetene), `galleri/` (galleriet), `posts/` (nyhetsbilder fra før biblioteket) | admin og media | offentlig |
 
 Private bilder vises med `signedUrls()` fra `lib/portal/storage.ts`.
 

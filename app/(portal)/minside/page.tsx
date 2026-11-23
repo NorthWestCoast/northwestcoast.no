@@ -140,7 +140,7 @@ export default async function MinSidePage() {
           {booking.status === 'scheduled' ? 'Avtalt service' : 'Ønsket service'}, leider {serialById.get(booking.ladder_id) ?? '–'}
         </Link>
       ),
-      text: booking.status === 'scheduled' ? undefined : 'Venter på bekreftelse fra NorthWest Coast',
+      text: booking.status === 'scheduled' ? undefined : 'Venter på bekreftelse fra NorthWestCoast',
       tone: booking.status === 'scheduled' ? 'ok' : 'info',
     });
   }

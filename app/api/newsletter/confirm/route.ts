@@ -23,12 +23,12 @@ const TOKEN = /^[0-9a-f]{32,64}$/;
 const TEXT = {
   no: {
     confirmTitle: 'Bekreft påmeldingen',
-    confirmBody: 'Trykk på knappen for å motta nyhetsbrevet fra NorthWest Coast.',
+    confirmBody: 'Trykk på knappen for å motta nyhetsbrevet fra NorthWestCoast.',
     confirmButton: 'Bekreft påmeldingen',
     confirmed: 'Du er påmeldt',
-    confirmedBody: 'Takk. Du får nyhetsbrevet fra NorthWest Coast, og kan melde deg av når som helst med lenken i e-postene.',
+    confirmedBody: 'Takk. Du får nyhetsbrevet fra NorthWestCoast, og kan melde deg av når som helst med lenken i e-postene.',
     leaveTitle: 'Meld deg av nyhetsbrevet',
-    leaveBody: 'Trykk på knappen for å slutte å motta nyhetsbrevet fra NorthWest Coast.',
+    leaveBody: 'Trykk på knappen for å slutte å motta nyhetsbrevet fra NorthWestCoast.',
     leaveButton: 'Meld meg av',
     left: 'Du er meldt av',
     leftBody: 'Du får ikke flere nyhetsbrev fra oss.',
@@ -38,12 +38,12 @@ const TEXT = {
   },
   en: {
     confirmTitle: 'Confirm your subscription',
-    confirmBody: 'Use the button to receive the newsletter from NorthWest Coast.',
+    confirmBody: 'Use the button to receive the newsletter from NorthWestCoast.',
     confirmButton: 'Confirm subscription',
     confirmed: 'You are subscribed',
-    confirmedBody: 'Thank you. You will receive the newsletter from NorthWest Coast, and can unsubscribe at any time with the link in the emails.',
+    confirmedBody: 'Thank you. You will receive the newsletter from NorthWestCoast, and can unsubscribe at any time with the link in the emails.',
     leaveTitle: 'Unsubscribe from the newsletter',
-    leaveBody: 'Use the button to stop receiving the newsletter from NorthWest Coast.',
+    leaveBody: 'Use the button to stop receiving the newsletter from NorthWestCoast.',
     leaveButton: 'Unsubscribe',
     left: 'You are unsubscribed',
     leftBody: 'You will not receive any more newsletters from us.',
@@ -65,7 +65,7 @@ function page(lang: Lang, title: string, body: string, button?: string, status =
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<title>${esc(title)} | NorthWest Coast</title>
+<title>${esc(title)} | NorthWestCoast</title>
 <style>
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0a1628; color: #16202e; font: 16px/1.55 Arial, Helvetica, sans-serif; }
   main { width: min(30rem, calc(100vw - 2rem)); background: #fff; border-top: 3px solid #7f2d36; padding: 2rem 1.75rem; box-sizing: border-box; }
