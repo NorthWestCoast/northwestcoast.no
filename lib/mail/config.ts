@@ -10,7 +10,7 @@
  * Avsender:
  *   RESEND_FROM_EMAIL     adressen e-postene sendes fra. Domenet må være
  *                         verifisert hos leverandøren. Kan stå med navn:
- *                         «NorthWest Coast <post@northwestcoast.no>».
+ *                         «NorthWestCoast <post@northwestcoast.no>».
  *
  * Kundene svarer aldri til avsenderadressen: hver e-post får Reply-To satt til
  * postkassen som behandler saken, så et svar havner hos et menneske uansett
@@ -23,7 +23,7 @@ export const ORDER_EMAIL = env('ORDER_TO_EMAIL') ?? CONTACT_EMAIL;
 export const MAINTENANCE_EMAIL = env('MAINTENANCE_TO_EMAIL') ?? CONTACT_EMAIL;
 export const SUPPORT_PHONE = '+47 904 07 341';
 
-const SENDER_NAME = 'NorthWest Coast';
+const SENDER_NAME = 'NorthWestCoast';
 
 /** Avsenderen slik den står i From-feltet, alltid med navn foran adressen. */
 export function sender(): string {

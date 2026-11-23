@@ -10,13 +10,20 @@ Forhåndsvisning med eksempeldata ligger i admin under **E-post**.
 
 | Fil | Mal i Supabase | Emnefelt |
 |---|---|---|
-| `magic-link.html` | Magic Link | Logg inn på Min side hos NorthWest Coast |
-| `confirm-signup.html` | Confirm signup | Velkommen til Min side hos NorthWest Coast |
-| `email-change.html` | Change Email Address | Bekreft ny e-postadresse hos NorthWest Coast |
-| `recovery.html` | Reset Password | Logg inn på Min side hos NorthWest Coast |
+| `magic-link.html` | Magic Link | Innloggingskode {{ .Token }} til Min side |
+| `confirm-signup.html` | Confirm signup | Velkommen til Min side. Innloggingskoden din er {{ .Token }} |
+| `email-change.html` | Change Email Address | Bekreft ny e-postadresse hos NorthWestCoast |
+| `recovery.html` | Reset Password | Logg inn på Min side hos NorthWestCoast |
 
 For hver mal: lim hele filen inn i feltet for innholdet, og sett emnefeltet
 som i tabellen. «Invite user» og «Reauthentication» brukes ikke av nettstedet.
+
+De to e-postene med engangskode har koden i emnet (`{{ .Token }}` fylles inn
+av Supabase). Da får hver e-post sitt eget emne. Med likt emne slår Gmail og
+andre e-postene sammen til én tråd og skjuler teksten som gjentar seg, så
+knappen og koden i den nyeste kan bli borte, og det er lett å bruke en gammel
+kode. Koden vises dermed i varsler og på låst skjerm. Derfor er den kortlevd
+(se «Email OTP Expiration» under).
 
 ## Hvorfor lenken ser ut som den gjør
 
@@ -51,12 +58,14 @@ av den som leser e-posten på en annen enhet.
 
 - **Email OTP Length:** 8. Engangskoden er den samme nøkkelen som lenken, og
   med seks sifre kan den gjettes med nok forsøk.
-- **Email OTP Expiration:** 3600 sekunder (tekstene sier 60 minutter; endres
-  den ene, må den andre følge).
+- **Email OTP Expiration:** 600 sekunder. Lenken og koden virker i 10
+  minutter. Tekstene i e-postene og på innloggingssiden henter tallet fra
+  `LOGIN_VALID_MINUTES` i `lib/site.ts`: endres den ene, må den andre følge,
+  og malene må bygges (`npm run mail:auth`) og limes inn på nytt.
 - **Confirm email** og **Secure email change:** på.
 
 **Authentication → Emails → SMTP Settings**
 
 - Vert `smtp.resend.com`, port 465, bruker `resend`, passord: en API-nøkkel
-  fra Resend. Avsender: `noreply@northwestcoast.no`, navn «NorthWest Coast».
+  fra Resend. Avsender: `noreply@northwestcoast.no`, navn «NorthWestCoast».
   Uten egen SMTP leverer Supabase bare til medlemmer av organisasjonen.
