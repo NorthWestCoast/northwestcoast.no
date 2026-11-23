@@ -5,6 +5,7 @@ import { requireStaff } from '@/lib/supabase/staff';
 import { type ActionResult, err, fail, isoDate, ok, optional, text, uuid } from '@/lib/portal/forms';
 import { idag } from '@/lib/format';
 import { parseUploadedPhotos } from '@/components/minside/photos';
+import { BUCKETS, orphanPhotos } from '@/lib/portal/storage';
 import { isLogKind } from '@/components/minside/util';
 
 /**
@@ -128,4 +129,31 @@ export async function attachMaintenancePhotos(formData: FormData): Promise<Actio
   if (log.ladder_id) refresh(log.ladder_id);
   else revalidatePath('/admin/vedlikehold');
   return ok(photos.length === 1 ? 'Bildet er lagt til.' : `${photos.length} bilder er lagt til.`);
+}
+
+/**
+ * Sletter bildene som aldri ble knyttet til en rapport. Lista kommer fra
+ * databasen, ikke fra skjemaet, og lagringen lar administratorer slette
+ * nettopp disse filene og ingen andre.
+ */
+export async function deleteOrphanPhotos(): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+
+  const paths = (await orphanPhotos(supabase)).map((photo) => photo.path);
+  if (paths.length === 0) return ok('Det er ingen løse bilder å slette.');
+
+  let deleted = 0;
+  for (let start = 0; start < paths.length; start += 100) {
+    const { data, error } = await supabase.storage.from(BUCKETS.logs).remove(paths.slice(start, start + 100));
+    if (error) {
+      revalidatePath('/admin/vedlikehold');
+      return err(`${deleted} av ${paths.length} filer ble slettet før det stoppet: ${error.message}`);
+    }
+    deleted += data?.length ?? 0;
+  }
+
+  revalidatePath('/admin/vedlikehold');
+  return deleted === paths.length
+    ? ok(`${deleted} filer er slettet.`)
+    : err(`Bare ${deleted} av ${paths.length} filer ble slettet. Last siden på nytt og prøv igjen.`);
 }

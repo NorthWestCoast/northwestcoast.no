@@ -43,3 +43,24 @@ export async function signedUrls(
 export function publicMediaUrl(supabase: SupabaseClient<Database>, path: string): string {
   return supabase.storage.from(BUCKETS.media).getPublicUrl(path).data.publicUrl;
 }
+
+/**
+ * Filer i maintenance-photos som aldri ble knyttet til en rapport: opplastingen
+ * stoppet halvveis, eller rapporten er slettet. Bare administratorer får lista
+ * (public.orphan_maintenance_photos), og bare disse filene kan de slette.
+ */
+export type OrphanPhoto = { path: string; bytes: number };
+
+export async function orphanPhotos(supabase: SupabaseClient<Database>): Promise<OrphanPhoto[]> {
+  const { data, error } = await supabase.rpc('orphan_maintenance_photos');
+  if (error) {
+    console.error('[storage] Kunne ikke hente løse bilder:', error.message);
+    return [];
+  }
+  if (!Array.isArray(data)) return [];
+  return data.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const { path, bytes } = row as Record<string, unknown>;
+    return typeof path === 'string' ? [{ path, bytes: Number(bytes) || 0 }] : [];
+  });
+}

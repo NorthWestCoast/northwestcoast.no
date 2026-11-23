@@ -77,7 +77,8 @@ begin
           'confirm_order', 'set_production_step', 'assign_job_serial', 'advance_job',
           'place_cabinet', 'issue_ladder_certificate',
           'accept_invitation', 'decline_invitation',
-          'receive_purchase_line', 'fulfil_job_from_stock')
+          'receive_purchase_line', 'fulfil_job_from_stock',
+          'orphan_maintenance_photos')
       )
     );
   if bad is not null then
@@ -131,14 +132,17 @@ begin
   --    nevnt, aldri hele raden: ellers kan et medlemskap dateres tilbake
   --    eller en delt rapport åpnes igjen.
   select string_agg(t, ', ') into bad
-  from unnest(array['public.company_members', 'public.ladder_state_shares',
-                    'public.stock_items', 'public.stock_movements']) t
+  from unnest(array['public.company_members', 'public.vessel_members', 'public.ladder_members',
+                    'public.ladder_state_shares', 'public.stock_items', 'public.stock_movements']) t
   where has_table_privilege('authenticated', t, 'UPDATE');
   if bad is not null then
     raise exception 'Regel 9 brutt - authenticated kan oppdatere hele raden i: %', bad;
   end if;
-  if has_table_privilege('authenticated', 'public.company_members', 'INSERT') then
-    raise exception 'Regel 9 brutt - medlemmer kan settes inn direkte i company_members.';
+  select string_agg(t, ', ') into bad
+  from unnest(array['public.company_members', 'public.vessel_members', 'public.ladder_members']) t
+  where has_table_privilege('authenticated', t, 'INSERT');
+  if bad is not null then
+    raise exception 'Regel 9 brutt - medlemmer kan settes inn direkte i: %', bad;
   end if;
 
   -- 10) Anonyme må kunne slå opp hjelpefunksjonene policyene bruker, og alle
@@ -154,5 +158,14 @@ begin
     raise exception 'Regel 10 brutt - visning uten security_invoker: %', bad;
   end if;
 
-  raise notice 'Sikkerhetsreglene holder (10 av 10).';
+  -- 11) Besøkende ser ikke hvem som skrev nyhetene: author_id er en brukers
+  --     id, og author_name kan være en ansatts e-postadresse.
+  select string_agg(col, ', ') into bad
+  from unnest(array['author_id', 'author_name']) col
+  where has_column_privilege('anon', 'public.posts', col, 'SELECT');
+  if bad is not null then
+    raise exception 'Regel 11 brutt - anon kan lese posts.%', bad;
+  end if;
+
+  raise notice 'Sikkerhetsreglene holder (11 av 11).';
 end $$;

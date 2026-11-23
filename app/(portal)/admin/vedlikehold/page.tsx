@@ -5,10 +5,11 @@ import { ActionButton, PortalForm } from '@/components/portal/forms';
 import { Hidden, SearchForm, Select } from '@/components/admin/fields';
 import MaintenanceReportForm from '@/components/admin/maintenance-report-form';
 import { uuid } from '@/lib/portal/forms';
-import { BUCKETS, signedUrls } from '@/lib/portal/storage';
+import { BUCKETS, orphanPhotos, signedUrls } from '@/lib/portal/storage';
 import { logKind } from '@/lib/portal/labels';
 import { dato, datoTid, idag } from '@/lib/format';
 import { linkMaintenanceLog, verifyMaintenanceLog } from '../actions';
+import { deleteOrphanPhotos } from './actions';
 import { anyColumnMatches, searchTerm } from '../_lib/search';
 
 const COLUMNS = 'id, kind, title, serial_number_raw, vessel_name_raw, imo_raw, reporter_name, reporter_email, performed_at, notes, created_at, source, verified_at, ladder_id, ladders(serial_number), maintenance_photos(storage_path, caption)';
@@ -88,11 +89,15 @@ export default async function VedlikeholdPage({
       : Promise.resolve({ data: null }),
   ]);
 
-  const urls = await signedUrls(
-    supabase,
-    BUCKETS.logs,
-    [...(unlinked ?? []), ...(recent ?? [])].flatMap((log) => log.maintenance_photos.map((photo) => photo.storage_path)),
-  );
+  const [urls, orphans] = await Promise.all([
+    signedUrls(
+      supabase,
+      BUCKETS.logs,
+      [...(unlinked ?? []), ...(recent ?? [])].flatMap((log) => log.maintenance_photos.map((photo) => photo.storage_path)),
+    ),
+    orphanPhotos(supabase),
+  ]);
+  const orphanMb = orphans.reduce((sum, photo) => sum + photo.bytes, 0) / 1024 / 1024;
 
   return (
     <>
@@ -263,6 +268,26 @@ export default async function VedlikeholdPage({
           <Empty title="Ingen rapporter ennå" />
         )}
       </Card>
+
+      {orphans.length > 0 && (
+        <Card
+          title="Bilder uten rapport"
+          description="Bilder som ble lastet opp for over et døgn siden, men aldri knyttet til en rapport. Opplastingen stoppet halvveis, eller rapporten er slettet."
+        >
+          <div className="pt-actions" style={{ alignItems: 'center' }}>
+            <span>
+              {orphans.length} {orphans.length === 1 ? 'fil' : 'filer'}, {orphanMb.toLocaleString('nb-NO', { maximumFractionDigits: 1 })} MB.
+            </span>
+            <ActionButton
+              action={deleteOrphanPhotos}
+              label="Slett filene"
+              pendingLabel="Sletter…"
+              tone="danger"
+              confirm={`Slette ${orphans.length} ${orphans.length === 1 ? 'fil' : 'filer'} som ikke hører til noen rapport? Det kan ikke angres.`}
+            />
+          </div>
+        </Card>
+      )}
     </>
   );
 }

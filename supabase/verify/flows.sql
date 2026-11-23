@@ -1208,4 +1208,227 @@ begin
   raise notice 'Lagertestene består.';
 end $$;
 
+-- ── Gjennomgangen 23.11.2026 ────────────────────────────────────────────────
+do $$
+declare
+  o uuid; x uuid; y uuid; adm uuid;               -- eier, fremmed, mannskap, administrator
+  v_company uuid; v_nwc_company uuid; v_vessel uuid; v_ladder uuid; v_product uuid;
+  v_log uuid; v_log2 uuid; v_path text; v_kept text;
+  v_failed boolean; v_count integer; v_res jsonb;
+begin
+  perform t.root();
+  insert into auth.users (email, email_confirmed_at) values ('eier@runde2.test', now()) returning id into o;
+  insert into auth.users (email, email_confirmed_at) values ('fremmed@runde2.test', now()) returning id into x;
+  insert into auth.users (email, email_confirmed_at) values ('mannskap@runde2.test', now()) returning id into y;
+  insert into auth.users (email, email_confirmed_at) values ('admin@nwc-runde2.test', now()) returning id into adm;
+  insert into public.staff_members (email, role) values ('admin@nwc-runde2.test', 'admin');
+  insert into app.gates (name, secret_hash)
+  values ('forms', encode(sha256(convert_to('hemmelig', 'UTF8')), 'hex'))
+  on conflict (name) do nothing;
+  select id into v_product from public.products where product_number = '400-034';
+
+  perform t.login(x); perform public.portal_bootstrap();
+  perform t.login(y); perform public.portal_bootstrap();
+  perform t.login(o); perform public.portal_bootstrap();
+  v_company := public.create_my_company('Runde To Rederi AS', '987654325');
+  insert into public.vessels (company_id, name) values (v_company, 'MS Runde') returning id into v_vessel;
+
+  perform t.root();
+  insert into public.vessel_members (vessel_id, user_id, role) values (v_vessel, y, 'crew');
+  insert into public.ladders (company_id, vessel_id, product_id, serial_number, status)
+  values (v_company, v_vessel, v_product, 'R2-2026-0001', 'installed')
+  returning id into v_ladder;
+
+  -- ── Medlemskap på fartøy og leider bare med samtykke ───────────────────
+  perform t.login(o);
+  v_failed := false;
+  begin
+    insert into public.vessel_members (vessel_id, user_id, role) values (v_vessel, x, 'viewer');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'ingen kan sette inn et medlem på et fartøy direkte');
+
+  v_failed := false;
+  begin
+    update public.vessel_members set user_id = x where vessel_id = v_vessel and user_id = y;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'et medlemskap på et fartøy kan ikke flyttes til en annen bruker');
+
+  v_failed := false;
+  begin
+    insert into public.ladder_members (ladder_id, user_id, role) values (v_ladder, x, 'viewer');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'ingen kan sette inn et medlem på en leider direkte');
+
+  perform t.ok(not exists (select 1 from public.profiles where user_id = x),
+               'eieren ser ikke profilen til en som ikke har tilgang');
+
+  update public.vessel_members set role = 'viewer' where vessel_id = v_vessel and user_id = y;
+  perform t.root();
+  perform t.ok((select role::text from public.vessel_members where vessel_id = v_vessel and user_id = y) = 'viewer',
+               'eieren kan fortsatt endre rollen');
+  perform t.login(o);
+  delete from public.vessel_members where vessel_id = v_vessel and user_id = y;
+  perform t.root();
+  perform t.ok(not exists (select 1 from public.vessel_members where vessel_id = v_vessel and user_id = y),
+               'og fjerne et medlem');
+
+  -- ── Nyhetene viser ikke hvem som skrev dem ─────────────────────────────
+  insert into public.posts (slug, title_no, status, published_at, author_id, author_name)
+  values ('runde-to', 'Runde to', 'published', now(), adm, 'admin@nwc-runde2.test');
+  perform t.anon();
+  perform t.ok((select count(*) from public.posts where slug = 'runde-to') = 1, 'besøkende leser fortsatt nyhetene');
+  v_failed := false;
+  begin
+    perform author_id from public.posts where slug = 'runde-to';
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'besøkende ser ikke forfatterens id');
+  v_failed := false;
+  begin
+    perform author_name from public.posts where slug = 'runde-to';
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'besøkende ser ikke forfatterens navn');
+
+  -- ── Verifiserte selskap ────────────────────────────────────────────────
+  perform t.root();
+  perform t.ok((select verified_at is null from public.companies where id = v_company),
+               'et selskap kunden oppretter selv, er ikke verifisert');
+
+  perform t.login(o);
+  v_failed := false;
+  begin
+    update public.companies set org_number = '923609016' where id = v_company;
+  exception when raise_exception then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'kunden kan ikke endre organisasjonsnummeret');
+
+  v_failed := false;
+  begin
+    update public.companies set verified_at = now() where id = v_company;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'kunden kan ikke verifisere selskapet selv');
+
+  update public.companies set name = 'Runde To Rederi' where id = v_company;
+  perform t.root();
+  perform t.ok((select name from public.companies where id = v_company) = 'Runde To Rederi',
+               'navnet kan endres før selskapet er verifisert');
+
+  perform t.login(adm);
+  update public.companies set verified_at = now() where id = v_company;
+  perform t.root();
+  perform t.ok((select verified_by from public.companies where id = v_company) = adm,
+               'det står hvem som verifiserte selskapet');
+
+  perform t.login(o);
+  v_failed := false;
+  begin
+    update public.companies set name = 'Et Annet Rederi AS' where id = v_company;
+  exception when raise_exception then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'navnet på et verifisert selskap endres bare av ansatte');
+  update public.companies set city = 'Ålesund' where id = v_company;
+  perform t.root();
+  perform t.ok((select city from public.companies where id = v_company) = 'Ålesund',
+               'kunden kan fortsatt endre adressen');
+
+  perform t.login(adm);
+  insert into public.companies (name) values ('Registrert av NWC AS') returning id into v_nwc_company;
+  perform t.root();
+  perform t.ok((select verified_at is not null and verified_by = adm from public.companies where id = v_nwc_company),
+               'et selskap en administrator oppretter, er verifisert');
+
+  -- ── Bilder fra det åpne vedlikeholdsskjemaet ───────────────────────────
+  perform t.anon();
+  perform set_config('request.headers',
+    json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '198.51.100.31')::text, true);
+  v_res := public.submit_maintenance_report(jsonb_build_object(
+    'name', 'Per', 'boat', 'MS Runde', 'serial', 'r2-2026-0001'));
+  v_log := (v_res ->> 'log_id')::uuid;
+  for i in 1..10 loop
+    insert into storage.objects (bucket_id, name) values ('maintenance-photos', v_log || '/' || i || '.jpg');
+  end loop;
+  v_failed := false;
+  begin
+    insert into storage.objects (bucket_id, name) values ('maintenance-photos', v_log || '/11.jpg');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'høyst 10 bilder per rapport fra skjemaet');
+
+  perform t.root();
+  insert into storage.objects (bucket_id, name, metadata)
+  values ('maintenance-photos', v_log || '/stor.jpg', jsonb_build_object('size', 250 * 1024 * 1024));
+  perform t.anon();
+  perform set_config('request.headers',
+    json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '198.51.100.32')::text, true);
+  v_res := public.submit_maintenance_report(jsonb_build_object(
+    'name', 'Pål', 'boat', 'MS Runde', 'serial', 'r2-2026-0001'));
+  v_log2 := (v_res ->> 'log_id')::uuid;
+  v_failed := false;
+  begin
+    insert into storage.objects (bucket_id, name) values ('maintenance-photos', v_log2 || '/1.jpg');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'skjemaet tar ikke imot flere bilder når døgnkvoten er brukt opp');
+  perform t.ok(v_log2 is not null, 'rapporten lagres likevel');
+
+  -- ── Opprydding i bilder som aldri ble knyttet til en rapport ───────────
+  perform t.root();
+  v_path := gen_random_uuid() || '/gammel.jpg';
+  v_kept := v_log || '/beholdt.jpg';
+  insert into storage.objects (bucket_id, name, created_at) values
+    ('maintenance-photos', v_path, now() - interval '2 days'),
+    ('maintenance-photos', v_kept, now() - interval '2 days');
+  insert into public.maintenance_photos (maintenance_log_id, storage_path) values (v_log, v_kept);
+
+  perform t.login(o);
+  v_failed := false;
+  begin
+    perform public.orphan_maintenance_photos();
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'bare administratorer ser lista over løse bilder');
+
+  perform t.login(adm);
+  perform t.ok(exists (select 1 from public.orphan_maintenance_photos() where path = v_path)
+               and not exists (select 1 from public.orphan_maintenance_photos() where path = v_kept),
+               'lista har bare bilder uten rapport');
+  delete from storage.objects where bucket_id = 'maintenance-photos' and name in (v_path, v_kept);
+  perform t.root();
+  perform t.ok(not exists (select 1 from storage.objects where name = v_path)
+               and exists (select 1 from storage.objects where name = v_kept),
+               'en administrator kan slette løse bilder, men ikke bilder i en rapport');
+
+  -- ── Bestillinger fra nettsiden: høyst 5 i timen per besøkende ──────────
+  perform t.anon();
+  perform set_config('request.headers',
+    json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '198.51.100.33')::text, true);
+  for i in 1..5 loop
+    perform public.place_order(jsonb_build_object(
+      'name', 'Kunde', 'email', 'kunde' || i || '@runde2.test',
+      'items', jsonb_build_array(jsonb_build_object('product_id', v_product, 'qty', 1))));
+  end loop;
+  v_failed := false;
+  begin
+    perform public.place_order(jsonb_build_object(
+      'name', 'Kunde', 'email', 'kunde6@runde2.test',
+      'items', jsonb_build_array(jsonb_build_object('product_id', v_product, 'qty', 1))));
+  exception when raise_exception then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'den sjette bestillingen i timen fra samme besøkende avvises');
+  perform set_config('request.headers',
+    json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '198.51.100.34')::text, true);
+  perform public.place_order(jsonb_build_object(
+    'name', 'Kunde', 'email', 'kunde7@runde2.test',
+    'items', jsonb_build_array(jsonb_build_object('product_id', v_product, 'qty', 1))));
+  perform t.ok(true, 'en annen besøkende kan fortsatt bestille');
+  perform set_config('request.headers', '', true);
+
+  raise notice 'Testene fra gjennomgangen 23.11 består.';
+end $$;
+
 rollback;

@@ -16,7 +16,7 @@ import {
 } from '@/lib/portal/labels';
 import { dato, datoTid, nok } from '@/lib/format';
 import {
-  createVessel, inviteToCompany, removeMember, revokeInvitation, setMemberRole, updateCompany,
+  createVessel, inviteToCompany, removeMember, revokeInvitation, setCompanyVerified, setMemberRole, updateCompany,
 } from '../../actions';
 import { createAgreement, deleteAgreement, updateAgreement } from '../actions';
 import { createProject } from '../../prosjekter/actions';
@@ -38,7 +38,7 @@ export default async function SelskapDetaljPage({
 
   const { data: company } = await supabase
     .from('companies')
-    .select('id, name, org_number, address, postal_code, city, contact_name, contact_email, contact_phone')
+    .select('id, name, org_number, address, postal_code, city, contact_name, contact_email, contact_phone, verified_at, verified_by')
     .eq('id', id)
     .maybeSingle();
   if (!company) notFound();
@@ -103,12 +103,15 @@ export default async function SelskapDetaljPage({
 
   // company_members peker på auth.users, ikke profiles, så navnene hentes for seg.
   const memberIds = (members ?? []).map((member) => member.user_id);
+  if (company.verified_by && !memberIds.includes(company.verified_by)) memberIds.push(company.verified_by);
   const { data: profiles } = memberIds.length
     ? await supabase.from('profiles').select('user_id, full_name, email, last_seen_at').in('user_id', memberIds)
     : { data: [] };
   const profileById = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
 
   const companyId = { company_id: company.id };
+  const verifier = company.verified_by ? profileById.get(company.verified_by) : null;
+  const verifiedByName = verifier ? verifier.full_name || verifier.email : null;
   const now = Date.now();
   const place = [company.address, [company.postal_code, company.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
 
@@ -118,7 +121,40 @@ export default async function SelskapDetaljPage({
         title={company.name}
         crumbs={[{ href: '/admin/selskap', label: 'Selskap' }, { label: company.name }]}
         description={[company.org_number ? `Org.nr. ${company.org_number}` : null, place || null].filter(Boolean).join(' · ') || undefined}
+        badge={company.verified_at ? <Badge tone="ok">Verifisert</Badge> : <Badge tone="warn">Ikke verifisert</Badge>}
       />
+
+      {company.verified_at ? (
+        <div className="pt-actions" style={{ alignItems: 'center' }}>
+          <span className="pt-hint">
+            Verifisert {dato(company.verified_at)}
+            {company.verified_by ? ` av ${verifiedByName ?? 'en administrator'}` : ''}. Kunden kan ikke endre navn eller
+            org.nr. selv.
+          </span>
+          <ActionButton
+            action={setCompanyVerified}
+            fields={{ ...companyId, verified: 'false' }}
+            label="Fjern verifiseringen"
+            pendingLabel="Fjerner…"
+          />
+        </div>
+      ) : (
+        <div>
+          <Alert tone="warn" title="Selskapet er ikke verifisert">
+            Hvem som helst kan registrere et selskap med et organisasjonsnummer. Kontroller at den som registrerte det,
+            faktisk hører til selskapet, før du knytter bestillinger eller leidere hit.
+          </Alert>
+          <div className="pt-actions" style={{ marginTop: '0.6rem' }}>
+            <ActionButton
+              action={setCompanyVerified}
+              fields={{ ...companyId, verified: 'true' }}
+              label="Merk som verifisert"
+              pendingLabel="Lagrer…"
+              tone="primary"
+            />
+          </div>
+        </div>
+      )}
 
       {vesselFailed && (
         <Alert tone="warn" title="Kunden er opprettet, men fartøyet ble ikke lagret">
