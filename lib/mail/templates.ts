@@ -1,5 +1,5 @@
 import { fmt, fmtLength } from '@/lib/pricing';
-import { PORTAL_URL, SITE_URL } from '@/lib/site';
+import { PORTAL_URL, PUBLIC_SITE_URL, SITE_URL } from '@/lib/site';
 import { CERTIFICATE_NAME, CERTIFICATE_NAME_LOWER } from '@/lib/portal/labels';
 import { CONTACT_EMAIL, SUPPORT_PHONE } from './config';
 import {
@@ -45,8 +45,14 @@ import {
 export type Mail = { subject: string; text: string; html: string };
 type MailLang = 'no' | 'en';
 
-const brand = () => ({ siteUrl: SITE_URL, phone: SUPPORT_PHONE, email: CONTACT_EMAIL });
-const SITE_HOST = SITE_URL.replace(/^https?:\/\//, '');
+/**
+ * Bunnteksten og linja om hvorfor mottakeren får e-posten viser selskapets
+ * adresse (PUBLIC_SITE_URL), ikke vertsnavnet appen kjører på. Logoen hentes
+ * fra nettstedet (SITE_URL), som må svare med bildet.
+ */
+const brand = () => ({ siteUrl: SITE_URL, homeUrl: PUBLIC_SITE_URL, phone: SUPPORT_PHONE, email: CONTACT_EMAIL });
+const host = (url: string) => url.replace(/^https?:\/\//, '');
+const SITE_HOST = host(PUBLIC_SITE_URL);
 
 const SIGN = {
   no: ['Med vennlig hilsen', 'NorthWestCoast AS'],
@@ -450,7 +456,7 @@ export function orderDelivered(args: {
   const hello = greeting(args.name);
   const serials = (args.serials ?? []).filter(Boolean);
   const subject = `Bestilling ${args.orderNumber} er levert`;
-  const english = `In English: everything in order ${args.orderNumber} is now registered as delivered. Service deadlines and the maintenance log for each ladder are available on Min side at ${SITE_HOST}.`;
+  const english = `In English: everything in order ${args.orderNumber} is now registered as delivered. Service deadlines and the maintenance log for each ladder are available on Min side at ${host(PORTAL_URL)}.`;
 
   return {
     subject,

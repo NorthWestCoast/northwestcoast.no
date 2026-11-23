@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { button, details, esc, html, link, oneLine, p, safeLabel, safeName, shell, unlink } from '../lib/mail/layout.ts';
+import { AUTH_TEMPLATES } from '../lib/mail/auth-templates.ts';
 
 let failed = 0;
 const ok = (cond: boolean, what: string) => {
@@ -43,11 +45,29 @@ ok(unlink('Ca. 2,5 m. Ingen avvik.') === 'Ca. 2,5 m. Ingen avvik.', 'unlink() r�
 // Rammen.
 const doc = shell({
   title: 'Emne <x>', preheader: 'Forhåndstekst', heading: 'Overskrift', body: [p('Hei')], reason: 'Derfor',
-  brand: { siteUrl: 'https://northwestcoast.no', phone: '+47 904 07 341', email: 'post@northwestcoast.no' },
+  brand: {
+    siteUrl: 'https://portal.northwestcoast.no',
+    homeUrl: 'https://northwestcoast.no',
+    phone: '+47 904 07 341',
+    email: 'post@northwestcoast.no',
+  },
 });
 ok(doc.startsWith('<!doctype html>') && doc.includes('lang="nb"'), 'shell() gir et helt dokument på norsk');
 ok(doc.includes('<title>Emne &lt;x&gt;</title>'), 'tittelen escapes');
 ok(!/<script/i.test(doc) && !/ on[a-z]+=/i.test(doc), 'ingen skript eller hendelsesattributter i rammen');
+ok(doc.includes('src="https://portal.northwestcoast.no/images/logo/'), 'logoen hentes fra siteUrl');
+ok(/>northwestcoast\.no<\/a>/.test(doc) && !/>portal\.northwestcoast\.no</.test(doc), 'bunnteksten viser homeUrl, ikke siteUrl');
+
+// Filene i supabase/templates/ er de som limes inn i Supabase, og
+// forhåndsvisningen i admin bygges av AUTH_TEMPLATES. De må være like, og
+// README-en må ha emnefeltene malene har (npm run mail:auth).
+const root = new URL('../', import.meta.url);
+const readme = readFileSync(new URL('supabase/templates/README.md', root), 'utf8');
+for (const template of AUTH_TEMPLATES) {
+  const file = readFileSync(new URL(`supabase/templates/${template.file}`, root), 'utf8');
+  ok(file === template.html, `supabase/templates/${template.file} er bygget fra malen (kjør npm run mail:auth)`);
+  ok(readme.includes(`| \`${template.file}\` | ${template.supabaseName} | ${template.subject} |`), `README-en har emnefeltet til ${template.file}`);
+}
 
 if (failed) { console.error(`${failed} test(er) feilet.`); process.exit(1); }
 console.log('E-posttestene består.');

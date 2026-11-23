@@ -30,6 +30,15 @@ function resolveSiteUrl(): string {
 export const SITE_URL = resolveSiteUrl().replace(/\/$/, '');
 
 /**
+ * Selskapets nettadresse slik kundene kjenner den, uansett hvor nettstedet
+ * kjører. Står i bunnteksten på e-postene og i linja om hvorfor mottakeren
+ * får dem. SITE_URL er der nettstedet faktisk svarer (vercel.app fram til
+ * lanseringen, og en annen adresse i forhåndsvisninger og lokalt), og brukes
+ * til lenker og bilder som må virke.
+ */
+export const PUBLIC_SITE_URL = 'https://northwestcoast.no';
+
+/**
  * Adressen til den innloggede delen: Min side, Admin, Produksjon,
  * innloggingen, delte rapporter (/los) og sertifikater (/sertifikat).
  *

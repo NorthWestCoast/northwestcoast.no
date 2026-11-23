@@ -32,8 +32,10 @@ export type AuthTemplate = {
 
 const SITE = '{{ .SiteURL }}';
 // Kontaktadressen i bunnteksten er den samme som appen bruker
-// (CONTACT_TO_EMAIL). Bygg malene på nytt når den endres.
-const brand = { siteUrl: SITE, phone: SUPPORT_PHONE, email: CONTACT_EMAIL };
+// (CONTACT_TO_EMAIL). Bygg malene på nytt når den endres. Bunnteksten lenker
+// til Site URL, altså portalen der mottakeren logger inn, ikke til
+// PUBLIC_SITE_URL som e-postene fra appen.
+const brand = { siteUrl: SITE, homeUrl: SITE, phone: SUPPORT_PHONE, email: CONTACT_EMAIL };
 
 /**
  * Lenken går til en side i appen der brukeren selv trykker «Logg inn».
