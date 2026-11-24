@@ -47,7 +47,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <PageHeader title="Oversikt" description="Det som venter på NorthWest Coast akkurat nå." />
+      <PageHeader title="Oversikt" description="Det som venter på NorthWestCoast akkurat nå." />
 
       <Stats>
         <Stat value={newOrders.count ?? 0} label="Nye bestillinger" href="/admin/bestillinger" tone={newOrders.count ? 'info' : undefined} />

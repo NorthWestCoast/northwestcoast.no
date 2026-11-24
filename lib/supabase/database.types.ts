@@ -406,6 +406,48 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_items: {
+        Row: {
+          answer_en: string | null
+          answer_no: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          published: boolean
+          question_en: string | null
+          question_no: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer_en?: string | null
+          answer_no: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published?: boolean
+          question_en?: string | null
+          question_no: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer_en?: string | null
+          answer_no?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published?: boolean
+          question_en?: string | null
+          question_no?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gallery_images: {
         Row: {
           alt_en: string | null
@@ -1053,6 +1095,48 @@ export type Database = {
           },
         ]
       }
+      media_library: {
+        Row: {
+          alt_en: string | null
+          alt_no: string | null
+          bytes: number | null
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          height: number | null
+          id: string
+          storage_path: string
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          alt_en?: string | null
+          alt_no?: string | null
+          bytes?: number | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          height?: number | null
+          id?: string
+          storage_path: string
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          alt_en?: string | null
+          alt_no?: string | null
+          bytes?: number | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          height?: number | null
+          id?: string
+          storage_path?: string
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           confirm_sent_at: string | null
@@ -1249,6 +1333,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      post_autosaves: {
+        Row: {
+          data: Json
+          post_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data: Json
+          post_key: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          data?: Json
+          post_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      post_revisions: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          changed_by_name: string | null
+          data: Json
+          id: string
+          post_id: string
+          restored_from: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          data: Json
+          id?: string
+          post_id: string
+          restored_from?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          data?: Json
+          id?: string
+          post_id?: string
+          restored_from?: string | null
+        }
+        Relationships: []
       }
       posts: {
         Row: {
@@ -2535,6 +2673,7 @@ export type Database = {
       reply_ticket: { Args: { p_ticket: string; p_body: string }; Returns: undefined }
       request_ladder_access: { Args: { p_serial: string; p_message?: string }; Returns: Json }
       request_service: { Args: { p_ladder: string; p_preferred_date?: string; p_location?: string; p_notes?: string }; Returns: string }
+      restore_post_revision: { Args: { p_revision: string }; Returns: string }
       set_production_step: { Args: { p_step: string; p_done: boolean; p_note?: string }; Returns: Json }
       set_ticket_status: { Args: { p_ticket: string; p_status: string }; Returns: undefined }
       stock_usage: { Args: { p_from?: string; p_to?: string }; Returns: unknown[] }

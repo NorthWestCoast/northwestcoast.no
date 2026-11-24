@@ -38,7 +38,7 @@ export default async function LadderAdminPanel({ ladderId }: { ladderId: string 
     <Card
       id="administrasjon"
       title="Administrasjon"
-      description="Bare synlig for administratorer i NorthWest Coast."
+      description="Bare synlig for administratorer i NorthWestCoast."
       flush
     >
       {/* Service: rapport, bilder og servicesertifikat i ett skjema. */}
@@ -59,7 +59,7 @@ export default async function LadderAdminPanel({ ladderId }: { ladderId: string 
       <Disclosure summary="Loggfør vedlikehold">
         <div className="pt-stack">
           <p className="pt-hint">
-            Vedlikehold NorthWest Coast har utført, eller noe kunden har meldt inn. Kunden ser rapporten i
+            Vedlikehold NorthWestCoast har utført, eller noe kunden har meldt inn. Kunden ser rapporten i
             historikken til leideren.
           </p>
           <MaintenanceReportForm

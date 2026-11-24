@@ -165,7 +165,7 @@ const OG_IMAGE = {
   url: `${SITE_URL}/og/no`,
   width: 1200,
   height: 630,
-  alt: 'Argostep – modulær leider til båt fra NorthWest Coast',
+  alt: 'Argostep – modulær leider til båt fra NorthWestCoast',
 };
 
 /**
@@ -189,17 +189,17 @@ export function pageMetadata({
     description,
     alternates: { canonical: path },
     openGraph: {
-      title: `${title} | NorthWest Coast`,
+      title: `${title} | NorthWestCoast`,
       description,
       url: path,
-      siteName: 'NorthWest Coast',
+      siteName: 'NorthWestCoast',
       locale: 'nb_NO',
       type: 'website' as const,
       images: [OG_IMAGE],
     },
     twitter: {
       card: 'summary_large_image' as const,
-      title: `${title} | NorthWest Coast`,
+      title: `${title} | NorthWestCoast`,
       description,
       images: [OG_IMAGE.url],
     },

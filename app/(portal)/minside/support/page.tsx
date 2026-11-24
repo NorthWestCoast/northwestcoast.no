@@ -7,7 +7,7 @@ import { datoTid } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Support' };
 
-/** Sakene brukeren (og selskapet) har hos NorthWest Coast. */
+/** Sakene brukeren (og selskapet) har hos NorthWestCoast. */
 export default async function SupportPage() {
   const { supabase } = await requireUser('/minside/support');
 

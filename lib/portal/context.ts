@@ -118,7 +118,7 @@ export async function requireUser(next = '/minside') {
 /** Dit en bruker sendes når rollen ikke gir tilgang til siden hun ba om. */
 const homeFor = (role: StaffRole) => staffHome(role) ?? '/minside';
 
-/** Krever administrator hos NorthWest Coast. */
+/** Krever administrator hos NorthWestCoast. */
 export async function requireAdmin(next = '/admin') {
   const { supabase, ctx } = await requireUser(next);
   if (ctx.staffRole !== 'admin') redirect(homeFor(ctx.staffRole));

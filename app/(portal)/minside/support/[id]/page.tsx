@@ -76,7 +76,7 @@ export default async function SakPage({ params }: { params: Promise<{ id: string
               <div className="pt-bubble-head">
                 <strong>
                   {message.from_staff
-                    ? `${message.author_name ?? 'NorthWest Coast'} (NorthWest Coast)`
+                    ? `${message.author_name ?? 'NorthWestCoast'} (NorthWestCoast)`
                     : message.author_name ?? 'Kunde'}
                 </strong>
                 <span>{datoTid(message.created_at)}</span>

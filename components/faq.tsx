@@ -4,10 +4,10 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useLang, useT } from '@/components/lang-provider';
 import { localePath } from '@/lib/i18n';
-import { FAQ_ITEMS } from '@/lib/faq-items';
+import { FAQ_FRONT_PAGE, answerParagraphs, type FaqEntry } from '@/lib/faq';
 
-
-export default function Faq() {
+/** Spørsmålene på forsiden: de første i lista fra admin (lib/faq.ts). */
+export default function Faq({ items }: { items: FaqEntry[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const lang = useLang();
   const t = useT();
@@ -39,18 +39,17 @@ export default function Faq() {
         </div>
 
         <div className="faq-list reveal">
-          {FAQ_ITEMS.slice(0, 4).map(({ key }) => {
-            const item = t.faq.items[key];
-            return (
-              <details className="fi" key={key}>
-                <summary className="fq">
-                  {item.q}
-                  <span className="fi-icon">+</span>
-                </summary>
-                <p className="fa">{item.a}</p>
-              </details>
-            );
-          })}
+          {items.slice(0, FAQ_FRONT_PAGE).map((item) => (
+            <details className="fi" key={item.id}>
+              <summary className="fq">
+                {item.q}
+                <span className="fi-icon">+</span>
+              </summary>
+              {answerParagraphs(item.a).map((part, index) => (
+                <p className="fa" key={index}>{part}</p>
+              ))}
+            </details>
+          ))}
         </div>
       </div>
     </section>

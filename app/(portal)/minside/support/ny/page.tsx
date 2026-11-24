@@ -8,7 +8,7 @@ import { createTicket } from '../actions';
 
 export const metadata: Metadata = { title: 'Ny sak' };
 
-/** Ny sak til NorthWest Coast. ?leider=<id> forhåndsvelger leideren. */
+/** Ny sak til NorthWestCoast. ?leider=<id> forhåndsvelger leideren. */
 export default async function NySakPage({
   searchParams,
 }: {

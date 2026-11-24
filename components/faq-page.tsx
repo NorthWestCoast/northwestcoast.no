@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FAQ_ITEMS, type FaqCategory } from '@/lib/faq-items';
+import { answerParagraphs, type FaqCategory, type FaqEntry } from '@/lib/faq';
 import { useLang, useT } from '@/components/lang-provider';
 import { track } from '@/lib/analytics';
 
@@ -13,7 +13,8 @@ const CATEGORIES: (FaqCategory | 'all')[] = [
   'delivery',
 ];
 
-export default function FaqPageContent() {
+/** Alle publiserte spørsmål (lib/faq.ts), med søk og kategorier. */
+export default function FaqPageContent({ items }: { items: FaqEntry[] }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<FaqCategory | 'all'>('all');
   const [submitted, setSubmitted] = useState(false);
@@ -22,9 +23,8 @@ export default function FaqPageContent() {
   const lang = useLang();
   const t = useT();
 
-  const filtered = FAQ_ITEMS.filter(({ key, category: cat }) => {
-    const item = t.faq.items[key];
-    const matchCat = category === 'all' || cat === category;
+  const filtered = items.filter((item) => {
+    const matchCat = category === 'all' || item.category === category;
     const q = search.toLowerCase();
     const matchSearch =
       !q || item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q);
@@ -86,18 +86,17 @@ export default function FaqPageContent() {
               {t.faq.noMatch}
             </p>
           ) : (
-            filtered.map(({ key }) => {
-              const item = t.faq.items[key];
-              return (
-                <details className="fi" key={key}>
-                  <summary className="fq">
-                    {item.q}
-                    <span className="fi-icon">+</span>
-                  </summary>
-                  <p className="fa">{item.a}</p>
-                </details>
-              );
-            })
+            filtered.map((item) => (
+              <details className="fi" key={item.id}>
+                <summary className="fq">
+                  {item.q}
+                  <span className="fi-icon">+</span>
+                </summary>
+                {answerParagraphs(item.a).map((part, index) => (
+                  <p className="fa" key={index}>{part}</p>
+                ))}
+              </details>
+            ))
           )}
         </div>
       </section>

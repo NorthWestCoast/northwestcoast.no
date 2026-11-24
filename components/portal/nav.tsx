@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Anchor, Archive, BadgeCheck, BarChart3, Bell, Boxes, Building2, ClipboardList, Factory, FileText, Images,
-  Inbox, KeyRound, LayoutDashboard, LifeBuoy, ListChecks, ListTree, MapPin, Menu, Newspaper, Package,
+  Anchor, Archive, BadgeCheck, BarChart3, Bell, Boxes, Building2, ChevronDown, CircleHelp, ClipboardList, Factory, FileText, Images,
+  Inbox, KeyRound, LayoutDashboard, Library, LifeBuoy, ListChecks, ListTree, MapPin, Menu, Newspaper, Package,
   PackagePlus, Ship, ShoppingCart, Tags, Truck, UserCog, Users, Warehouse, Wrench, X,
 } from 'lucide-react';
 
@@ -15,7 +15,7 @@ import {
  * sideforhold (1569 × 385); størrelsen på skjermen settes i portal.css.
  */
 function Logo() {
-  return <Image src="/images/logo/NY-logo.png" alt="NorthWest Coast" width={163} height={40} priority />;
+  return <Image src="/images/logo/NY-logo.png" alt="NorthWestCoast" width={163} height={40} priority />;
 }
 
 /**
@@ -46,6 +46,8 @@ const ICONS = {
   jobs: Boxes,
   doc: FileText,
   gallery: Images,
+  library: Library,
+  faq: CircleHelp,
   cabinet: Archive,
   project: MapPin,
   certificate: BadgeCheck,
@@ -113,6 +115,41 @@ export default function PortalNav({
     .reduce<NavItem | null>((best, item) => (best && best.href.length >= item.href.length ? best : item), null);
   const isActive = (item: NavItem) => item.href === current?.href;
 
+  // Gruppene kan legges sammen. Valget huskes i nettleseren (per område), og
+  // gruppen med siden man står på, åpnes alltid.
+  const storageKey = `nwc:nav-collapsed:${area}`;
+  const activeGroup = groups.find((group) => group.title && group.items.some(isActive))?.title;
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored: unknown = JSON.parse(localStorage.getItem(storageKey) ?? '[]');
+      if (Array.isArray(stored)) {
+        setCollapsed(stored.filter((title): title is string => typeof title === 'string' && title !== activeGroup));
+      }
+    } catch {
+      // Uten lagring (privat vindu, blokkert) er alle gruppene åpne.
+    }
+    // Leses bare når menyen vises første gang; activeGroup følges opp under.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (activeGroup) setCollapsed((current) => (current.includes(activeGroup) ? current.filter((t) => t !== activeGroup) : current));
+  }, [activeGroup]);
+
+  function toggle(title: string) {
+    setCollapsed((current) => {
+      const next = current.includes(title) ? current.filter((t) => t !== title) : [...current, title];
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {
+        // Valget gjelder da bare til siden lastes på nytt.
+      }
+      return next;
+    });
+  }
+
   return (
     <>
       <header className="pt-topbar">
@@ -149,21 +186,41 @@ export default function PortalNav({
         <div className="pt-side-area">{area}</div>
 
         <nav className="pt-nav" aria-label={area}>
-          {groups.map((group, index) => (
-            <div key={group.title ?? index} style={{ display: 'contents' }}>
-              {group.title && <div className="pt-nav-group">{group.title}</div>}
-              {group.items.map((item) => {
-                const Icon = ICONS[item.icon];
-                return (
-                  <Link key={item.href} href={item.href} aria-current={isActive(item) ? 'page' : undefined}>
-                    <Icon size={17} strokeWidth={1.8} />
-                    {item.label}
-                    {item.count ? <span className="pt-nav-count">{item.count > 99 ? '99+' : item.count}</span> : null}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+          {groups.map((group, index) => {
+            const shut = Boolean(group.title && collapsed.includes(group.title));
+            // Tellerne skal ikke forsvinne når gruppen er lagt sammen.
+            const total = group.items.reduce((sum, item) => sum + (item.count ?? 0), 0);
+            const id = `pt-nav-group-${index}`;
+            return (
+              <div key={group.title ?? index} className="pt-nav-section">
+                {group.title && (
+                  <button
+                    type="button"
+                    className="pt-nav-group"
+                    aria-expanded={!shut}
+                    aria-controls={id}
+                    onClick={() => toggle(group.title!)}
+                  >
+                    <span>{group.title}</span>
+                    {shut && total > 0 && <span className="pt-nav-count">{total > 99 ? '99+' : total}</span>}
+                    <ChevronDown size={14} strokeWidth={2} className="pt-nav-chevron" aria-hidden="true" />
+                  </button>
+                )}
+                <div id={id} className="pt-nav-items" hidden={shut}>
+                  {group.items.map((item) => {
+                    const Icon = ICONS[item.icon];
+                    return (
+                      <Link key={item.href} href={item.href} aria-current={isActive(item) ? 'page' : undefined}>
+                        <Icon size={17} strokeWidth={1.8} />
+                        {item.label}
+                        {item.count ? <span className="pt-nav-count">{item.count > 99 ? '99+' : item.count}</span> : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </nav>
 
         <div className="pt-side-foot">{footer}</div>

@@ -2,6 +2,7 @@ import JsonLd from '@/components/json-ld';
 import { faqLd, productLd } from '@/lib/seo';
 import { getPriceTable } from '@/lib/catalog';
 import { getGalleryImages } from '@/lib/gallery';
+import { FAQ_FRONT_PAGE, getFaq } from '@/lib/faq';
 import { DEFAULT_LANG, isLang } from '@/lib/i18n';
 import Nav from '@/components/nav';
 import Hero from '@/components/hero';
@@ -23,11 +24,11 @@ import Lightbox from '@/components/lightbox';
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang: raw } = await params;
   const lang = isLang(raw) ? raw : DEFAULT_LANG;
-  const [table, gallery] = await Promise.all([getPriceTable(), getGalleryImages(lang)]);
+  const [table, gallery, faq] = await Promise.all([getPriceTable(), getGalleryImages(lang), getFaq(lang)]);
 
   return (
     <>
-      <JsonLd data={[productLd(lang, table), faqLd(lang, 4)]} />
+      <JsonLd data={[productLd(lang, table), ...(faq.length ? [faqLd(lang, faq.slice(0, FAQ_FRONT_PAGE))] : [])]} />
       <Nav />
 
       <Hero />
@@ -108,7 +109,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         dualBottomFill="var(--navy)"
       />
 
-      <Faq />
+      {faq.length > 0 && <Faq items={faq} />}
 
       <Contact />
 

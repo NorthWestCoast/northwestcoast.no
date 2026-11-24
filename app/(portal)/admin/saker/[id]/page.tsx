@@ -82,7 +82,7 @@ export default async function SakPage({ params }: { params: Promise<{ id: string
                     data-mine={message.author_id === ctx.userId ? 'true' : undefined}
                   >
                     <div className="pt-bubble-head">
-                      <strong>{message.author_name ?? (message.from_staff ? 'NorthWest Coast' : 'Kunde')}</strong>
+                      <strong>{message.author_name ?? (message.from_staff ? 'NorthWestCoast' : 'Kunde')}</strong>
                       <span>{datoTid(message.created_at)}</span>
                     </div>
                     <p>{message.body}</p>

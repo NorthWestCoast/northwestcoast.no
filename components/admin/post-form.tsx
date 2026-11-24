@@ -3,16 +3,22 @@ import type { Tables } from '@/lib/supabase/database.types';
 import { Hidden, Input, Select, Textarea } from './fields';
 import KeepForm from './keep-form';
 import MediaUpload from './media-upload';
+import PostFileTools from './post-file-tools';
+import PostImages from './post-images';
+import PostAutosave from './post-autosave';
+import PostPreview from './post-preview';
 
 type Post = Pick<
   Tables<'posts'>,
   | 'id' | 'slug' | 'title_no' | 'title_en' | 'tag_no' | 'tag_en' | 'excerpt_no' | 'excerpt_en'
-  | 'body_no' | 'body_en' | 'cover_image_url' | 'status' | 'published_at'
+  | 'body_no' | 'body_en' | 'cover_image_url' | 'status' | 'published_at' | 'updated_at'
 >;
 
 const FORMAT_HINT =
   'Blank linje gir nytt avsnitt. «## » først på linja gir overskrift, «- » gir punktliste. ' +
-  '**fet** gir fet tekst, og [tekst](https://…) gir lenke.';
+  '**fet** gir fet tekst, og [tekst](https://…) gir lenke. Bildene står i en bildeblokk ' +
+  '(«:::bilder» … «:::») og vises som lysbildeshow. Den lages med «Legg til bilder» under, ' +
+  'som henter bildene fra biblioteket eller laster opp nye.';
 
 /** Skjemaet for et nyhetsinnlegg. Uten `post`: nytt innlegg. */
 export default function PostForm({
@@ -29,6 +35,8 @@ export default function PostForm({
   return (
     <KeepForm action={action} submitLabel={post ? 'Lagre innlegget' : 'Opprett innlegget'}>
       {post && <Hidden fields={{ post_id: post.id }} />}
+
+      <PostFileTools />
 
       <div className="pt-form-row">
         <Input name="title_no" label="Tittel (norsk)" required minLength={2} maxLength={200} defaultValue={post?.title_no ?? ''} />
@@ -62,16 +70,23 @@ export default function PostForm({
         defaultValue={post?.body_no ?? ''}
         hint={FORMAT_HINT}
       />
+      <PostImages field="body_no" label="Bilder i den norske teksten" lang="no" />
       <Textarea
         name="body_en"
         label="Brødtekst (engelsk)"
         rows={10}
         maxLength={40000}
         defaultValue={post?.body_en ?? ''}
-        hint="Samme formatering som i den norske teksten."
+        hint="Samme formatering og bildeblokk som i den norske teksten, med engelske bildetekster."
+      />
+      <PostImages
+        field="body_en"
+        label="Bilder i den engelske teksten"
+        lang="en"
+        copyFrom={{ field: 'body_no', label: 'den norske teksten' }}
       />
 
-      <MediaUpload name="cover_image_url" defaultValue={post?.cover_image_url ?? ''} folder="posts" />
+      <MediaUpload name="cover_image_url" defaultValue={post?.cover_image_url ?? ''} />
 
       <div className="pt-form-row">
         <Select name="status" label="Status" defaultValue={post?.status ?? 'draft'}>
@@ -86,6 +101,10 @@ export default function PostForm({
           hint="Tom: settes til i dag første gang innlegget publiseres. En dato fram i tid skjuler innlegget til da."
         />
       </div>
+
+      <PostPreview />
+
+      <PostAutosave postId={post?.id} updatedAt={post?.updated_at} />
     </KeepForm>
   );
 }

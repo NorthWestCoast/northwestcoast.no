@@ -1431,4 +1431,175 @@ begin
   raise notice 'Testene fra gjennomgangen 23.11 består.';
 end $$;
 
+-- ── Bildebiblioteket ────────────────────────────────────────────────────────
+do $$
+declare
+  m uuid; p uuid; k uuid;                         -- media, produksjon, kunde
+  v_failed boolean;
+begin
+  perform t.root();
+  insert into auth.users (email, email_confirmed_at) values ('media@bibliotek.test', now()) returning id into m;
+  insert into auth.users (email, email_confirmed_at) values ('produksjon@bibliotek.test', now()) returning id into p;
+  insert into auth.users (email, email_confirmed_at) values ('kunde@bibliotek.test', now()) returning id into k;
+  insert into public.staff_members (email, role) values
+    ('media@bibliotek.test', 'media'), ('produksjon@bibliotek.test', 'production');
+
+  perform t.login(m);
+  insert into public.media_library (storage_path, file_name, alt_no)
+  values ('bibliotek/a1.jpg', 'kasse.jpg', 'Leiderkasse på dekk');
+  update public.media_library set alt_en = 'Ladder case on deck' where storage_path = 'bibliotek/a1.jpg';
+  perform t.ok((select created_by = m and alt_en = 'Ladder case on deck'
+                from public.media_library where storage_path = 'bibliotek/a1.jpg'),
+               'media legger bilder i biblioteket og skriver beskrivelsene');
+
+  v_failed := false;
+  begin
+    insert into public.media_library (storage_path) values ('galleri/../privat.jpg');
+  exception when check_violation then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'biblioteket tar bare imot bilder i bibliotek/ og posts/');
+
+  perform t.login(p);
+  perform t.ok(not exists (select 1 from public.media_library), 'produksjon ser ikke biblioteket');
+  v_failed := false;
+  begin
+    insert into public.media_library (storage_path) values ('bibliotek/p1.jpg');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'produksjon kan ikke legge bilder i biblioteket');
+
+  perform t.login(k);
+  perform t.ok(not exists (select 1 from public.media_library), 'kunder ser ikke biblioteket');
+  delete from public.media_library;
+  perform t.root();
+  perform t.ok(exists (select 1 from public.media_library where storage_path = 'bibliotek/a1.jpg'),
+               'kunder kan ikke slette fra biblioteket');
+
+  perform t.anon();
+  v_failed := false;
+  begin
+    perform 1 from public.media_library;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'besøkende har ingen tilgang til biblioteket');
+
+  perform t.login(m);
+  delete from public.media_library where storage_path = 'bibliotek/a1.jpg';
+  perform t.root();
+  perform t.ok(not exists (select 1 from public.media_library where storage_path = 'bibliotek/a1.jpg'),
+               'media kan slette fra biblioteket');
+
+  raise notice 'Bibliotektestene består.';
+end $$;
+
+-- ── Versjoner, automatisk lagring og FAQ ────────────────────────────────────
+do $$
+declare
+  m uuid; m2 uuid; k uuid;                        -- media, media nummer to, kunde
+  v_post uuid; v_first uuid; v_deleted uuid; v_count integer; v_failed boolean;
+begin
+  perform t.root();
+  insert into auth.users (email, email_confirmed_at) values ('media@historikk.test', now()) returning id into m;
+  insert into auth.users (email, email_confirmed_at) values ('media2@historikk.test', now()) returning id into m2;
+  insert into auth.users (email, email_confirmed_at) values ('kunde@historikk.test', now()) returning id into k;
+  insert into public.staff_members (email, role) values ('media@historikk.test', 'media'), ('media2@historikk.test', 'media');
+
+  -- ── Versjoner ──
+  perform t.login(m);
+  insert into public.posts (slug, title_no, body_no) values ('historikk', 'Første utgave', 'Tekst én') returning id into v_post;
+  select id into v_first from public.post_revisions where post_id = v_post and action = 'created';
+  perform t.ok(v_first is not null
+               and (select changed_by = m and changed_by_name = 'media@historikk.test' from public.post_revisions where id = v_first),
+               'et nytt innlegg blir første versjon, med hvem som skrev det');
+  update public.posts set title_no = 'Første utgave' where id = v_post;
+  perform t.ok((select count(*) from public.post_revisions where post_id = v_post) = 1,
+               'en lagring uten endringer gir ingen ny versjon');
+  update public.posts set title_no = 'Andre utgave', body_no = 'Tekst to', status = 'published', published_at = now() where id = v_post;
+  perform t.ok((select count(*) from public.post_revisions where post_id = v_post and action = 'updated') = 1,
+               'en endring gir en ny versjon');
+
+  perform public.restore_post_revision(v_first);
+  perform t.ok((select title_no = 'Første utgave' and body_no = 'Tekst én' and status = 'published'
+                from public.posts where id = v_post),
+               'en gammel versjon kan hentes tilbake, og innlegget beholder status');
+  perform t.ok((select restored_from = v_first from public.post_revisions
+                where post_id = v_post and action = 'restored'),
+               'gjenopprettingen står i historikken med versjonen den kom fra');
+
+  delete from public.posts where id = v_post;
+  select id into v_deleted from public.post_revisions where post_id = v_post and action = 'deleted';
+  perform t.ok(v_deleted is not null, 'et slettet innlegg blir liggende i historikken');
+  perform public.restore_post_revision(v_deleted);
+  perform t.ok((select status = 'draft' and title_no = 'Første utgave' from public.posts where id = v_post),
+               'et slettet innlegg kan hentes tilbake, som kladd');
+
+  v_failed := false;
+  begin
+    insert into public.post_revisions (post_id, action, data) values (v_post, 'updated', '{}');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'ingen kan skrive versjoner selv');
+  v_failed := false;
+  begin
+    delete from public.post_revisions where post_id = v_post;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'ingen kan slette historikken');
+
+  perform t.login(k);
+  perform t.ok(not exists (select 1 from public.post_revisions), 'kunder ser ikke historikken');
+  v_failed := false;
+  begin
+    perform public.restore_post_revision(v_first);
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'kunder kan ikke hente tilbake versjoner');
+
+  -- ── Automatisk lagring ──
+  perform t.login(m);
+  insert into public.post_autosaves (post_key, data) values ('ny', '{"title_no": "Halvferdig"}');
+  insert into public.post_autosaves (post_key, data) values ('ny', '{"title_no": "Litt mer"}')
+  on conflict (user_id, post_key) do update set data = excluded.data;
+  perform t.ok((select data ->> 'title_no' from public.post_autosaves where post_key = 'ny') = 'Litt mer',
+               'skjemaet lagres automatisk i en kopi per person');
+  perform t.ok((select title_no from public.posts where id = v_post) = 'Første utgave',
+               'den automatiske lagringen rører ikke innlegget');
+
+  perform t.login(m2);
+  perform t.ok(not exists (select 1 from public.post_autosaves), 'andre ser ikke kopien');
+  v_failed := false;
+  begin
+    insert into public.post_autosaves (user_id, post_key, data) values (m, 'ny', '{}');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'ingen kan lagre i en annens kopi');
+
+  perform t.login(k);
+  v_failed := false;
+  begin
+    insert into public.post_autosaves (post_key, data) values ('ny', '{}');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'kunder har ingen automatisk lagring');
+
+  -- ── FAQ ──
+  perform t.anon();
+  select count(*) into v_count from public.faq_items;
+  perform t.ok(v_count = 9, 'spørsmålene fra koden er flyttet til databasen');
+  perform t.login(m);
+  insert into public.faq_items (question_no, answer_no, published) values ('Et nytt spørsmål?', 'Et svar.', false);
+  update public.faq_items set answer_en = 'An answer.' where question_no = 'Et nytt spørsmål?';
+  perform t.anon();
+  perform t.ok((select count(*) from public.faq_items) = v_count, 'besøkende ser bare publiserte spørsmål');
+  perform t.login(k);
+  v_failed := false;
+  begin
+    insert into public.faq_items (question_no, answer_no) values ('Fra en kunde?', 'Svar.');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'kunder kan ikke legge til spørsmål');
+
+  raise notice 'Testene for versjoner, automatisk lagring og FAQ består.';
+end $$;
+
 rollback;

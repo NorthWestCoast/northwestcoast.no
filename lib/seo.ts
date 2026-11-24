@@ -1,5 +1,5 @@
 import type { LocalizedArticle } from './articles';
-import { FAQ_ITEMS } from './faq-items';
+import type { FaqEntry } from './faq';
 import { getDict, LANGS, localePath, SITE_NAME, SITE_URL, type Lang } from './i18n';
 import type { PriceTable } from './pricing';
 import { CONFIRMED_SOCIAL_URLS, ORG } from './site';
@@ -39,7 +39,8 @@ export function organizationLd(lang: Lang = 'no') {
     '@id': ORG_ID,
     name: SITE_NAME,
     legalName: ORG.legalName,
-    alternateName: ['Northwestcoast', 'NWC'],
+    // Navnet har vært skrevet i to ord på nettstedet og i omtaler.
+    alternateName: ['NorthWest Coast', 'Northwestcoast', 'NWC'],
     description: t.footer.tagline,
     url: SITE_URL,
     logo: {
@@ -173,9 +174,9 @@ export function productLd(lang: Lang, table: PriceTable) {
   };
 }
 
-export function faqLd(lang: Lang, limit?: number) {
+/** Strukturert data for spørsmålene som vises på siden (lib/faq.ts). */
+export function faqLd(lang: Lang, items: FaqEntry[]) {
   const t = getDict(lang);
-  const items = limit ? FAQ_ITEMS.slice(0, limit) : FAQ_ITEMS;
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -183,10 +184,10 @@ export function faqLd(lang: Lang, limit?: number) {
     inLanguage: bcp47(lang),
     isPartOf: { '@id': SITE_ID },
     about: { '@id': PRODUCT_ID },
-    mainEntity: items.map(({ key }) => ({
+    mainEntity: items.map((item) => ({
       '@type': 'Question',
-      name: t.faq.items[key].q,
-      acceptedAnswer: { '@type': 'Answer', text: t.faq.items[key].a },
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
     })),
   };
 }
@@ -331,10 +332,14 @@ function isoDate(date: string): string | undefined {
   return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
 }
 
+/** Full adresse til et bilde: opplastede bilder har det allerede, nettstedets egne ligger i /public. */
+const absImage = (src: string) => (/^https?:\/\//i.test(src) ? src : abs(src));
+
 /**
  * Strukturert data for ett innlegg (fra lib/posts.ts). `Article`, ikke
  * `NewsArticle`: dette er selskapets egne nyheter, ikke en nyhetsredaksjon.
- * dateModified utelates fordi innleggene bare har én dato.
+ * Bildene er forsidebildet og bildene i lysbildeshowet; dateModified er
+ * sist innlegget ble lagret i admin.
  */
 export function articleLd(lang: Lang, a: LocalizedArticle) {
   const url = abs(localePath(lang, `/nyheter/${a.slug}`));
@@ -343,9 +348,9 @@ export function articleLd(lang: Lang, a: LocalizedArticle) {
     '@type': 'Article',
     headline: a.title,
     description: a.excerpt,
-    // Forsidebilder fra admin er fulle adresser; de faste ligger i /public.
-    image: /^https?:\/\//i.test(a.image) ? a.image : abs(a.image),
-    datePublished: isoDate(a.date),
+    image: [...new Set([a.image, ...a.images].map(absImage))].slice(0, 20),
+    datePublished: a.publishedAt ?? isoDate(a.date),
+    dateModified: a.modifiedAt ?? a.publishedAt ?? isoDate(a.date),
     articleSection: a.tag,
     inLanguage: bcp47(lang),
     url,

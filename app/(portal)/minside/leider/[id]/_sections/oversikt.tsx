@@ -139,7 +139,7 @@ export default async function Oversikt({ supabase, ctx, ladder, canManage }: Sec
         key: `booking-${booking.id}`,
         date: iso ? dato(iso) : 'Dato ikke avtalt',
         title: booking.status === 'scheduled' ? 'Service er avtalt' : 'Service er bestilt',
-        text: booking.status === 'scheduled' ? undefined : 'Venter på bekreftelse fra NorthWest Coast',
+        text: booking.status === 'scheduled' ? undefined : 'Venter på bekreftelse fra NorthWestCoast',
         tone: booking.status === 'scheduled' ? 'ok' : 'info',
         future: true,
       },

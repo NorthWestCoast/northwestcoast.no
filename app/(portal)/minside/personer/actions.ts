@@ -14,7 +14,7 @@ function refresh() {
   revalidatePath('/minside', 'layout');
 }
 
-/** Brukerens rolle i selskapet. NorthWest Coast-administratorer regnes som eier. */
+/** Brukerens rolle i selskapet. NorthWestCoast-administratorer regnes som eier. */
 function myRole(ctx: PortalContext, companyId: string): Role | null {
   if (ctx.staffRole === 'admin') return 'owner';
   return ctx.companies.find((company) => company.id === companyId)?.role ?? null;

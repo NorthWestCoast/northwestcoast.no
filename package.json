@@ -15,6 +15,7 @@
     "test:mail": "node tests/mail-layout.test.mts",
     "test:hosts": "node tests/portal-hosts.test.mts",
     "test:stock": "node tests/stock.test.mts",
+    "test:posts": "node tests/post-markdown.test.mts",
     "mail:auth": "node scripts/build-auth-mail.mts",
     "icons": "node scripts/generate-icons.mjs"
   },

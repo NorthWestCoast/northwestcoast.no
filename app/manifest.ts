@@ -12,7 +12,7 @@ import { THEME_COLOR } from '@/lib/site';
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'NorthWest Coast – Argostep',
+    name: 'NorthWestCoast – Argostep',
     short_name: 'NWC',
     description: getDict('no').meta.home.description,
     lang: 'nb',

@@ -34,6 +34,7 @@ function entries(
   priority: number,
   changeFrequency: 'weekly' | 'monthly' | 'yearly',
   lastModified?: Date,
+  images?: string[],
 ): MetadataRoute.Sitemap {
   const { languages } = buildAlternates(path);
   return LANGS.map((lang) => ({
@@ -42,11 +43,21 @@ function entries(
     changeFrequency,
     priority,
     alternates: { languages },
+    ...(images?.length ? { images } : {}),
   }));
 }
 
-// Nyheter redigeres i admin. Sitemapet bygges på nytt hver time, og med en
-// gang når et innlegg lagres (getArticles er tagget med POSTS_TAG).
+/** Full adresse til et bilde (nettstedets egne ligger i /public). */
+const absImage = (src: string) => (/^https?:\/\//i.test(src) ? src : `${SITE_URL}${src}`);
+
+/** Sist innlegget ble lagret, ellers publiseringsdatoen. */
+const modified = (a: { modifiedAt: string | null; date: string }) =>
+  a.modifiedAt ? new Date(a.modifiedAt) : parseNorwegianDate(a.date);
+
+// Nyheter redigeres i admin. Hvert innlegg har datoen det sist ble lagret, og
+// bildene sine (forsidebildet og lysbildeshowet), så de kan finnes i
+// bildesøk. Sitemapet bygges på nytt hver time, og med en gang når et
+// innlegg lagres (getArticles er tagget med POSTS_TAG).
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -54,10 +65,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Bare offentlige sider. Innlogging og de innloggede områdene (/logg-inn,
   // /minside, /admin, /produksjon, /los) hører ikke hjemme her.
+  // Nyhetssiden er endret når det nyeste innlegget ble lagret.
+  const newsChanged = articles.length
+    ? new Date(Math.max(...articles.map((a) => modified(a).getTime())))
+    : undefined;
+
   return [
-    ...PAGES.flatMap((p) => entries(p.path, p.priority, p.changeFrequency)),
+    ...PAGES.flatMap((p) =>
+      entries(p.path, p.priority, p.changeFrequency, p.path === '/nyheter' ? newsChanged : undefined),
+    ),
     ...articles.flatMap((a) =>
-      entries(`/nyheter/${a.slug}`, 0.5, 'yearly', parseNorwegianDate(a.date)),
+      entries(
+        `/nyheter/${a.slug}`,
+        0.5,
+        'yearly',
+        modified(a),
+        [...new Set([a.image, ...a.images].map(absImage))].slice(0, 20),
+      ),
     ),
     // Personvernerklæringen finnes bare på norsk.
     { url: `${SITE_URL}/personvern`, changeFrequency: 'yearly', priority: 0.3 },

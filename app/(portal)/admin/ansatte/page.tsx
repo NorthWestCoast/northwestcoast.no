@@ -8,7 +8,7 @@ import { dato } from '@/lib/format';
 import { addStaff, removeStaff, setStaffRole } from './actions';
 import { MEDIA_ACCESS, STAFF_ROLE_OPTIONS, STAFF_ROLE_VALUES } from './roles';
 
-/** Hvem som har en rolle hos NorthWest Coast: ansatte, og eksterne som hjelper til med innholdet. */
+/** Hvem som har en rolle hos NorthWestCoast: ansatte, og eksterne som hjelper til med innholdet. */
 export default async function AnsattePage() {
   const { supabase, ctx } = await requireStaff();
 

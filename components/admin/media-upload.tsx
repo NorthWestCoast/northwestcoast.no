@@ -1,29 +1,32 @@
 'use client';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { BUCKETS } from '@/lib/portal/storage';
-
-const ALLOWED: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/avif': 'avif',
-};
-const MAX_BYTES = 8 * 1024 * 1024;
+import { useEffect, useRef, useState } from 'react';
+import { COVER_MIN_WIDTH, LIBRARY_FOLDER } from '@/lib/media-library';
+import {
+  IMAGE_TYPES,
+  SET_MEDIA_EVENT,
+  type SetMediaDetail,
+  libraryUrl,
+  uploadPublicImage,
+} from '@/lib/portal/upload-image';
+import LibraryPicker from './library-picker';
 
 /**
  * Ett bilde til en nyhet eller et produkt.
  *
- * Bildet lastes opp fra nettleseren til den offentlige bøtta `public-media`
- * (lagringspolicyen slipper bare administratorer og media til). Adressen legges i et
- * skjult felt, så skjemaet rundt lagrer den sammen med resten. En adresse
- * kan også limes inn direkte.
+ * Bildet velges fra bildebiblioteket, eller lastes opp fra nettleseren til
+ * den offentlige bøtta `public-media` (lagringspolicyen slipper bare
+ * administratorer og media til) og havner da også i biblioteket. Adressen
+ * legges i et skjult felt, så skjemaet rundt lagrer den sammen med resten.
+ * En adresse kan også limes inn direkte.
+ *
+ * .md-importen setter bildet utenfra med hendelsen SET_MEDIA_EVENT, og en
+ * endring meldes med et input-event (forhåndsvisningen lytter på det).
  */
 export default function MediaUpload({
   name = 'cover_image_url',
   defaultValue = '',
-  folder = 'posts',
+  folder = LIBRARY_FOLDER,
   label = 'Forsidebilde',
 }: {
   name?: string;
@@ -35,69 +38,113 @@ export default function MediaUpload({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [inputKey, setInputKey] = useState(0);
+  const [choosing, setChoosing] = useState(false);
+  // Bredden på bildet som sist ble valgt eller lastet opp (ukjent for innlimte adresser).
+  const [width, setWidth] = useState<number | null>(null);
+  const hidden = useRef<HTMLInputElement>(null);
+  const first = useRef(true);
+
+  useEffect(() => {
+    const onSet = (event: Event) => {
+      const detail = (event as CustomEvent<SetMediaDetail>).detail;
+      if (detail?.name === name) {
+        setUrl(detail.url);
+        setWidth(null);
+      }
+    };
+    window.addEventListener(SET_MEDIA_EVENT, onSet);
+    return () => window.removeEventListener(SET_MEDIA_EVENT, onSet);
+  }, [name]);
+
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    hidden.current?.dispatchEvent(new Event('input', { bubbles: true }));
+  }, [url]);
 
   async function upload(file: File | undefined) {
     if (!file) return;
     setError('');
-
-    const ext = ALLOWED[file.type];
-    if (!ext) {
-      setError('Bildet må være JPG, PNG, WebP eller AVIF.');
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      setError('Bildet er for stort. Største tillatte størrelse er 8 MB.');
-      return;
-    }
-
     setBusy(true);
-    const supabase = createClient();
-    const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKETS.media)
-      .upload(path, file, { contentType: file.type, upsert: false, cacheControl: '31536000' });
-    setBusy(false);
-    setInputKey((key) => key + 1);
-
-    if (uploadError) {
-      console.error('[media]', uploadError.message);
-      setError('Bildet ble ikke lastet opp. Prøv igjen.');
-      return;
+    try {
+      const result = await uploadPublicImage(file, folder);
+      setUrl(result.url);
+      setWidth(result.library?.width ?? null);
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Bildet ble ikke lastet opp. Prøv igjen.');
+    } finally {
+      setBusy(false);
+      setInputKey((key) => key + 1);
     }
-    setUrl(supabase.storage.from(BUCKETS.media).getPublicUrl(path).data.publicUrl);
   }
 
   const previewable = /^(https:\/\/|\/)/.test(url);
 
   return (
     <div className="pt-drop">
-      <input type="hidden" name={name} value={url} />
+      <input ref={hidden} type="hidden" name={name} value={url} />
 
       <label className="pt-label" htmlFor={`${name}-file`}>{label}</label>
+      {folder === LIBRARY_FOLDER && (
+        <div>
+          <button type="button" className="pt-btn pt-btn-ghost pt-btn-sm" disabled={busy} onClick={() => setChoosing(true)}>
+            Velg fra biblioteket
+          </button>
+          <LibraryPicker
+            open={choosing}
+            multiple={false}
+            lang="no"
+            title="Velg forsidebilde"
+            onClose={() => setChoosing(false)}
+            onPick={([image]) => {
+              if (!image) return;
+              setError('');
+              setUrl(libraryUrl(image.storage_path));
+              setWidth(image.width);
+            }}
+          />
+        </div>
+      )}
       <input
         key={inputKey}
         id={`${name}-file`}
         type="file"
-        accept={Object.keys(ALLOWED).join(',')}
+        accept={Object.keys(IMAGE_TYPES).join(',')}
         disabled={busy}
         onChange={(event) => upload(event.target.files?.[0])}
       />
       <span className="pt-hint">
-        {busy ? 'Laster opp…' : 'JPG, PNG, WebP eller AVIF, inntil 8 MB. Liggende format passer best.'}
+        {busy
+          ? 'Laster opp…'
+          : `Eller last opp et nytt: JPG, PNG, WebP eller AVIF. Liggende format, minst ${COVER_MIN_WIDTH} piksler bredt, passer best.`}
       </span>
 
       <label className="pt-label" htmlFor={`${name}-url`}>Eller lim inn en bildeadresse</label>
       <input
         id={`${name}-url`}
         className="pt-input"
-        type="url"
+        // Ikke type="url": bilder fra nettstedet har relative adresser (/images/…),
+        // og dem ville nettleseren nektet å sende.
+        type="text"
         inputMode="url"
-        placeholder="https://…"
+        spellCheck={false}
+        placeholder="https://… eller /images/…"
         value={url}
-        onChange={(event) => setUrl(event.target.value.trim())}
+        onChange={(event) => {
+          setUrl(event.target.value.trim());
+          setWidth(null);
+        }}
       />
 
       {error && <span className="pt-msg" data-ok="false" role="alert">{error}</span>}
+      {url && width !== null && width < COVER_MIN_WIDTH && (
+        <span className="pt-msg" data-ok="false">
+          Bildet er {width} piksler bredt. Google og delingstjenestene viser forsidebildet best når det er minst{' '}
+          {COVER_MIN_WIDTH} piksler.
+        </span>
+      )}
 
       {url && previewable && (
         <div className="pt-photos">
@@ -109,7 +156,7 @@ export default function MediaUpload({
       )}
       {url && (
         <div>
-          <button type="button" className="pt-link" onClick={() => setUrl('')}>Fjern bildet</button>
+          <button type="button" className="pt-link" onClick={() => { setUrl(''); setWidth(null); }}>Fjern bildet</button>
         </div>
       )}
     </div>

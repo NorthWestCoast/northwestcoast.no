@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { DEFAULT_ARTICLE_IMAGE, type LocalizedArticle } from './articles';
 import type { Lang } from './i18n';
+import { firstParagraph, galleryEntries, resolveImage } from './post-markdown';
 import { POSTS_TAG } from './portal/tags';
 import type { Database } from './supabase/database.types';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, noteSupabaseMissing, supabaseConfigured } from './supabase/config';
@@ -33,10 +34,11 @@ type PostRow = Pick<
   | 'tag_en'
   | 'cover_image_url'
   | 'published_at'
+  | 'updated_at'
 >;
 
 const COLUMNS =
-  'slug, title_no, title_en, excerpt_no, excerpt_en, body_no, body_en, tag_no, tag_en, cover_image_url, published_at';
+  'slug, title_no, title_en, excerpt_no, excerpt_en, body_no, body_en, tag_no, tag_en, cover_image_url, published_at, updated_at';
 
 /** Anonym klient uten sesjon. RLS slipper bare gjennom publiserte innlegg. */
 function anonClient() {
@@ -103,41 +105,25 @@ function formatDate(iso: string): string {
   return `${part('day')}.${part('month')}.${part('year')}`;
 }
 
-/** Den offentlige bøtta i prosjektets egen lagring, der opplastede bilder ligger. */
-const OWN_MEDIA = `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/+$/, '')}/storage/v1/object/public/`;
-
-/**
- * Forsidebilde: et bilde lastet opp i admin eller en fil i /public. Adresser
- * til andre nettsteder godtas ikke, ellers kunne den som skriver innlegg fått
- * alle besøkendes nettlesere til å hente noe fra en vert hun selv valgte.
- */
-function coverImage(value: string | null): string {
-  const url = filled(value);
-  if (OWN_MEDIA.startsWith('https://') && url.startsWith(OWN_MEDIA) && !/\s/.test(url)) return url;
-  if (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1):\d+\/storage\/v1\/object\/public\/[^\s]+$/.test(url)) return url;
-  if (url.startsWith('/') && !url.startsWith('//') && !/[\s\\]/.test(url)) return url;
-  return DEFAULT_ARTICLE_IMAGE;
-}
+/** Forsidebilde: et bilde vi godtar (se resolveImage), ellers standardbildet. */
+const coverImage = (value: string | null) => resolveImage(value) ?? DEFAULT_ARTICLE_IMAGE;
 
 /** Ingress når innlegget ikke har en: første avsnitt, uten formatering. */
 function summarize(body: string): string {
-  const paragraph = body
-    .replace(/\r\n?/g, '\n')
-    .split(/\n\s*\n/)
-    .map((block) => block.trim())
-    .find((block) => block && !block.startsWith('## ') && !block.startsWith('- '));
-  if (!paragraph) return '';
-
-  const plain = paragraph
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\[([^\]\n]+)\]\([^)\s]+\)/g, '$1')
-    .replace(/\s+/g, ' ');
+  const plain = firstParagraph(body);
   return plain.length > 200 ? `${plain.slice(0, 197).trimEnd()}…` : plain;
+}
+
+/** Det seneste av to tidspunkt. Et innlegg som lagres før publiseringsdatoen, er ikke endret før det kom ut. */
+function latest(a: string | null, b: string | null): string | null {
+  if (!a || !b) return a ?? b;
+  return new Date(a).getTime() >= new Date(b).getTime() ? a : b;
 }
 
 function fromRow(row: PostRow, lang: Lang): LocalizedArticle {
   const body = localized(lang, row.body_no, row.body_en);
   const excerpt = localized(lang, row.excerpt_no, row.excerpt_en) || summarize(body);
+  const images = [...new Set(galleryEntries(body).map((entry) => resolveImage(entry.ref)).filter((src): src is string => Boolean(src)))];
 
   return {
     slug: row.slug,
@@ -148,6 +134,9 @@ function fromRow(row: PostRow, lang: Lang): LocalizedArticle {
     excerpt,
     teaser: excerpt,
     body,
+    publishedAt: row.published_at,
+    modifiedAt: latest(row.updated_at, row.published_at),
+    images,
   };
 }
 

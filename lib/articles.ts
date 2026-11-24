@@ -10,6 +10,12 @@ export interface LocalizedArticle {
   title: string;
   excerpt: string;
   teaser: string;
+  /** Publiseringstidspunktet (ISO), til strukturert data og sitemap. */
+  publishedAt: string | null;
+  /** Sist lagret i admin (ISO). Aldri før publiseringen. */
+  modifiedAt: string | null;
+  /** Bildene i bildeblokkene på dette språket, i rekkefølge (adresser fra resolveImage). */
+  images: string[];
   /**
    * Ren tekst med et lite markdown-utvalg: blank linje = avsnitt, «## » =
    * mellomtittel, «- » = punkt, **fet** og [lenke](https://…). Tegnes av

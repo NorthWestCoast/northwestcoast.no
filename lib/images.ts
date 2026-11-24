@@ -165,6 +165,46 @@ export async function compressImage(file: File): Promise<File> {
   }
 }
 
+/**
+ * Har bildet gjennomsiktige områder? Tegner en liten kopi og ser etter
+ * punkter som ikke er helt dekkende. JPEG har aldri gjennomsiktighet.
+ */
+export async function hasTransparency(file: File): Promise<boolean> {
+  if (file.type === 'image/jpeg' || typeof createImageBitmap !== 'function') return false;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return false;
+    context.drawImage(bitmap, 0, 0, size, size);
+    bitmap.close();
+
+    const { data } = context.getImageData(0, 0, size, size);
+    for (let index = 3; index < data.length; index += 4) {
+      if (data[index] < 250) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/** Bredde og høyde i piksler, eller null når nettleseren ikke klarer å lese bildet. */
+export async function imageSize(file: File): Promise<{ width: number; height: number } | null> {
+  if (typeof createImageBitmap !== 'function') return null;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const size = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return size;
+  } catch {
+    return null;
+  }
+}
+
 /** Leser EXIF-dato og komprimerer i én operasjon. */
 export async function prepareImage(file: File): Promise<PreparedImage> {
   // EXIF må leses FØR komprimering – canvas beholder ikke metadata.

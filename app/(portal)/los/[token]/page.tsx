@@ -25,7 +25,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="pt">
       <div className="pt-public">
         <div className="pt-public-brand">
-          <strong>NorthWest Coast</strong>
+          <strong>NorthWestCoast</strong>
           <span className="pt-hint">Argostep · tilstandsrapport</span>
         </div>
         {children}
@@ -178,7 +178,7 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
       {certificate && (
         <Card
           title={CERTIFICATE_NAME}
-          description="Utstedt av NorthWest Coast etter service. Lenken viser om det fortsatt gjelder."
+          description="Utstedt av NorthWestCoast etter service. Lenken viser om det fortsatt gjelder."
         >
           <KV
             items={[
@@ -256,7 +256,7 @@ export default async function LosPage({ params }: { params: Promise<{ token: str
       <p className="pt-hint">
         Rapporten er opprettet {datoTid(share.createdAt)}
         {share.createdByName ? ` av ${share.createdByName}` : ''} og er tilgjengelig til {datoTid(share.expiresAt)}.
-        Opplysningene er registrert av {vessel ? 'fartøyet' : 'eieren'} og NorthWest Coast AS.
+        Opplysningene er registrert av {vessel ? 'fartøyet' : 'eieren'} og NorthWestCoast AS.
       </p>
     </Shell>
   );

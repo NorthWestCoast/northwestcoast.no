@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { requireMedia } from '@/lib/portal/context';
 import { Alert, Badge, Card, Empty, PageHeader, Td } from '@/components/portal/ui';
-import { dato } from '@/lib/format';
+import { ActionButton } from '@/components/portal/forms';
+import { dato, datoTid } from '@/lib/format';
+import { revisionPost } from '@/lib/post-revisions';
+import { restorePostRevision } from './actions';
 
 export default async function NyheterPage({
   searchParams,
@@ -11,11 +14,32 @@ export default async function NyheterPage({
   const { slettet } = await searchParams;
   const { supabase } = await requireMedia();
 
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('id, slug, title_no, status, published_at, updated_at, author_name')
-    .order('created_at', { ascending: false })
-    .limit(200);
+  const [{ data: posts }, { data: deletions }] = await Promise.all([
+    supabase
+      .from('posts')
+      .select('id, slug, title_no, status, published_at, updated_at, author_name')
+      .order('created_at', { ascending: false })
+      .limit(200),
+    supabase
+      .from('post_revisions')
+      .select('id, post_id, data, changed_by_name, changed_at')
+      .eq('action', 'deleted')
+      .order('changed_at', { ascending: false })
+      .limit(50),
+  ]);
+
+  // Slettede innlegg som ikke er hentet tilbake: siste sletting per innlegg.
+  const deletedIds = [...new Set((deletions ?? []).map((row) => row.post_id))];
+  const { data: back } = deletedIds.length
+    ? await supabase.from('posts').select('id').in('id', deletedIds)
+    : { data: [] as { id: string }[] };
+  const returned = new Set((back ?? []).map((row) => row.id));
+  const seen = new Set<string>();
+  const deleted = (deletions ?? []).filter((row) => {
+    if (returned.has(row.post_id) || seen.has(row.post_id)) return false;
+    seen.add(row.post_id);
+    return true;
+  });
 
   const now = Date.now();
 
@@ -27,7 +51,11 @@ export default async function NyheterPage({
         actions={<Link href="/admin/nyheter/ny" className="pt-btn">Nytt innlegg</Link>}
       />
 
-      {slettet && <Alert tone="ok" title="Innlegget er slettet" />}
+      {slettet && (
+        <Alert tone="ok" title="Innlegget er slettet">
+          Det kan hentes tilbake under «Slettede innlegg» nederst.
+        </Alert>
+      )}
 
       <Card flush>
         {posts?.length ? (
@@ -64,6 +92,43 @@ export default async function NyheterPage({
           <Empty title="Ingen innlegg ennå" action={{ href: '/admin/nyheter/ny', label: 'Skriv det første innlegget' }} />
         )}
       </Card>
+
+      {deleted.length > 0 && (
+        <Card
+          title="Slettede innlegg"
+          description="Et slettet innlegg kan hentes tilbake. Det kommer tilbake som kladd, med alle versjonene sine."
+          flush
+        >
+          <table className="pt-table">
+            <thead>
+              <tr><th>Tittel</th><th>Slettet</th><th>Av</th><th /></tr>
+            </thead>
+            <tbody>
+              {deleted.map((row) => {
+                const version = revisionPost(row.data);
+                return (
+                  <tr key={row.id}>
+                    <Td label="Tittel" className="pt-table-strong">
+                      <Link href={`/admin/nyheter/${row.post_id}/versjon/${row.id}`}>{version.title_no}</Link>
+                    </Td>
+                    <Td label="Slettet" className="pt-nowrap">{datoTid(row.changed_at)}</Td>
+                    <Td label="Av">{row.changed_by_name ?? '–'}</Td>
+                    <Td>
+                      <ActionButton
+                        action={restorePostRevision}
+                        fields={{ revision_id: row.id }}
+                        label="Hent tilbake"
+                        pendingLabel="Henter…"
+                        confirm={`Hente tilbake «${version.title_no}»? Det kommer tilbake som kladd.`}
+                      />
+                    </Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </Card>
+      )}
     </>
   );
 }

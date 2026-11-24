@@ -441,7 +441,7 @@ export async function linkMaintenanceLog(formData: FormData): Promise<ActionResu
 /**
  * Bekrefter en melding fra det åpne vedlikeholdsskjemaet. Skjemaet krever
  * ikke innlogging, så meldingen teller ikke som vedlikehold og vises ikke i
- * rapporter til los før NorthWest Coast har sett over den.
+ * rapporter til los før NorthWestCoast har sett over den.
  */
 export async function verifyMaintenanceLog(formData: FormData): Promise<ActionResult> {
   const { supabase, ctx } = await requireStaff();

@@ -1,55 +1,19 @@
 import { Fragment, type ReactNode } from 'react';
+import PostSlideshow from '@/components/post-slideshow';
+import { canOptimizeImage } from '@/lib/articles';
+import type { Lang } from '@/lib/i18n';
+import { parseBody, resolveImage } from '@/lib/post-markdown';
 
 /**
  * Tegner brødteksten i et innlegg.
  *
- * Teksten er ren tekst med et lite markdown-utvalg, slik den skrives i admin:
- *
- *   blank linje          nytt avsnitt
- *   ## Tittel            mellomtittel
- *   - punkt              punktliste
- *   **fet**              utheving
- *   [tekst](https://…)   lenke (bare http og https)
+ * Formatet er beskrevet i lib/post-markdown.ts: avsnitt, «## » mellomtittel,
+ * «- » punkt, **fet**, [lenke](https://…) og bildeblokker («:::bilder»), som
+ * vises som lysbildeshow.
  *
  * Alt bygges som React-elementer. Ingenting i teksten tolkes som HTML, så
  * det som skrives i admin kan aldri bli til skript på nettsiden.
  */
-
-type Block =
-  | { kind: 'heading'; text: string }
-  | { kind: 'paragraph'; lines: string[] }
-  | { kind: 'list'; items: string[] };
-
-function parseBlocks(source: string): Block[] {
-  const blocks: Block[] = [];
-  // Avsnittet eller lista som fortsatt tar imot linjer.
-  let open: Extract<Block, { kind: 'paragraph' | 'list' }> | null = null;
-
-  for (const raw of source.replace(/\r\n?/g, '\n').split('\n')) {
-    const line = raw.trim();
-
-    if (!line) {
-      open = null;
-    } else if (line.startsWith('## ')) {
-      open = null;
-      blocks.push({ kind: 'heading', text: line.slice(3).trim() });
-    } else if (line.startsWith('- ')) {
-      if (open?.kind !== 'list') {
-        open = { kind: 'list', items: [] };
-        blocks.push(open);
-      }
-      open.items.push(line.slice(2).trim());
-    } else {
-      if (open?.kind !== 'paragraph') {
-        open = { kind: 'paragraph', lines: [] };
-        blocks.push(open);
-      }
-      open.lines.push(line);
-    }
-  }
-
-  return blocks;
-}
 
 /** Bare http(s)-adresser blir lenker. javascript:, data: og relative stier blir det ikke. */
 function safeUrl(value: string): string | null {
@@ -98,11 +62,20 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
   return nodes;
 }
 
-export default function PostBody({ body }: { body: string }) {
+export default function PostBody({ body, lang = 'no' }: { body: string; lang?: Lang }) {
   return (
     <>
-      {parseBlocks(body).map((block, index) => {
+      {parseBody(body).map((block, index) => {
         const key = String(index);
+
+        if (block.kind === 'gallery') {
+          // Bilder vi ikke godtar (feil adresse, filnavn som aldri ble lastet opp) hoppes over.
+          const images = block.images.flatMap(({ ref, caption }) => {
+            const src = resolveImage(ref);
+            return src ? [{ src, caption, unoptimized: !canOptimizeImage(src) }] : [];
+          });
+          return images.length ? <PostSlideshow key={key} images={images} lang={lang} /> : null;
+        }
 
         if (block.kind === 'heading') {
           return <h2 key={key}>{inline(block.text, key)}</h2>;

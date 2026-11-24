@@ -145,9 +145,9 @@ export async function GET(
     services: services ?? [],
     maintenance: (logs ?? []).map((l) => ({
       performed_at: l.performed_at,
-      // Rapporter NorthWest Coast har lagt inn selv, er ikke mannskapets egenrapportering.
+      // Rapporter NorthWestCoast har lagt inn selv, er ikke mannskapets egenrapportering.
       reporter_name: l.source === 'admin'
-        ? [l.reporter_name, 'NorthWest Coast'].filter(Boolean).join(', ')
+        ? [l.reporter_name, 'NorthWestCoast'].filter(Boolean).join(', ')
         : l.reporter_name,
       // Typen (inspeksjon, test, reparasjon …) og tittelen står først i notatet,
       // så PDF-oppsettet kan være uendret.

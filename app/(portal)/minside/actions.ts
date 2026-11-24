@@ -73,7 +73,7 @@ export async function requestLadderAccess(formData: FormData): Promise<ActionRes
       return ok(
         result.handled_by === 'owner'
           ? 'Forespørselen er sendt. Eieren av leideren avgjør om du får tilgang, og du får varsel når det er avklart.'
-          : 'Forespørselen er sendt. Leideren har ingen registrert eier ennå, så NorthWest Coast behandler den. Du får varsel når det er avklart.',
+          : 'Forespørselen er sendt. Leideren har ingen registrert eier ennå, så NorthWestCoast behandler den. Du får varsel når det er avklart.',
       );
     default:
       return err('Forespørselen kunne ikke sendes. Prøv igjen.');
@@ -143,7 +143,7 @@ export async function requestService(formData: FormData): Promise<ActionResult> 
   if (error) return fail(error, 'Servicebestillingen kunne ikke sendes.');
 
   refresh();
-  return ok('Service er bestilt. NorthWest Coast tar kontakt for å avtale tidspunkt.');
+  return ok('Service er bestilt. NorthWestCoast tar kontakt for å avtale tidspunkt.');
 }
 
 /** Avbestiller en servicebestilling som ikke er utført. */

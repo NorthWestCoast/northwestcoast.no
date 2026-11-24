@@ -10,7 +10,7 @@ const SELECT = 'id, created_at, message, requester_name, requester_email, status
 
 /**
  * Forespørsler om tilgang til en leider via produksjonsnummeret. Eieren av
- * leideren kan svare selv på Min side; her kan NorthWest Coast svare for alle.
+ * leideren kan svare selv på Min side; her kan NorthWestCoast svare for alle.
  */
 export default async function TilgangPage() {
   const { supabase } = await requireStaff();
