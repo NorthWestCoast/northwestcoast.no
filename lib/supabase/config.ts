@@ -23,7 +23,7 @@ export function noteSupabaseMissing() {
   if (noted || typeof window !== 'undefined') return;
   noted = true;
   console.warn(
-    '[supabase] Ikke konfigurert – prisliste og nyheter vises fra de faste reservene (se .env.example).',
+    '[supabase] Ikke konfigurert – prislista vises fra den faste reserven, og nyhetene er tomme (se .env.example).',
   );
 }
 
