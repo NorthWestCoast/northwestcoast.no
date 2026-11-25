@@ -27,7 +27,8 @@ type NavLink = {
 export default function Nav() {
   const navRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
-  const [subOpen, setSubOpen] = useState(false);
+  // Undermenyen som er åpen (lenkens href), eller null.
+  const [subOpen, setSubOpen] = useState<string | null>(null);
   const lang = useLang();
   const t = useT();
   const pathname = usePathname() ?? '/';
@@ -57,7 +58,15 @@ export default function Nav() {
     { href: '/galleri', label: t.nav.galleri },
     { href: '/nyheter', label: t.nav.nyheter },
     { href: '/kalkulator', label: t.calculator.navLabel },
-    { href: '/vedlikehold', label: t.nav.vedlikehold },
+    {
+      href: '/veiledning',
+      label: t.nav.vedlikehold,
+      sub: [
+        // Foreldrelenken går hit, så den står ikke to ganger i mobilmenyen.
+        { href: '/veiledning', label: t.guide.navLabel, drawer: false },
+        { href: '/vedlikehold', label: t.maintenance.title },
+      ],
+    },
     { href: '/faq', label: t.nav.faq },
     { href: '/om-oss', label: t.about.navLabel },
   ];
@@ -128,19 +137,19 @@ export default function Nav() {
               // til oversikten, så menyen er aldri eneste vei inn (berøring).
               <li
                 key={l.href}
-                className={`nav-has-sub${subOpen ? ' open' : ''}`}
-                onMouseEnter={() => setSubOpen(true)}
-                onMouseLeave={() => setSubOpen(false)}
-                onFocus={() => setSubOpen(true)}
+                className={`nav-has-sub${subOpen === l.href ? ' open' : ''}`}
+                onMouseEnter={() => setSubOpen(l.href)}
+                onMouseLeave={() => setSubOpen(null)}
+                onFocus={() => setSubOpen(l.href)}
                 onBlur={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setSubOpen(false);
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setSubOpen(null);
                 }}
-                onKeyDown={(e) => { if (e.key === 'Escape') setSubOpen(false); }}
+                onKeyDown={(e) => { if (e.key === 'Escape') setSubOpen(null); }}
               >
                 <Link
                   href={site(l.href)}
-                  aria-expanded={subOpen}
-                  onClick={() => setSubOpen(false)}
+                  aria-expanded={subOpen === l.href}
+                  onClick={() => setSubOpen(null)}
                 >
                   {l.label}
                   <ChevronDown className="nav-caret" size={13} strokeWidth={2} aria-hidden="true" />
@@ -148,7 +157,7 @@ export default function Nav() {
                 <ul className="nav-sub">
                   {l.sub.map((s) => (
                     <li key={s.href}>
-                      <Link href={site(s.href)} onClick={() => setSubOpen(false)}>
+                      <Link href={site(s.href)} onClick={() => setSubOpen(null)}>
                         {s.label}
                       </Link>
                     </li>
@@ -196,7 +205,7 @@ export default function Nav() {
             ...(l.sub ?? [])
               .filter((s) => s.drawer !== false)
               .map((s) => (
-                <li key={s.href}>
+                <li key={`${l.href}>${s.href}`}>
                   <Link
                     href={site(s.href)}
                     className="nav-drawer-sub"

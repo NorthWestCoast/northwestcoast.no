@@ -982,15 +982,73 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          expires_at: string
+          id: string
+          ladder_id: string
+          last_used_at: string | null
+          recipient: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          token_hash: string
+          use_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          expires_at: string
+          id?: string
+          ladder_id: string
+          last_used_at?: string | null
+          recipient?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash: string
+          use_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          expires_at?: string
+          id?: string
+          ladder_id?: string
+          last_used_at?: string | null
+          recipient?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_links_ladder_id_fkey"
+            columns: ["ladder_id"]
+            isOneToOne: false
+            referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_logs: {
         Row: {
+          checklist: Database["public"]["Enums"]["maintenance_checklist"] | null
+          checklist_items: Json
           created_at: string
           id: string
           imo_raw: string | null
+          incomplete: boolean
           kind: Database["public"]["Enums"]["log_kind"]
           ladder_id: string | null
+          link_id: string | null
           notes: string | null
           notified_at: string | null
+          paper_form: boolean
           performed_at: string
           reported_by_user_id: string | null
           reporter_email: string | null
@@ -1004,13 +1062,18 @@ export type Database = {
           vessel_name_raw: string | null
         }
         Insert: {
+          checklist?: Database["public"]["Enums"]["maintenance_checklist"] | null
+          checklist_items?: Json
           created_at?: string
           id?: string
           imo_raw?: string | null
+          incomplete?: boolean
           kind?: Database["public"]["Enums"]["log_kind"]
           ladder_id?: string | null
+          link_id?: string | null
           notes?: string | null
           notified_at?: string | null
+          paper_form?: boolean
           performed_at?: string
           reported_by_user_id?: string | null
           reporter_email?: string | null
@@ -1024,13 +1087,18 @@ export type Database = {
           vessel_name_raw?: string | null
         }
         Update: {
+          checklist?: Database["public"]["Enums"]["maintenance_checklist"] | null
+          checklist_items?: Json
           created_at?: string
           id?: string
           imo_raw?: string | null
+          incomplete?: boolean
           kind?: Database["public"]["Enums"]["log_kind"]
           ladder_id?: string | null
+          link_id?: string | null
           notes?: string | null
           notified_at?: string | null
+          paper_form?: boolean
           performed_at?: string
           reported_by_user_id?: string | null
           reporter_email?: string | null
@@ -1049,6 +1117,13 @@ export type Database = {
             columns: ["ladder_id"]
             isOneToOne: false
             referencedRelation: "ladders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_logs_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_links"
             referencedColumns: ["id"]
           },
           {
@@ -2658,6 +2733,7 @@ export type Database = {
       fulfil_job_from_stock: { Args: { p_job: string; p_stock_job: string }; Returns: string }
       get_certificate: { Args: { p_token: string }; Returns: Json }
       get_ladder_share: { Args: { p_token: string }; Returns: Json }
+      get_maintenance_link: { Args: { p_token: string }; Returns: Json }
       install_ladder: { Args: { p_ladder: string; p_vessel: string; p_installed_at?: string; p_project?: string }; Returns: undefined }
       is_valid_imo: { Args: { value: string }; Returns: boolean }
       is_valid_org_number: { Args: { value: string }; Returns: boolean }
@@ -2674,11 +2750,13 @@ export type Database = {
       request_ladder_access: { Args: { p_serial: string; p_message?: string }; Returns: Json }
       request_service: { Args: { p_ladder: string; p_preferred_date?: string; p_location?: string; p_notes?: string }; Returns: string }
       restore_post_revision: { Args: { p_revision: string }; Returns: string }
+      revoke_maintenance_link: { Args: { p_link: string }; Returns: undefined }
       set_production_step: { Args: { p_step: string; p_done: boolean; p_note?: string }; Returns: Json }
       set_ticket_status: { Args: { p_ticket: string; p_status: string }; Returns: undefined }
       stock_usage: { Args: { p_from?: string; p_to?: string }; Returns: unknown[] }
       submit_contact_request: { Args: { payload: Json }; Returns: string }
       submit_maintenance_report: { Args: { payload: Json }; Returns: Json }
+      submit_maintenance_via_link: { Args: { p_token: string; payload: Json }; Returns: Json }
       subscribe_newsletter: { Args: { p_email: string }; Returns: Json }
       unsubscribe_newsletter: { Args: { p_token: string }; Returns: boolean }
     }
@@ -2688,6 +2766,7 @@ export type Database = {
       ladder_lifecycle_status: "in_production" | "delivered" | "installed" | "retired" | "in_stock"
       ladder_photo_kind: "ladder" | "attachment_point" | "overview" | "other"
       log_kind: "maintenance" | "inspection" | "test" | "usage" | "repair" | "note"
+      maintenance_checklist: "before_use" | "after_use" | "quarterly"
       order_status: "new" | "quoted" | "confirmed" | "in_production" | "delivered" | "cancelled"
       product_kind: "ladder" | "cabinet" | "spare_part"
       service_result: "ok" | "ok_with_remarks" | "failed"

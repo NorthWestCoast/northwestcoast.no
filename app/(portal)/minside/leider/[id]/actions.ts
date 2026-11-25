@@ -11,6 +11,10 @@ import { createInvitation } from '@/lib/portal/invite';
 import { idag } from '@/lib/format';
 import { parseUploadedPhotos } from '@/components/minside/photos';
 import { SHARE_CHECKLIST, SHARE_DAYS, isLogKind } from '@/components/minside/util';
+import { checklistLogTitle, checklistPayload, isChecklist } from '@/lib/maintenance-checklists';
+import type { FinishResult, RegisterInput, RegisterResult } from '@/components/maintenance-checklist-form';
+import type { UploadedFile } from '@/components/portal/photo-uploader';
+import { LINK_DAYS } from '@/components/minside/maintenance-links';
 
 /**
  * Handlinger på leidersiden. RLS avgjør hva brukeren får gjøre; her
@@ -87,6 +91,129 @@ export async function attachLogPhotos(formData: FormData): Promise<ActionResult>
 
   refresh();
   return ok(photos.length === 1 ? 'Bildet er lagt til.' : `${photos.length} bilder er lagt til.`);
+}
+
+/**
+ * Registrering fra skjemaet med sjekkpunkter (fanen «Registrer vedlikehold»).
+ * Bundet til leideren på serveren: `registerMaintenance.bind(null, id)`.
+ *
+ * Teksten på punktene hentes her; skjemaet sender bare avkrysningene.
+ * Databasen regner selv ut om registreringen er ufullstendig.
+ */
+export async function registerMaintenance(ladderId: string, input: RegisterInput): Promise<RegisterResult> {
+  const { supabase, ctx } = await requireUser();
+
+  const id = uuid(ladderId);
+  if (!id) return { ok: false, error: 'Fant ikke leideren.' };
+
+  const checklist = input?.checklist ?? null;
+  if (checklist !== null && !isChecklist(checklist)) return { ok: false, error: 'Ukjent sjekkliste.' };
+
+  const today = idag();
+  const performedAt = isoDate(typeof input.performedAt === 'string' ? input.performedAt : null) ?? today;
+  if (performedAt > today) return { ok: false, error: 'Datoen kan ikke ligge fram i tid.' };
+
+  const paper = checklist !== null && input.paperForm === true;
+  const title = checklist ? checklistLogTitle(checklist) : optional(String(input.title ?? ''), 160);
+  const notes = optional(String(input.notes ?? ''), 4000);
+  if (!checklist && !title && !notes) return { ok: false, error: 'Skriv hva som ble gjort.' };
+
+  const { data: ladder } = await supabase
+    .from('ladders')
+    .select('id, vessel_id, serial_number')
+    .eq('id', id)
+    .maybeSingle();
+  if (!ladder) return { ok: false, error: 'Du har ikke tilgang til denne leideren.' };
+
+  const { data: log, error } = await supabase
+    .from('maintenance_logs')
+    .insert({
+      ladder_id: ladder.id,
+      vessel_id: ladder.vessel_id,
+      serial_number_raw: ladder.serial_number,
+      reported_by_user_id: ctx.userId,
+      reporter_name: ctx.displayName,
+      source: 'portal',
+      kind: checklist ? 'inspection' : 'maintenance',
+      title,
+      performed_at: performedAt,
+      notes,
+      checklist,
+      checklist_items: checklist && !paper ? checklistPayload('no', checklist, input.checked) : [],
+      paper_form: paper,
+    })
+    .select('id')
+    .single();
+  if (error || !log) {
+    console.error('[registrer] Kunne ikke lagre:', error?.code, error?.message);
+    return { ok: false, error: 'Registreringen kunne ikke lagres. Prøv igjen.' };
+  }
+
+  refresh();
+  return { ok: true, logId: log.id };
+}
+
+/** Knytter bildene nettleseren lastet opp, til registreringen. */
+export async function finishRegistration(ladderId: string, logId: string, photos: UploadedFile[]): Promise<FinishResult> {
+  const { supabase } = await requireUser();
+  const id = uuid(logId);
+  if (!id || !uuid(ladderId)) return { ok: false };
+
+  const parsed = parseUploadedPhotos(JSON.stringify(photos ?? []), id, 10);
+  if (parsed.length > 0) {
+    const { error } = await supabase.from('maintenance_photos').insert(
+      parsed.map((photo) => ({ maintenance_log_id: id, storage_path: photo.path, captured_at: photo.captured_at })),
+    );
+    if (error) {
+      console.error('[registrer] Bildene kunne ikke knyttes:', error.code, error.message);
+      return { ok: false };
+    }
+  }
+
+  refresh();
+  return { ok: true };
+}
+
+/**
+ * Ny lenke for registrering uten innlogging. Som delingslenkene lagres bare
+ * hashen; lenken vises én gang, rett etter at den er laget.
+ */
+export async function createMaintenanceLink(formData: FormData): Promise<ActionResult> {
+  const { supabase, ctx } = await requireUser();
+
+  const ladderId = uuid(formData.get('ladder_id'));
+  if (!ladderId) return err('Fant ikke leideren.');
+
+  const days = int(formData.get('days'), 1, 366);
+  if (days === null || !LINK_DAYS.some((d) => d === days)) return err('Velg hvor lenge lenken skal gjelde.');
+
+  const token = randomBytes(24).toString('base64url');
+  const tokenHash = createHash('sha256').update(token).digest('hex');
+
+  const { error } = await supabase.from('maintenance_links').insert({
+    ladder_id: ladderId,
+    token_hash: tokenHash,
+    created_by: ctx.userId,
+    recipient: optional(formData.get('recipient'), 160),
+    expires_at: new Date(Date.now() + days * 86_400_000).toISOString(),
+  });
+  if (error) return fail(error, 'Lenken kunne ikke lages. Bare den som forvalter leideren, kan lage lenker.');
+
+  refresh();
+  redirect(`/minside/leider/${ladderId}?fane=registrer&lenke=${token}#lenker`);
+}
+
+/** Trekker tilbake en lenke. Den kan ikke åpnes igjen. */
+export async function revokeMaintenanceLink(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+  const linkId = uuid(formData.get('link_id'));
+  if (!linkId) return err('Fant ikke lenken.');
+
+  const { error } = await supabase.rpc('revoke_maintenance_link', { p_link: linkId });
+  if (error) return fail(error, 'Lenken kunne ikke trekkes tilbake.');
+
+  refresh();
+  return ok('Lenken er trukket tilbake.');
 }
 
 /** Ny planlagt oppgave på leideren. */

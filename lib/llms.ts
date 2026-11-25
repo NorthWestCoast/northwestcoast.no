@@ -4,6 +4,7 @@ import { getDict, LANGS, localePath, SITE_NAME, SITE_URL, type Lang } from './i1
 import { parseBody } from './post-markdown';
 import { getArticles } from './posts';
 import type { PriceTable } from './pricing';
+import { MAINTENANCE_PLAN as PLAN, MANUAL } from './maintenance-plan';
 import { ORG } from './site';
 
 /**
@@ -141,9 +142,37 @@ function pageLinks(lang: Lang): string[] {
     page(t.faq.title, '/faq', t.meta.faq.description),
     page(t.viewerPage.title, '/3d-leider', t.meta.leider3d.description),
     page(t.gallery.title, '/galleri', t.meta.galleri.description),
+    page(t.guide.title, '/veiledning', t.meta.veiledning.description),
     page(t.maintenance.title, '/vedlikehold', t.meta.vedlikehold.description),
     page(t.about.navLabel, '/om-oss', t.meta.omOss.description),
     page(t.nav.nyheter, '/nyheter', t.meta.nyheter.description),
+  ];
+}
+
+/** Intervallene, garantien og sjekklistene fra veiledningssiden. */
+function guideLines(lang: Lang): string[] {
+  const g = getDict(lang).guide;
+  return [
+    `### ${g.title}`,
+    '',
+    `${g.plan.sub} ${abs(lang, '/veiledning')}`,
+    '',
+    `- ${g.plan.before.when}: ${g.plan.before.what}`,
+    `- ${g.plan.after.when}: ${g.plan.after.what}`,
+    `- ${g.plan.quarterly.when(PLAN.inspectionMonths)}: ${g.plan.quarterly.what}`,
+    `- ${g.plan.test.when(PLAN.testAfterMonths)}: ${g.plan.test.what}`,
+    '',
+    `${g.warranty.title}:`,
+    '',
+    `- ${g.warranty.standard.title(PLAN.warrantyYears)}. ${g.warranty.standard.desc}`,
+    `- ${g.warranty.extended.title(PLAN.extendedWarrantyYears)}. ${g.warranty.extended.desc(PLAN.yearlyWarrantyAfterYears)}`,
+    `- ${g.warranty.lifetime.title(PLAN.lifetimeYears)}. ${g.warranty.lifetime.desc}`,
+    '',
+    `${g.parts.listTitle}:`,
+    '',
+    ...g.parts.list.map((item) => `- ${item}`),
+    '',
+    `${g.help.manual}: ${SITE_URL}${MANUAL.href} (${g.help.manualMeta(MANUAL.revision, MANUAL.sizeMb)})`,
   ];
 }
 
@@ -286,6 +315,8 @@ function fullSection(lang: Lang, table: PriceTable, content: LlmsContent): strin
     `${t.order.sub} ${abs(lang, '/bestill')}`,
     '',
     `${t.order.checkoutSub} ${t.order.note}`,
+    '',
+    ...guideLines(lang),
     '',
     `### ${t.maintenance.title}`,
     '',

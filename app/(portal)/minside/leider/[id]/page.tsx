@@ -10,10 +10,11 @@ import Historikk from './_sections/historikk';
 import Plan from './_sections/plan';
 import Deling from './_sections/deling';
 import Tilgang from './_sections/tilgang';
+import Registrer from './_sections/registrer';
 
 export const metadata: Metadata = { title: 'Leider' };
 
-const FANER = ['oversikt', 'historikk', 'plan', 'deling', 'tilgang'] as const;
+const FANER = ['oversikt', 'registrer', 'historikk', 'plan', 'deling', 'tilgang'] as const;
 type Fane = (typeof FANER)[number];
 
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
@@ -27,7 +28,7 @@ export default async function LeiderPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ fane?: string | string[]; type?: string | string[] }>;
+  searchParams: Promise<{ fane?: string | string[]; type?: string | string[]; lenke?: string | string[] }>;
 }) {
   const { id: rawId } = await params;
   const query = await searchParams;
@@ -91,6 +92,7 @@ export default async function LeiderPage({
         current={href(fane)}
         items={[
           { href: href('oversikt'), label: 'Oversikt' },
+          { href: href('registrer'), label: 'Registrer vedlikehold' },
           { href: href('historikk'), label: 'Historikk' },
           { href: href('plan'), label: 'Service og oppgaver' },
           { href: href('deling'), label: 'Deling' },
@@ -99,6 +101,7 @@ export default async function LeiderPage({
       />
 
       {fane === 'oversikt' && <Oversikt {...props} />}
+      {fane === 'registrer' && <Registrer {...props} newLink={first(query.lenke)} />}
       {fane === 'historikk' && <Historikk {...props} type={first(query.type)} />}
       {fane === 'plan' && <Plan {...props} />}
       {fane === 'deling' && <Deling {...props} />}

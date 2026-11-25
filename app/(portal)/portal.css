@@ -1061,3 +1061,94 @@ a.pt-stat:hover { border-color: var(--pt-ink); }
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+
+/* ── Registrering av vedlikehold (components/maintenance-checklist-form.tsx) ── */
+.mf { gap: 1.15rem; }
+
+.mf-segments { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.45rem; }
+.mf-segment { position: relative; }
+.mf-segment input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.mf-segment span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--pt-line-strong);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.mf-segment span:hover { border-color: var(--pt-navy); }
+.mf-segment input:checked + span { background: var(--pt-navy); border-color: var(--pt-navy); color: #fff; }
+.mf-segment input:focus-visible + span { outline: 2px solid var(--pt-blue); outline-offset: 2px; }
+
+/* Sjekkpunktene: store flater som er lette å treffe med tommelen om bord. */
+.mf-checks { display: grid; gap: 0.5rem; margin-top: 0.45rem; }
+.mf-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface);
+  font-size: 0.93rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.mf-check input { width: 20px; height: 20px; margin-top: 0.05rem; flex: none; accent-color: var(--pt-green); }
+.mf-check:has(input:checked) { border-color: var(--pt-green); background: var(--pt-green-bg); }
+
+.mf-paper-hint {
+  padding: 0.75rem 0.95rem;
+  border-left: 3px solid var(--pt-blue);
+  background: var(--pt-blue-bg);
+  color: var(--pt-ink);
+}
+
+.mf-files { display: grid; gap: 0.5rem; justify-items: start; }
+.mf-file-btn { position: relative; cursor: pointer; }
+.mf-file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.mf-file-btn:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
+.mf-file-btn:has(input:focus-visible) { outline: 2px solid var(--pt-blue); outline-offset: 2px; }
+.mf-file-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; width: 100%; font-size: 0.88rem; }
+.mf-file-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--pt-radius);
+  background: var(--pt-sunken);
+}
+.mf-file-list li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-file-list button { flex: none; border: 0; background: none; padding: 0; font: inherit; cursor: pointer; }
+
+/* Spørsmålet om å sende inn et ufullstendig skjema */
+.mf-dialog {
+  margin: auto;
+  width: min(480px, calc(100vw - 2rem));
+  padding: 1.4rem;
+  border: 1px solid var(--pt-line-strong);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface);
+  color: var(--pt-ink);
+}
+.mf-dialog::backdrop { background: rgb(10 22 40 / 0.5); }
+.mf-dialog h2 { margin: 0 0 0.6rem; font-size: 1.1rem; }
+.mf-dialog p { font-size: 0.93rem; }
+.mf-dialog ul { margin: 0.5rem 0 0.9rem 1.2rem; padding: 0; list-style: disc; display: grid; gap: 0.3rem; font-size: 0.92rem; }
+.mf-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin-top: 1.1rem; }
+
+.mf-done { display: grid; gap: 0.8rem; justify-items: start; }
+.mf-done .pt-alert { width: 100%; margin-bottom: 0; }
+.mf-done .pt-alert p + p { margin-top: 0.3rem; }
+
+.mf-print-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* Sjekkpunktene i historikken */
+.mf-result summary { cursor: pointer; font-size: 0.88rem; color: var(--pt-muted); }
+.mf-result ul { list-style: none; margin: 0.45rem 0 0; padding: 0; display: grid; gap: 0.25rem; font-size: 0.88rem; }
+.mf-result li { display: flex; gap: 0.5rem; }
+.mf-result li > span:first-child { color: var(--pt-green); font-weight: 700; }
+.mf-result li[data-checked='false'] > span:first-child { color: var(--pt-red); }

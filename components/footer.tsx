@@ -71,6 +71,7 @@ export default function Footer() {
             <li><Link href={`${site('/produkter')}#reservedeler`}>{t.footer.parts}</Link></li>
             <li><Link href={site('/kalkulator')}>{t.calculator.navLabel}</Link></li>
             <li><Link href={site('/bestill')}>{t.footer.orderList}</Link></li>
+            <li><Link href={site('/veiledning')}>{t.guide.navLabel}</Link></li>
             <li><Link href={site('/vedlikehold')}>{t.footer.maintenance}</Link></li>
           </ul>
         </div>
