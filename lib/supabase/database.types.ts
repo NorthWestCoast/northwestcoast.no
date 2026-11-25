@@ -790,6 +790,7 @@ export type Database = {
       }
       ladder_tasks: {
         Row: {
+          auto: string | null
           completed_at: string | null
           completed_by: string | null
           completed_log_id: string | null
@@ -805,6 +806,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          auto?: string | null
           completed_at?: string | null
           completed_by?: string | null
           completed_log_id?: string | null
@@ -820,6 +822,7 @@ export type Database = {
           title: string
         }
         Update: {
+          auto?: string | null
           completed_at?: string | null
           completed_by?: string | null
           completed_log_id?: string | null

@@ -122,6 +122,12 @@ export default async function SelskapDetaljPage({
         crumbs={[{ href: '/admin/selskap', label: 'Selskap' }, { label: company.name }]}
         description={[company.org_number ? `Org.nr. ${company.org_number}` : null, place || null].filter(Boolean).join(' · ') || undefined}
         badge={company.verified_at ? <Badge tone="ok">Verifisert</Badge> : <Badge tone="warn">Ikke verifisert</Badge>}
+        actions={
+          <>
+            <Link href={`/admin/selskap/${company.id}/kunde`} className="pt-btn pt-btn-ghost">Vis som kunde</Link>
+            <Link href={`/admin/kalender?selskap=${company.id}`} className="pt-btn pt-btn-ghost">Kalender</Link>
+          </>
+        }
       />
 
       {company.verified_at ? (
