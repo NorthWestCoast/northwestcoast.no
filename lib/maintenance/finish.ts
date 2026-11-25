@@ -18,25 +18,30 @@ type Finished = {
   reporter_email?: string | null;
   notes?: string | null;
   matched?: boolean;
+  /** 'link' for registreringer via lenke, 'web' for det gamle åpne skjemaet. */
+  source?: string;
 };
 
-export type FinishResult = { ok: boolean; photos: number };
+export type FinishResult = { ok: boolean; photos: number; receipt: string | null };
 
 /**
- * Avslutter en vedlikeholdsrapport fra det åpne skjemaet, og varsler.
+ * Avslutter en registrering uten innlogging (via lenke, eller det gamle åpne
+ * skjemaet), og sender e-post.
  *
  * finish_maintenance_report() knytter bildene som faktisk ligger i lagringen
- * til rapporten, legger et varsel til administratorene i portalen og stempler
- * rapporten som avsluttet. Den er idempotent: kalles den to ganger
- * (dobbeltklikk, nytt forsøk etter dårlig dekning), svarer den `already`, og
- * e-posten sendes ikke på nytt.
+ * til registreringen og stempler den som avsluttet. Den er idempotent: kalles
+ * den to ganger (dobbeltklikk, nytt forsøk etter dårlig dekning), svarer den
+ * `already`, og e-posten sendes ikke på nytt.
  *
- * Klienten er besøkerens egen (anonyme) sesjon. Rapportens id er en tilfeldig
- * UUID som bare den som nettopp sendte inn kjenner, og funksjonen tar bare
- * imot rapporter fra skjemaet de siste to timene.
+ * Registreringer via lenke varsles i portalen til dem som forvalter leideren
+ * (maintenance_logs_notify), og går ikke på e-post til NorthWestCoast. Den
+ * som registrerte, får en kvittering hvis e-postadressen er oppgitt.
  *
- * E-posten er et tillegg: feiler den, er rapporten likevel lagret og varslet
- * i portalen.
+ * Klienten er besøkerens egen (anonyme) sesjon. Id-en er en tilfeldig UUID
+ * som bare den som nettopp sendte inn kjenner, og funksjonen tar bare imot
+ * registreringer fra de siste to timene.
+ *
+ * E-posten er et tillegg: feiler den, er registreringen likevel lagret.
  */
 export async function finishMaintenance(
   supabase: SupabaseClient<Database>,
@@ -54,12 +59,14 @@ export async function finishMaintenance(
     if (error && error.code !== 'P0001') {
       console.error('[maintenance] Kunne ikke avslutte rapporten:', error.code, error.message);
     }
-    return { ok: false, photos: 0 };
+    return { ok: false, photos: 0, receipt: null };
   }
 
   const report = data as Finished;
   const photos = typeof report.photos === 'number' ? report.photos : 0;
-  if (report.already) return { ok: true, photos };
+  if (report.already) return { ok: true, photos, receipt: null };
+  const viaLink = report.source === 'link';
+  let receipt: string | null = null;
 
   try {
     const name = report.reporter ?? 'Ukjent';
@@ -77,7 +84,7 @@ export async function finishMaintenance(
 
     // Bildene ligger i en privat bøtte og vises i admin; e-posten lenker dit
     // i stedet for til selve filene.
-    await sendMail(
+    if (!viaLink) await sendMail(
       {
         to: MAINTENANCE_EMAIL,
         replyTo: report.reporter_email ?? undefined,
@@ -98,10 +105,11 @@ export async function finishMaintenance(
         { to: report.reporter_email, replyTo: MAINTENANCE_EMAIL, ...maintenanceReceipt({ ...fields, lang }) },
         { template: 'maintenance_receipt', relatedType: 'maintenance_log', relatedId: logId },
       );
+      receipt = report.reporter_email;
     }
   } catch (mailError) {
     console.error('[maintenance] E-post feilet for rapport', logId, mailError);
   }
 
-  return { ok: true, photos };
+  return { ok: true, photos, receipt };
 }

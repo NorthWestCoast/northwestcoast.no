@@ -19,6 +19,7 @@ const PAGES: { path: string; priority: number; changeFrequency: 'weekly' | 'mont
   { path: '/kalkulator', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/bestill', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/faq', priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/veiledning', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/vedlikehold', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/galleri', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/nyheter', priority: 0.6, changeFrequency: 'weekly' },

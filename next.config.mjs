@@ -34,7 +34,7 @@ function mediaPatterns() {
  * portalen, og hva portalens vertsnavn svarer på selv. PORTAL_PAGE i
  * lib/site.ts har de samme områdene.
  */
-const PORTAL_AREAS = ['minside', 'admin', 'produksjon', 'logg-inn', 'auth', 'los', 'sertifikat'];
+const PORTAL_AREAS = ['minside', 'admin', 'produksjon', 'logg-inn', 'auth', 'los', 'sertifikat', 'registrer'];
 
 /**
  * Portalen på eget vertsnavn (NEXT_PUBLIC_PORTAL_URL, f.eks.

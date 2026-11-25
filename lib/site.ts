@@ -78,7 +78,7 @@ export const PORTAL_HAS_OWN_HOST = Boolean(
  * Områdene følger PORTAL_AREAS i next.config.mjs. /personvern er med fordi
  * den svarer på begge vertsnavnene.
  */
-const PORTAL_PAGE = /^\/(minside|admin|produksjon|logg-inn|auth|los|sertifikat|personvern)(\/|$)/;
+const PORTAL_PAGE = /^\/(minside|admin|produksjon|logg-inn|auth|los|sertifikat|registrer|personvern)(\/|$)/;
 
 export function isPortalPage(pathname: string): boolean {
   return PORTAL_PAGE.test(pathname);

@@ -65,8 +65,10 @@ begin
       -- Åpne skjema på nettsiden (uten innlogging). Alle er strupet i databasen.
       p.proname in ('place_order', 'submit_contact_request', 'subscribe_newsletter',
                     'confirm_newsletter', 'unsubscribe_newsletter',
-                    'submit_maintenance_report', 'finish_maintenance_report',
-                    'get_ladder_share', 'get_certificate')
+                    'finish_maintenance_report',
+                    'get_ladder_share', 'get_certificate',
+                    -- Lenker for registrering av vedlikehold uten innlogging.
+                    'get_maintenance_link', 'submit_maintenance_via_link')
       or (
         r.rolname = 'authenticated'
         and p.proname in (
@@ -78,7 +80,7 @@ begin
           'place_cabinet', 'issue_ladder_certificate',
           'accept_invitation', 'decline_invitation',
           'receive_purchase_line', 'fulfil_job_from_stock',
-          'orphan_maintenance_photos')
+          'orphan_maintenance_photos', 'revoke_maintenance_link')
       )
     );
   if bad is not null then

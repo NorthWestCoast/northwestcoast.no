@@ -14,6 +14,37 @@ import type { SectionProps } from './types';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+type CheckedItem = { label: string; checked: boolean };
+
+/** Punktene fra databasen (jsonb), uten noe som ikke har riktig form. */
+function checklistItemsOf(value: unknown): CheckedItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) =>
+    item && typeof item === 'object' && typeof (item as CheckedItem).label === 'string'
+      ? [{ label: (item as CheckedItem).label, checked: (item as CheckedItem).checked === true }]
+      : [],
+  );
+}
+
+/** Sjekkpunktene, sammenslått: «4 av 4 punkter huket av». */
+function ChecklistResult({ items }: { items: CheckedItem[] }) {
+  const done = items.filter((item) => item.checked).length;
+  return (
+    <details className="mf-result">
+      <summary>{done} av {items.length} punkter huket av</summary>
+      <ul>
+        {items.map((item) => (
+          <li key={item.label} data-checked={item.checked}>
+            <span aria-hidden="true">{item.checked ? '✓' : '✗'}</span>
+            <span className="sr-only">{item.checked ? 'Huket av: ' : 'Ikke huket av: '}</span>
+            {item.label}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 type Entry = { iso: string; created: string; item: TimelineItem };
 
 /**
@@ -31,7 +62,7 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
 
   const logQuery = supabase
     .from('maintenance_logs')
-    .select('id, performed_at, created_at, kind, title, notes, reporter_name, reported_by_user_id, source, verified_at')
+    .select('id, performed_at, created_at, kind, title, notes, reporter_name, reported_by_user_id, source, verified_at, checklist, checklist_items, incomplete, paper_form')
     .eq('ladder_id', id)
     .order('performed_at', { ascending: false })
     .order('created_at', { ascending: false })
@@ -139,6 +170,8 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
           : [];
       });
 
+    const items = checklistItemsOf(log.checklist_items);
+
     // Egne loggføringer kan få bilder det første døgnet (samme grense som lagringen).
     const canAddPhotos =
       log.reported_by_user_id === ctx.userId && Date.now() - Date.parse(log.created_at) < DAY_MS;
@@ -152,6 +185,8 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
         title: (
           <>
             {log.title || logKind(log.kind)} <Badge>{logKind(log.kind)}</Badge>
+            {log.incomplete && <> <Badge tone="warn">Ufullstendig</Badge></>}
+            {log.paper_form && <> <Badge tone="info">Papirskjema</Badge></>}
           </>
         ),
         text: [
@@ -160,11 +195,13 @@ export default async function Historikk({ supabase, ctx, ladder, type }: Section
             log.reporter_name,
             log.source === 'web'
               ? (log.verified_at ? 'meldt via nettskjema' : 'meldt via nettskjema, ikke bekreftet av NorthWestCoast')
-              : log.source === 'admin' ? 'lagt inn av NorthWestCoast' : null,
+              : log.source === 'admin' ? 'lagt inn av NorthWestCoast'
+              : log.source === 'link' ? 'registrert via lenke' : null,
           ].filter(Boolean).join(' · ') || null,
         ].filter(Boolean).join('\n') || undefined,
-        extra: (photos.length > 0 || canAddPhotos) ? (
+        extra: (photos.length > 0 || canAddPhotos || items.length > 0) ? (
           <div className="pt-stack" style={{ marginTop: '0.6rem' }}>
+            {items.length > 0 && <ChecklistResult items={items} />}
             <PhotoGrid photos={photos} />
             {canAddPhotos && (
               <PhotoUploader

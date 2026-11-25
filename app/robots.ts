@@ -25,10 +25,11 @@ const NAMED_CRAWLERS = [
 
 /**
  * Innloggede områder, API-et og delingslenker (/los/ er unike, kortlivede
- * rapporter til los, /sertifikat/ er kontrollsider for ett bestemt dokument). /logg-inn står ikke her: siden har noindex, og den må
+ * rapporter til los, /sertifikat/ er kontrollsider for ett bestemt dokument,
+ * /registrer/ er lenker for å registrere vedlikehold på én leider). /logg-inn står ikke her: siden har noindex, og den må
  * kunne leses for at søkemotorene skal se det.
  */
-const PRIVATE = ['/minside', '/admin', '/produksjon', '/api/', '/auth/', '/los/', '/sertifikat/'];
+const PRIVATE = ['/minside', '/admin', '/produksjon', '/api/', '/auth/', '/los/', '/sertifikat/', '/registrer/'];
 
 export default function robots(): MetadataRoute.Robots {
   return {

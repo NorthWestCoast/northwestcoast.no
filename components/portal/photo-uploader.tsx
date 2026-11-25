@@ -39,6 +39,44 @@ async function prepare(file: File): Promise<{ blob: Blob; ext: string; type: str
   }
 }
 
+/** Er filen et bilde lagringen tar imot? */
+export function isImageFile(file: File): boolean {
+  return ALLOWED.includes(file.type) || /\.(jpe?g|png|webp|heic)$/i.test(file.name);
+}
+
+export type UploadedFile = { path: string; captured_at: string };
+
+/**
+ * Krymper og laster opp bildene til `folder` i bøtta, ett om gangen. Feiler
+ * ett, fortsetter resten; svaret sier hvilke som kom fram.
+ */
+export async function uploadPhotos(
+  bucket: string,
+  folder: string,
+  files: File[],
+  onProgress?: (index: number, total: number) => void,
+): Promise<{ uploaded: UploadedFile[]; failed: number }> {
+  const supabase = createClient();
+  const uploaded: UploadedFile[] = [];
+  let failed = 0;
+
+  for (const [index, file] of files.entries()) {
+    onProgress?.(index + 1, files.length);
+    const { blob, ext, type } = await prepare(file);
+    if (blob.size > MAX_BYTES) { failed += 1; continue; }
+
+    const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: type, upsert: false });
+    if (error) {
+      console.error('[upload]', error.message);
+      failed += 1;
+      continue;
+    }
+    uploaded.push({ path, captured_at: new Date(file.lastModified || Date.now()).toISOString() });
+  }
+  return { uploaded, failed };
+}
+
 /**
  * Velg bilder (eller ta dem med kameraet), last opp rett til lagring, og meld
  * stiene til en server action som knytter dem til riktig rad.
@@ -75,7 +113,7 @@ export default function PhotoUploader({
   function pick(list: FileList | null) {
     setResult(null);
     const picked = Array.from(list ?? []);
-    const valid = picked.filter((f) => (ALLOWED.includes(f.type) || /\.(jpe?g|png|webp|heic)$/i.test(f.name)));
+    const valid = picked.filter(isImageFile);
     if (valid.length < picked.length) {
       setResult({ ok: false, error: 'Bare bilder (JPG, PNG, WebP, HEIC) kan lastes opp.' });
     }
@@ -87,24 +125,9 @@ export default function PhotoUploader({
     setBusy(true);
     setResult(null);
 
-    const supabase = createClient();
-    const uploaded: { path: string; captured_at: string }[] = [];
-    let failed = 0;
-
-    for (const [index, file] of files.entries()) {
-      setProgress(`Laster opp ${index + 1} av ${files.length}…`);
-      const { blob, ext, type } = await prepare(file);
-      if (blob.size > MAX_BYTES) { failed += 1; continue; }
-
-      const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: type, upsert: false });
-      if (error) {
-        console.error('[upload]', error.message);
-        failed += 1;
-        continue;
-      }
-      uploaded.push({ path, captured_at: new Date(file.lastModified || Date.now()).toISOString() });
-    }
+    const { uploaded, failed } = await uploadPhotos(bucket, folder, files, (i, n) =>
+      setProgress(`Laster opp ${i} av ${n}…`),
+    );
 
     if (uploaded.length === 0) {
       setBusy(false);

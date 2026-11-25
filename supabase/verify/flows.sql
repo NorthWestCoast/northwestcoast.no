@@ -309,9 +309,21 @@ begin
                'eieren kan slette bildene også etter at delingen er trukket tilbake');
   perform t.anon();
 
-  -- ── Åpent vedlikeholdsskjema ──────────────────────────────────────────────
+  -- ── Det gamle åpne vedlikeholdsskjemaet ───────────────────────────────────
+  -- Stengt for besøkende (maintenance_checklists_and_links). Rapportene som
+  -- finnes, skal fortsatt kunne avsluttes og bekreftes, så de lages her som
+  -- databaseeier.
+  v_failed := false;
+  begin
+    perform public.submit_maintenance_report(jsonb_build_object(
+      'name', 'Ola', 'boat', 'MS Test', 'serial', 'nwc-2026-0001'));
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'det åpne vedlikeholdsskjemaet kan ikke brukes uten innlogging');
+  perform t.root();
   v_res := public.submit_maintenance_report(jsonb_build_object(
     'name', 'Ola', 'boat', 'MS Test', 'serial', 'nwc-2026-0001', 'notes', 'Smurt'));
+  perform t.anon();
   perform t.ok((v_res ->> 'matched')::boolean, 'serienummeret kobles til leideren');
   insert into storage.objects (bucket_id, name) values ('maintenance-photos', (v_res ->> 'log_id') || '/1-a.jpg');
   v_res := public.finish_maintenance_report((v_res ->> 'log_id')::uuid,
@@ -860,7 +872,6 @@ begin
   -- ── Meldinger fra det åpne skjemaet teller ikke før de er bekreftet ────
   perform t.root();
   select last_maintenance_at into v_last from public.ladder_status where ladder_id = v_ladder;
-  perform t.anon();
   perform public.submit_maintenance_report(jsonb_build_object(
     'name', 'Kontrollert OK – NWC service', 'boat', 'x', 'serial', 'sec-2026-0001'));
   perform t.root();
@@ -1343,12 +1354,13 @@ begin
                'et selskap en administrator oppretter, er verifisert');
 
   -- ── Bilder fra det åpne vedlikeholdsskjemaet ───────────────────────────
-  perform t.anon();
+  perform t.root();
   perform set_config('request.headers',
     json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '198.51.100.31')::text, true);
   v_res := public.submit_maintenance_report(jsonb_build_object(
     'name', 'Per', 'boat', 'MS Runde', 'serial', 'r2-2026-0001'));
   v_log := (v_res ->> 'log_id')::uuid;
+  perform t.anon();
   for i in 1..10 loop
     insert into storage.objects (bucket_id, name) values ('maintenance-photos', v_log || '/' || i || '.jpg');
   end loop;
@@ -1362,12 +1374,12 @@ begin
   perform t.root();
   insert into storage.objects (bucket_id, name, metadata)
   values ('maintenance-photos', v_log || '/stor.jpg', jsonb_build_object('size', 250 * 1024 * 1024));
-  perform t.anon();
   perform set_config('request.headers',
     json_build_object('x-nwc-gate', 'hemmelig', 'x-nwc-client', '198.51.100.32')::text, true);
   v_res := public.submit_maintenance_report(jsonb_build_object(
     'name', 'Pål', 'boat', 'MS Runde', 'serial', 'r2-2026-0001'));
   v_log2 := (v_res ->> 'log_id')::uuid;
+  perform t.anon();
   v_failed := false;
   begin
     insert into storage.objects (bucket_id, name) values ('maintenance-photos', v_log2 || '/1.jpg');
@@ -1600,6 +1612,172 @@ begin
   perform t.ok(v_failed, 'kunder kan ikke legge til spørsmål');
 
   raise notice 'Testene for versjoner, automatisk lagring og FAQ består.';
+end $$;
+
+-- ── Sjekkpunkter, papirskjema og lenker for vedlikehold ─────────────────────
+do $$
+declare
+  o uuid; x uuid; y uuid; adm uuid;               -- eier, fremmed, mannskap, administrator
+  v_company uuid; v_vessel uuid; v_ladder uuid; v_product uuid;
+  v_log uuid; v_link uuid; v_res jsonb; v_failed boolean;
+  v_token text := 'lenke_abcdefghijklmnopqrstuvwxyz0123456789';
+  v_items jsonb := '[{"label": "Skader", "checked": true}, {"label": "Forurensning", "checked": false}]';
+begin
+  perform t.root();
+  insert into auth.users (email, email_confirmed_at) values ('eier@lenke.test', now()) returning id into o;
+  insert into auth.users (email, email_confirmed_at) values ('fremmed@lenke.test', now()) returning id into x;
+  insert into auth.users (email, email_confirmed_at) values ('mannskap@lenke.test', now()) returning id into y;
+  insert into auth.users (email, email_confirmed_at) values ('admin@nwc-lenke.test', now()) returning id into adm;
+  insert into public.staff_members (email, role) values ('admin@nwc-lenke.test', 'admin');
+  select id into v_product from public.products where product_number = '400-034';
+
+  perform t.login(x); perform public.portal_bootstrap();
+  perform t.login(y); perform public.portal_bootstrap();
+  perform t.login(o); perform public.portal_bootstrap();
+  v_company := public.create_my_company('Lenke Rederi AS', '987654333');
+  insert into public.vessels (company_id, name) values (v_company, 'MS Lenke') returning id into v_vessel;
+
+  perform t.root();
+  insert into public.vessel_members (vessel_id, user_id, role) values (v_vessel, y, 'crew');
+  insert into public.ladders (company_id, vessel_id, product_id, serial_number, status)
+  values (v_company, v_vessel, v_product, 'LK-2026-0001', 'installed')
+  returning id into v_ladder;
+
+  -- ── Sjekkpunkter fra Min side ──
+  perform t.login(y);
+  insert into public.maintenance_logs
+    (ladder_id, vessel_id, reported_by_user_id, source, kind, title, checklist, checklist_items, incomplete)
+  values (v_ladder, v_vessel, y, 'portal', 'inspection', 'Kvartalsvis kontroll', 'quarterly', v_items, false)
+  returning id into v_log;
+  perform t.ok((select incomplete from public.maintenance_logs where id = v_log),
+               'et punkt som ikke er huket av, gjør registreringen ufullstendig (uansett hva klienten sier)');
+
+  insert into public.maintenance_logs
+    (ladder_id, vessel_id, reported_by_user_id, source, kind, title, checklist, checklist_items, paper_form)
+  values (v_ladder, v_vessel, y, 'portal', 'inspection', 'Kvartalsvis kontroll', 'quarterly', v_items, true)
+  returning id into v_log;
+  perform t.ok((select checklist_items = '[]'::jsonb and not incomplete from public.maintenance_logs where id = v_log),
+               'et papirskjema lagres uten punkter; bildet er dokumentasjonen');
+
+  v_failed := false;
+  begin
+    insert into public.maintenance_logs (ladder_id, reported_by_user_id, source, checklist, checklist_items)
+    values (v_ladder, y, 'portal', 'quarterly', '[{"label": "x", "checked": "ja"}]');
+  exception when raise_exception then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'sjekkpunkter med feil format avvises');
+
+  -- ── Lenker ──
+  v_failed := false;
+  begin
+    insert into public.maintenance_links (ladder_id, token_hash, created_by, expires_at)
+    values (v_ladder, encode(sha256(convert_to(v_token, 'UTF8')), 'hex'), y, now() + interval '30 days');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'mannskap som ikke forvalter leideren, kan ikke lage lenker');
+
+  perform t.login(o);
+  v_failed := false;
+  begin
+    insert into public.maintenance_links (ladder_id, token_hash, created_by, expires_at, created_at)
+    values (v_ladder, encode(sha256(convert_to(v_token || 'x', 'UTF8')), 'hex'), o,
+            now() + interval '400 days', now() + interval '100 days');
+  exception when check_violation then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en lenke varer høyst et år, også om opprettet-tidspunktet flyttes fram');
+
+  insert into public.maintenance_links (ladder_id, token_hash, created_by, recipient, expires_at)
+  values (v_ladder, encode(sha256(convert_to(v_token, 'UTF8')), 'hex'), o, ' Skipper ', now() + interval '30 days')
+  returning id into v_link;
+  perform t.ok((select recipient = 'Skipper' and created_by_name = 'eier@lenke.test'
+                from public.maintenance_links where id = v_link),
+               'eieren kan lage en lenke, og navnet hentes fra profilen');
+
+  perform t.login(x);
+  perform t.ok(not exists (select 1 from public.maintenance_links), 'andre ser ikke lenkene');
+
+  perform t.anon();
+  v_failed := false;
+  begin
+    perform 1 from public.maintenance_links;
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'besøkende kan ikke lese lenketabellen');
+  perform t.ok(public.get_maintenance_link('feil-token-som-er-lang-nok-1234') is null, 'en ukjent lenke gir ingenting');
+  v_res := public.get_maintenance_link(v_token);
+  perform t.ok(v_res ->> 'state' = 'active' and v_res ->> 'serial' = 'LK-2026-0001' and v_res ->> 'vessel' = 'MS Lenke',
+               'lenken viser leideren og fartøyet');
+
+  v_res := public.submit_maintenance_via_link(v_token, jsonb_build_object(
+    'name', 'Kari Mannskap', 'checklist', 'quarterly', 'items', v_items, 'notes', 'Litt olje',
+    'ladder_id', gen_random_uuid()));
+  v_log := (v_res ->> 'log_id')::uuid;
+  perform t.root();
+  perform t.ok((select ladder_id = v_ladder and vessel_id = v_vessel and source = 'link' and link_id = v_link
+                       and kind = 'inspection' and title = 'Kvartalsvis kontroll' and incomplete
+                from public.maintenance_logs where id = v_log),
+               'en registrering via lenke havner på lenkens leider, uansett hva skjemaet sender');
+  perform t.ok((select use_count = 1 and last_used_at is not null from public.maintenance_links where id = v_link),
+               'lenken teller bruken');
+  perform t.ok(exists (select 1 from public.notifications where user_id = o and title like 'Registrert via lenke%'),
+               'den som forvalter leideren, varsles');
+  perform t.ok((select last_maintenance_at from public.ladder_status where ladder_id = v_ladder) = current_date,
+               'en registrering via lenke teller som siste vedlikehold uten bekreftelse');
+
+  perform t.anon();
+  insert into storage.objects (bucket_id, name) values ('maintenance-photos', v_log || '/1-skjema.jpg');
+  v_res := public.finish_maintenance_report(v_log, array[v_log || '/1-skjema.jpg']);
+  perform t.ok((v_res ->> 'photos')::integer = 1 and v_res ->> 'source' = 'link',
+               'bildene knyttes til registreringen via lenke');
+  v_failed := false;
+  begin
+    insert into storage.objects (bucket_id, name) values ('maintenance-photos', v_log || '/2.jpg');
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'mappen stenges når registreringen er avsluttet');
+
+  v_failed := false;
+  begin
+    perform public.submit_maintenance_via_link(v_token, jsonb_build_object('name', 'Kari', 'performed_at', current_date + 1));
+  exception when raise_exception then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'datoen kan ikke ligge fram i tid');
+
+  -- ── Tilbaketrekking ──
+  perform t.login(y);
+  v_failed := false;
+  begin
+    perform public.revoke_maintenance_link(v_link);
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'mannskap kan ikke trekke tilbake lenken');
+
+  v_failed := false;
+  begin
+    insert into public.maintenance_logs (ladder_id, reported_by_user_id, source, title, link_id)
+    values (v_ladder, y, 'portal', 'Lurt', v_link);
+  exception when insufficient_privilege then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'en innlogget kan ikke knytte sin egen loggføring til en lenke');
+
+  perform t.login(o);
+  perform public.revoke_maintenance_link(v_link);
+  perform t.anon();
+  perform t.ok(public.get_maintenance_link(v_token) ->> 'state' = 'revoked', 'en tilbaketrukket lenke virker ikke');
+  v_failed := false;
+  begin
+    perform public.submit_maintenance_via_link(v_token, jsonb_build_object('name', 'Kari', 'notes', 'Etterpå'));
+  exception when raise_exception then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'og tar ikke imot flere registreringer');
+
+  perform t.login(adm);
+  insert into public.maintenance_links (ladder_id, token_hash, created_by, expires_at)
+  values (v_ladder, encode(sha256(convert_to(v_token || 'nwc', 'UTF8')), 'hex'), adm, now() + interval '7 days');
+  perform t.ok((select count(*) from public.maintenance_links where ladder_id = v_ladder) = 2,
+               'NorthWestCoast kan lage lenker på kundens leider');
+
+  raise notice 'Testene for sjekkpunkter og lenker består.';
 end $$;
 
 rollback;
