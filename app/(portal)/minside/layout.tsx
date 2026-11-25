@@ -25,6 +25,7 @@ export default async function MinSideLayout({ children }: { children: React.Reac
     {
       items: [
         { href: '/minside', label: 'Oversikt', icon: 'dashboard', exact: true },
+        { href: '/minside/kalender', label: 'Kalender', icon: 'calendar' },
         { href: '/minside/leidere', label: 'Leidere', icon: 'ladder' },
         { href: '/minside/fartoy', label: 'Fartøy', icon: 'vessel' },
         { href: '/minside/prosjekter', label: 'Prosjekter', icon: 'project' },

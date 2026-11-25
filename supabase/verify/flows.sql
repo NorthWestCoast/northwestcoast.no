@@ -219,7 +219,7 @@ begin
   perform t.login(b);
   v_log := public.complete_ladder_task(v_task, 'Alt i orden', current_date);
   perform t.ok((select status from public.ladder_tasks where id = v_task) = 'done', 'oppgaven er fullført');
-  perform t.ok((select count(*) from public.ladder_tasks where status = 'open') = 1, 'neste forekomst er lagt inn');
+  perform t.ok((select count(*) from public.ladder_tasks where status = 'open' and auto is null) = 1, 'neste forekomst er lagt inn');
   perform t.ok((select title from public.maintenance_logs where id = v_log) = 'Halvårlig egenkontroll',
                'fullføringen er dokumentert i loggen');
 
@@ -1778,6 +1778,99 @@ begin
                'NorthWestCoast kan lage lenker på kundens leider');
 
   raise notice 'Testene for sjekkpunkter og lenker består.';
+end $$;
+
+-- ── Faste kontroller fra brukermanualen ─────────────────────────────────────
+do $$
+declare
+  o uuid; y uuid;                                  -- eier, mannskap
+  v_company uuid; v_vessel uuid; v_ladder uuid; v_old uuid; v_product uuid;
+  v_task uuid; v_count integer;
+begin
+  perform t.root();
+  insert into auth.users (email, email_confirmed_at) values ('eier@faste.test', now()) returning id into o;
+  insert into auth.users (email, email_confirmed_at) values ('mannskap@faste.test', now()) returning id into y;
+  select id into v_product from public.products where product_number = '400-034';
+
+  perform t.login(y); perform public.portal_bootstrap();
+  perform t.login(o); perform public.portal_bootstrap();
+  v_company := public.create_my_company('Faste Kontroller AS', '987654341');
+  insert into public.vessels (company_id, name) values (v_company, 'MS Fast') returning id into v_vessel;
+
+  perform t.root();
+  insert into public.vessel_members (vessel_id, user_id, role) values (v_vessel, y, 'crew');
+  insert into public.ladders (company_id, vessel_id, product_id, serial_number, status)
+  values (v_company, v_vessel, v_product, 'FK-2026-0001', 'delivered')
+  returning id into v_ladder;
+  perform t.ok(not exists (select 1 from public.ladder_tasks where ladder_id = v_ladder),
+               'en leider som ikke er tatt i bruk, har ingen faste oppgaver');
+
+  update public.ladders set status = 'installed', installed_at = current_date where id = v_ladder;
+  perform t.ok((select due_date = (current_date + interval '3 months')::date and recurrence_months = 3 and kind = 'inspection'
+                from public.ladder_tasks where ladder_id = v_ladder and auto = 'quarterly_inspection' and status = 'open'),
+               'tatt i bruk: kvartalsvis kontroll om tre måneder, som gjentas');
+  perform t.ok((select due_date = (current_date + interval '30 months')::date and recurrence_months is null and kind = 'test'
+                from public.ladder_tasks where ladder_id = v_ladder and auto = 'iso_test'),
+               'tatt i bruk: test etter ISO 799-1 om 30 måneder');
+
+  update public.ladders set installed_at = current_date - 1 where id = v_ladder;
+  perform t.ok((select count(*) from public.ladder_tasks where ladder_id = v_ladder) = 2,
+               'en ny dato gir ingen doble oppgaver');
+
+  insert into public.ladders (company_id, vessel_id, product_id, serial_number, status, installed_at)
+  values (v_company, v_vessel, v_product, 'FK-2020-0002', 'installed', date '2020-01-10')
+  returning id into v_old;
+  perform t.ok((select due_date >= current_date and due_date < current_date + 93
+                from public.ladder_tasks where ladder_id = v_old and auto = 'quarterly_inspection'),
+               'en gammel dato gir neste kvartalskontroll fram i tid, ikke en forfalt');
+  perform t.ok((select due_date = date '2022-07-10' from public.ladder_tasks where ladder_id = v_old and auto = 'iso_test'),
+               'testen regnes fra datoen leideren ble tatt i bruk');
+
+  -- ── En registrert kvartalskontroll lukker oppgaven ──
+  perform t.login(y);
+  insert into public.maintenance_logs
+    (ladder_id, vessel_id, reported_by_user_id, source, kind, title, checklist, checklist_items, performed_at)
+  values (v_ladder, v_vessel, y, 'portal', 'inspection', 'Kvartalsvis kontroll', 'quarterly',
+          '[{"label": "Skader", "checked": true}]', current_date);
+  perform t.root();
+  perform t.ok((select status = 'done' and completed_by = y and completed_log_id is not null
+                from public.ladder_tasks where ladder_id = v_ladder and auto = 'quarterly_inspection'
+                order by created_at limit 1),
+               'en registrert kvartalskontroll lukker oppgaven');
+  perform t.ok((select count(*) = 1 and min(due_date) = (current_date + interval '3 months')::date
+                from public.ladder_tasks where ladder_id = v_ladder and auto = 'quarterly_inspection' and status = 'open'),
+               'og neste kommer tre måneder etter kontrollen');
+
+  perform t.login(y);
+  insert into public.maintenance_logs (ladder_id, vessel_id, reported_by_user_id, source, kind, title, checklist)
+  values (v_ladder, v_vessel, y, 'portal', 'inspection', 'Kontroll før bruk', 'before_use');
+  perform t.root();
+  perform t.ok((select count(*) from public.ladder_tasks where ladder_id = v_ladder and auto = 'quarterly_inspection') = 2,
+               'andre sjekklister rører ikke den kvartalsvise oppgaven');
+
+  -- ── Fullført for hånd: neste beholder merket ──
+  select id into v_task from public.ladder_tasks
+   where ladder_id = v_ladder and auto = 'quarterly_inspection' and status = 'open';
+  perform t.login(y);
+  perform public.complete_ladder_task(v_task, 'Gjort', current_date);
+  perform t.root();
+  perform t.ok((select count(*) = 1 from public.ladder_tasks
+                where ladder_id = v_ladder and auto = 'quarterly_inspection' and status = 'open'),
+               'en fast oppgave som fullføres for hånd, kommer igjen som fast oppgave');
+
+  -- ── Tatt ned og utrangert ──
+  update public.ladders set status = 'delivered', installed_at = null, vessel_id = null where id = v_ladder;
+  perform t.ok(not exists (select 1 from public.ladder_tasks
+                           where ladder_id = v_ladder and auto = 'quarterly_inspection' and status = 'open'),
+               'tatt ned: den kvartalsvise kontrollen avlyses');
+  perform t.ok(exists (select 1 from public.ladder_tasks where ladder_id = v_ladder and auto = 'iso_test' and status = 'open'),
+               'men testen blir stående');
+
+  update public.ladders set status = 'retired' where id = v_old;
+  perform t.ok(not exists (select 1 from public.ladder_tasks where ladder_id = v_old and status = 'open'),
+               'utrangert: alle faste oppgaver avlyses');
+
+  raise notice 'Testene for faste kontroller består.';
 end $$;
 
 rollback;

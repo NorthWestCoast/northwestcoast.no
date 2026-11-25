@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Anchor, Archive, BadgeCheck, BarChart3, Bell, Boxes, Building2, ChevronDown, CircleHelp, ClipboardList, Factory, FileText, Images,
+  Anchor, Archive, BadgeCheck, BarChart3, Bell, Boxes, Building2, CalendarDays, ChevronDown, CircleHelp, ClipboardList, Factory, FileText, Images,
   Inbox, KeyRound, LayoutDashboard, Library, LifeBuoy, ListChecks, ListTree, MapPin, Menu, Newspaper, Package,
   PackagePlus, Ship, ShoppingCart, Tags, Truck, UserCog, Users, Warehouse, Wrench, X,
 } from 'lucide-react';
@@ -55,6 +55,7 @@ const ICONS = {
   purchase: PackagePlus,
   parts: ListTree,
   usage: BarChart3,
+  calendar: CalendarDays,
 } as const;
 
 export type NavIcon = keyof typeof ICONS;
