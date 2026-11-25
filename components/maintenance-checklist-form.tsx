@@ -140,6 +140,9 @@ export default function MaintenanceChecklistForm({
         ...(askName ? { name, email } : {}),
       });
 
+      // Uten svar er siden på vei et annet sted, f.eks. i demovisningen, der
+      // middleware stopper innsendingen og laster siden på nytt.
+      if (!result) return;
       if (!result.ok) {
         setError(result.error);
         return;

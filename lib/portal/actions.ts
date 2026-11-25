@@ -1,13 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { DEMO_COOKIE } from '@/lib/portal/demo';
 
-/** Logger ut og sender brukeren til innloggingssiden. */
+/** Logger ut og sender brukeren til innloggingssiden. Slår også av demovisningen. */
 export async function signOut() {
   const supabase = await createServerSupabase();
   await supabase.auth.signOut();
+  (await cookies()).delete(DEMO_COOKIE);
   redirect('/logg-inn');
 }
 

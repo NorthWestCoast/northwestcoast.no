@@ -65,6 +65,11 @@ export type PortalContext = {
   unread: number;
   /** Invitasjoner som venter på at brukeren godtar eller avslår. */
   invitations: PortalInvitation[];
+  /**
+   * Demovisningen er på: portalen viser bare demodataene (lib/portal/demo.ts).
+   * Databasen avgjør det, så det er bare sant for administratorer.
+   */
+  demo: boolean;
 };
 
 export const getPortalContext = cache(async (): Promise<PortalContext | null> => {
@@ -86,6 +91,7 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
       hasAccess: false,
       unread: 0,
       invitations: [],
+      demo: false,
     };
   }
 
@@ -104,6 +110,7 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
     hasAccess: ctx.has_access === true,
     unread: typeof ctx.unread === 'number' ? ctx.unread : 0,
     invitations: parseInvitations(ctx.invitations),
+    demo: ctx.demo === true,
   };
 });
 

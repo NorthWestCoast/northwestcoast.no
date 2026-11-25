@@ -63,6 +63,19 @@ live-databasen.
 PostgREST + stedfortreder for innlogging og lagring), se README-en der.
 `supabase/seed/demo.sql` legger inn ett demorederi med fartøy, leidere,
 historikk og bestillinger; `supabase/seed/remove-demo.sql` fjerner det igjen.
+`supabase/seed/demo-lager.sql` legger til lagerdata og er bare for det lokale
+miljøet (delelista henger på de ekte produktene).
+
+### Demodata i produksjon
+
+`demo.sql` kan også kjøres i produksjon. Radene merkes `demo = true`, og en
+restriktiv policy (migrasjonen `demo_view`) holder dem utenfor alle lister,
+tellinger og kalendere. De vises bare i demovisningen, som en administrator
+slår på i `/admin/demo`. Da viser hele portalen bare demodataene, med en gul
+stripe øverst, og ingenting kan endres (se `lib/portal/demo.ts`). Kjør skriptet
+som det er via SQL-editoren eller MCP; det gjør ingenting om dataene finnes.
+Datoene regnes fra dagen skriptet kjøres, så kjør `remove-demo.sql` og så
+`demo.sql` på nytt når demodataene har blitt for gamle.
 
 ## Sikkerhetsmodell
 
