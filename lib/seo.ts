@@ -122,7 +122,7 @@ export function productLd(lang: Lang, table: PriceTable) {
     name: t.product.title,
     alternateName: t.products.ladder.title,
     description: t.product.answerBody,
-    image: [abs('/images/ladder-full.png'), abs('/images/leider_in_use.jpg')],
+    image: [abs('/images/argostep-utfelt.jpg'), abs('/images/argostep-foldet.jpg'), abs('/images/leider_in_use.jpg')],
     brand: { '@type': 'Brand', name: 'Argostep' },
     manufacturer: { '@id': ORG_ID },
     category: lang === 'no' ? 'Maritimt sikkerhetsutstyr > Leidere' : 'Marine safety equipment > Embarkation ladders',
