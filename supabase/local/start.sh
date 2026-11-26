@@ -52,6 +52,7 @@ if [ "$exists" != "1" ]; then
   export PGOPTIONS='-c search_path="$user",public,extensions -c client_min_messages=warning'
   for file in supabase/migrations/*.sql; do run_sql -1 -f "$file" >/dev/null; done
   run_sql -f supabase/seed/demo.sql
+  run_sql -f supabase/seed/demo-lager.sql
   run_sql -f supabase/local/users.sql
   unset PGOPTIONS
   # Rollen PostgREST logger inn som; den bytter til anon/authenticated per forespørsel.

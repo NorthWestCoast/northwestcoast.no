@@ -101,6 +101,7 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
+          demo: boolean
           id: string
           installed_at: string | null
           job_id: string | null
@@ -117,6 +118,7 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string
+          demo?: boolean
           id?: string
           installed_at?: string | null
           job_id?: string | null
@@ -133,6 +135,7 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string
+          demo?: boolean
           id?: string
           installed_at?: string | null
           job_id?: string | null
@@ -200,6 +203,7 @@ export type Database = {
           contact_phone: string | null
           country: string
           created_at: string
+          demo: boolean
           id: string
           name: string
           org_number: string | null
@@ -216,6 +220,7 @@ export type Database = {
           contact_phone?: string | null
           country?: string
           created_at?: string
+          demo?: boolean
           id?: string
           name: string
           org_number?: string | null
@@ -232,6 +237,7 @@ export type Database = {
           contact_phone?: string | null
           country?: string
           created_at?: string
+          demo?: boolean
           id?: string
           name?: string
           org_number?: string | null
@@ -275,6 +281,7 @@ export type Database = {
         Row: {
           company_name: string | null
           created_at: string
+          demo: boolean
           email: string
           handled_at: string | null
           id: string
@@ -287,6 +294,7 @@ export type Database = {
         Insert: {
           company_name?: string | null
           created_at?: string
+          demo?: boolean
           email: string
           handled_at?: string | null
           id?: string
@@ -299,6 +307,7 @@ export type Database = {
         Update: {
           company_name?: string | null
           created_at?: string
+          demo?: boolean
           email?: string
           handled_at?: string | null
           id?: string
@@ -315,6 +324,7 @@ export type Database = {
           carrier: string | null
           created_at: string
           delivered_at: string | null
+          demo: boolean
           id: string
           job_id: string | null
           notes: string | null
@@ -326,6 +336,7 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           delivered_at?: string | null
+          demo?: boolean
           id?: string
           job_id?: string | null
           notes?: string | null
@@ -337,6 +348,7 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           delivered_at?: string | null
+          demo?: boolean
           id?: string
           job_id?: string | null
           notes?: string | null
@@ -796,6 +808,7 @@ export type Database = {
           completed_log_id: string | null
           created_at: string
           created_by: string | null
+          demo: boolean
           description: string | null
           due_date: string
           id: string
@@ -812,6 +825,7 @@ export type Database = {
           completed_log_id?: string | null
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           description?: string | null
           due_date: string
           id?: string
@@ -828,6 +842,7 @@ export type Database = {
           completed_log_id?: string | null
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           description?: string | null
           due_date?: string
           id?: string
@@ -859,6 +874,7 @@ export type Database = {
           company_id: string | null
           created_at: string
           custom_length_m: number | null
+          demo: boolean
           id: string
           installed_at: string | null
           notes: string | null
@@ -876,6 +892,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           custom_length_m?: number | null
+          demo?: boolean
           id?: string
           installed_at?: string | null
           notes?: string | null
@@ -893,6 +910,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           custom_length_m?: number | null
+          demo?: boolean
           id?: string
           installed_at?: string | null
           notes?: string | null
@@ -1043,6 +1061,7 @@ export type Database = {
           checklist: Database["public"]["Enums"]["maintenance_checklist"] | null
           checklist_items: Json
           created_at: string
+          demo: boolean
           id: string
           imo_raw: string | null
           incomplete: boolean
@@ -1068,6 +1087,7 @@ export type Database = {
           checklist?: Database["public"]["Enums"]["maintenance_checklist"] | null
           checklist_items?: Json
           created_at?: string
+          demo?: boolean
           id?: string
           imo_raw?: string | null
           incomplete?: boolean
@@ -1093,6 +1113,7 @@ export type Database = {
           checklist?: Database["public"]["Enums"]["maintenance_checklist"] | null
           checklist_items?: Json
           created_at?: string
+          demo?: boolean
           id?: string
           imo_raw?: string | null
           incomplete?: boolean
@@ -1255,6 +1276,7 @@ export type Database = {
         Row: {
           body: string | null
           created_at: string
+          demo: boolean
           id: string
           kind: string
           link: string | null
@@ -1265,6 +1287,7 @@ export type Database = {
         Insert: {
           body?: string | null
           created_at?: string
+          demo?: boolean
           id?: string
           kind: string
           link?: string | null
@@ -1275,6 +1298,7 @@ export type Database = {
         Update: {
           body?: string | null
           created_at?: string
+          demo?: boolean
           id?: string
           kind?: string
           link?: string | null
@@ -1289,6 +1313,7 @@ export type Database = {
           cabinet_price_nok: number
           cabinet_product_id: string | null
           custom_length_m: number | null
+          demo: boolean
           id: string
           line_total_nok: number
           on_request: boolean
@@ -1302,6 +1327,7 @@ export type Database = {
           cabinet_price_nok?: number
           cabinet_product_id?: string | null
           custom_length_m?: number | null
+          demo?: boolean
           id?: string
           line_total_nok: number
           on_request?: boolean
@@ -1315,6 +1341,7 @@ export type Database = {
           cabinet_price_nok?: number
           cabinet_product_id?: string | null
           custom_length_m?: number | null
+          demo?: boolean
           id?: string
           line_total_nok?: number
           on_request?: boolean
@@ -1351,6 +1378,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           delivery_address: string | null
+          demo: boolean
           expected_delivery: string | null
           id: string
           imo: string | null
@@ -1371,6 +1399,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_address?: string | null
+          demo?: boolean
           expected_delivery?: string | null
           id?: string
           imo?: string | null
@@ -1391,6 +1420,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_address?: string | null
+          demo?: boolean
           expected_delivery?: string | null
           id?: string
           imo?: string | null
@@ -1614,6 +1644,7 @@ export type Database = {
       }
       production_job_steps: {
         Row: {
+          demo: boolean
           description: string | null
           done_at: string | null
           done_by: string | null
@@ -1625,6 +1656,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          demo?: boolean
           description?: string | null
           done_at?: string | null
           done_by?: string | null
@@ -1636,6 +1668,7 @@ export type Database = {
           title: string
         }
         Update: {
+          demo?: boolean
           description?: string | null
           done_at?: string | null
           done_by?: string | null
@@ -1665,6 +1698,7 @@ export type Database = {
           created_by: string | null
           customer_label: string | null
           delivered_at: string | null
+          demo: boolean
           due_date: string | null
           id: string
           job_number: string
@@ -1697,6 +1731,7 @@ export type Database = {
           created_by?: string | null
           customer_label?: string | null
           delivered_at?: string | null
+          demo?: boolean
           due_date?: string | null
           id?: string
           job_number?: string
@@ -1729,6 +1764,7 @@ export type Database = {
           created_by?: string | null
           customer_label?: string | null
           delivered_at?: string | null
+          demo?: boolean
           due_date?: string | null
           id?: string
           job_number?: string
@@ -1920,6 +1956,7 @@ export type Database = {
           company_id: string
           created_at: string
           created_by: string | null
+          demo: boolean
           description: string | null
           id: string
           kind: string
@@ -1932,6 +1969,7 @@ export type Database = {
           company_id: string
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           description?: string | null
           id?: string
           kind?: string
@@ -1944,6 +1982,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           description?: string | null
           id?: string
           kind?: string
@@ -2063,6 +2102,7 @@ export type Database = {
           covers: string | null
           created_at: string
           created_by: string | null
+          demo: boolean
           ends_on: string | null
           id: string
           interval_months: number
@@ -2078,6 +2118,7 @@ export type Database = {
           covers?: string | null
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           ends_on?: string | null
           id?: string
           interval_months?: number
@@ -2093,6 +2134,7 @@ export type Database = {
           covers?: string | null
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           ends_on?: string | null
           id?: string
           interval_months?: number
@@ -2116,6 +2158,7 @@ export type Database = {
       service_bookings: {
         Row: {
           created_at: string
+          demo: boolean
           id: string
           ladder_id: string
           location: string | null
@@ -2132,6 +2175,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          demo?: boolean
           id?: string
           ladder_id: string
           location?: string | null
@@ -2148,6 +2192,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          demo?: boolean
           id?: string
           ladder_id?: string
           location?: string | null
@@ -2214,6 +2259,7 @@ export type Database = {
       service_reports: {
         Row: {
           created_at: string
+          demo: boolean
           findings: string | null
           id: string
           ladder_id: string
@@ -2227,6 +2273,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          demo?: boolean
           findings?: string | null
           id?: string
           ladder_id: string
@@ -2240,6 +2287,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          demo?: boolean
           findings?: string | null
           id?: string
           ladder_id?: string
@@ -2470,6 +2518,7 @@ export type Database = {
           contact_name: string | null
           created_at: string
           created_by: string | null
+          demo: boolean
           id: string
           ladder_id: string | null
           last_message_at: string
@@ -2487,6 +2536,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           id?: string
           ladder_id?: string | null
           last_message_at?: string
@@ -2504,6 +2554,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by?: string | null
+          demo?: boolean
           id?: string
           ladder_id?: string | null
           last_message_at?: string
@@ -2536,6 +2587,7 @@ export type Database = {
           author_name: string | null
           body: string
           created_at: string
+          demo: boolean
           from_staff: boolean
           id: string
           ticket_id: string
@@ -2545,6 +2597,7 @@ export type Database = {
           author_name?: string | null
           body: string
           created_at?: string
+          demo?: boolean
           from_staff?: boolean
           id?: string
           ticket_id: string
@@ -2554,6 +2607,7 @@ export type Database = {
           author_name?: string | null
           body?: string
           created_at?: string
+          demo?: boolean
           from_staff?: boolean
           id?: string
           ticket_id?: string
@@ -2604,6 +2658,7 @@ export type Database = {
           call_sign: string | null
           company_id: string
           created_at: string
+          demo: boolean
           home_port: string | null
           id: string
           imo: string | null
@@ -2621,6 +2676,7 @@ export type Database = {
           call_sign?: string | null
           company_id: string
           created_at?: string
+          demo?: boolean
           home_port?: string | null
           id?: string
           imo?: string | null
@@ -2638,6 +2694,7 @@ export type Database = {
           call_sign?: string | null
           company_id?: string
           created_at?: string
+          demo?: boolean
           home_port?: string | null
           id?: string
           imo?: string | null

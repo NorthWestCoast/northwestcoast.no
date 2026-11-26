@@ -66,6 +66,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: '/admin/selskap', label: 'Selskap', icon: 'companies' },
         { href: '/admin/brukere', label: 'Brukere', icon: 'people' },
         { href: '/admin/tilgang', label: 'Tilgangsforespørsler', icon: 'access', count: accessRequests.count ?? 0 },
+        { href: '/admin/demo', label: 'Demovisning', icon: 'demo' },
       ],
     },
     {

@@ -1,6 +1,13 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from './config';
+import {
+  DEMO_BLOCKED_PARAM,
+  DEMO_BLOCKED_VALUE,
+  DEMO_COOKIE,
+  DEMO_START,
+  DEMO_STOP,
+} from '@/lib/portal/demo';
 
 /**
  * Stier som krever innlogging.
@@ -50,5 +57,51 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // ── Demovisningen (lib/portal/demo.ts) ──
+  const demo = request.cookies.get(DEMO_COOKIE)?.value;
+  if (demo) {
+    // Bryteren hører til den som slo den på. Logger noen andre inn i samme
+    // nettleser, eller er sesjonen borte, fjernes den før siden lages.
+    if (demo !== user?.id) {
+      request.cookies.delete(DEMO_COOKIE);
+      const next = NextResponse.next({ request });
+      response.cookies.getAll().forEach((cookie) => next.cookies.set(cookie));
+      next.cookies.delete(DEMO_COOKIE);
+      return next;
+    }
+
+    // Bare til å se på: ingenting sendes inn. Unntaket er stiene som slår
+    // demovisningen av og på.
+    const writes = request.method !== 'GET' && request.method !== 'HEAD';
+    if (needsAuth && writes && pathname !== DEMO_START && pathname !== DEMO_STOP) {
+      return demoBlocked(request);
+    }
+  }
+
   return response;
+}
+
+/**
+ * Svar på et skjema som er stoppet i demovisningen: tilbake til samme side,
+ * som da viser en melding i demostripa.
+ *
+ * En serverhandling (hodet Next-Action) kalles med fetch og følger ikke en
+ * vanlig videresending. Next leser i stedet x-action-redirect, og et svar med
+ * bare det hodet laster siden på nytt med den nye adressen. Uten JavaScript
+ * er skjemaet et vanlig POST, og da holder en vanlig videresending.
+ */
+function demoBlocked(request: NextRequest) {
+  const target = request.nextUrl.clone();
+  target.searchParams.set(DEMO_BLOCKED_PARAM, DEMO_BLOCKED_VALUE);
+
+  if (request.headers.has('next-action')) {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        'content-type': 'text/plain',
+        'x-action-redirect': `${target.pathname}${target.search};replace`,
+      },
+    });
+  }
+  return NextResponse.redirect(target, 303);
 }

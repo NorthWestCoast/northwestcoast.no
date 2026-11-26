@@ -5,6 +5,8 @@ import { signOut } from '@/lib/portal/actions';
 import type { PortalContext, StaffRole } from '@/lib/portal/context';
 import { MEDIA_HOME } from '@/lib/portal/landing';
 import { staffRoleLabel } from '@/lib/portal/labels';
+import { DEMO_STOP } from '@/lib/portal/demo';
+import DemoBar from './demo-bar';
 
 type Area = { label: string; home: string };
 
@@ -54,7 +56,8 @@ export default function PortalShell({
     : ctx.companies.map((c) => c.name).join(', ') || 'Ingen selskap ennå';
 
   return (
-    <div className="pt">
+    <div className="pt" data-demo={ctx.demo ? 'true' : undefined}>
+      {ctx.demo && <DemoBar />}
       <PortalNav
         area={current.label}
         brandHref={current.home}
@@ -70,9 +73,17 @@ export default function PortalShell({
                 <Link key={other.home} href={other.home}>{other.label}</Link>
               ))}
               <Link href={siteHref('/')}>Nettsiden</Link>
-              <form action={signOut}>
-                <button type="submit">Logg ut</button>
-              </form>
+              {ctx.demo ? (
+                // Serverhandlingene er stoppet i demovisningen, også signOut.
+                <form action={DEMO_STOP} method="post">
+                  <input type="hidden" name="logg-ut" value="1" />
+                  <button type="submit">Logg ut</button>
+                </form>
+              ) : (
+                <form action={signOut}>
+                  <button type="submit">Logg ut</button>
+                </form>
+              )}
             </div>
           </>
         }

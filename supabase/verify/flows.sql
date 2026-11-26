@@ -1873,4 +1873,88 @@ begin
   raise notice 'Testene for faste kontroller består.';
 end $$;
 
+-- ── Demovisning ─────────────────────────────────────────────────────────────
+do $$
+declare
+  o uuid; adm uuid;                                -- kunde, administrator
+  v_real uuid; v_demo uuid; v_vessel uuid; v_ladder uuid; v_product uuid; v_failed boolean;
+begin
+  perform t.root();
+  insert into auth.users (email, email_confirmed_at) values ('eier@demoskille.test', now()) returning id into o;
+  insert into auth.users (email, email_confirmed_at) values ('admin@demoskille.test', now()) returning id into adm;
+  insert into public.staff_members (email, role) values ('admin@demoskille.test', 'admin');
+  select id into v_product from public.products where product_number = '400-034';
+
+  insert into public.companies (name) values ('Ekte Rederi AS') returning id into v_real;
+
+  -- Som seed-skriptet: alt som settes inn, også av triggerne, blir demorader.
+  perform set_config('nwc.demo_seed', 'on', true);
+  insert into public.companies (name) values ('Demoskille AS') returning id into v_demo;
+  insert into public.vessels (company_id, name) values (v_demo, 'MS Demoskille') returning id into v_vessel;
+  insert into public.ladders (company_id, vessel_id, product_id, serial_number, status, installed_at)
+  values (v_demo, v_vessel, v_product, 'DS-2026-0001', 'installed', current_date)
+  returning id into v_ladder;
+  insert into public.notifications (user_id, kind, title) values (adm, 'service_done', 'Demovarsel');
+  perform set_config('nwc.demo_seed', 'off', true);
+  insert into public.notifications (user_id, kind, title) values (adm, 'service_done', 'Ekte varsel');
+
+  perform t.ok((select demo from public.companies where id = v_demo), 'seed-skriptet merker radene som demo');
+  perform t.ok((select count(*) > 0 and bool_and(demo) from public.ladder_tasks where ladder_id = v_ladder),
+               'også radene triggerne lager');
+  perform t.ok(not (select demo from public.companies where id = v_real), 'andre rader er ikke demo');
+
+  -- ── Administrator, vanlig visning ──
+  perform t.login(adm);
+  perform t.ok(exists (select 1 from public.companies where id = v_real), 'admin ser de ekte selskapene');
+  perform t.ok(not exists (select 1 from public.companies where id = v_demo), 'men ikke demoselskapet');
+  perform t.ok(not exists (select 1 from public.ladder_status where ladder_id = v_ladder), 'eller demoleideren');
+  perform t.ok(not exists (select 1 from public.ladder_tasks where ladder_id = v_ladder), 'eller kontrollene på den');
+  perform t.ok(not (public.portal_bootstrap() ->> 'demo')::boolean, 'demovisningen er av uten hodet');
+  perform t.ok((public.portal_bootstrap() ->> 'unread')::int = 1, 'demovarselet telles ikke');
+
+  v_failed := false;
+  begin
+    insert into public.companies (name, demo) values ('Lurt inn AS', true);
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'ansatte kan ikke lage demorader selv');
+
+  -- ── Administrator, demovisning ──
+  perform set_config('request.headers', json_build_object('x-nwc-demo', '1')::text, true);
+  perform t.ok((public.portal_bootstrap() ->> 'demo')::boolean, 'med hodet er demovisningen på');
+  perform t.ok(exists (select 1 from public.companies where id = v_demo), 'og admin ser demoselskapet');
+  perform t.ok(exists (select 1 from public.ladder_status where ladder_id = v_ladder), 'og demoleideren');
+  perform t.ok(not exists (select 1 from public.companies where id = v_real), 'men ingen ekte selskap');
+  perform t.ok((public.portal_bootstrap() ->> 'unread')::int = 1, 'og bare demovarselet');
+
+  v_failed := false;
+  begin
+    update public.companies set name = 'Endret AS' where id = v_demo;
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'demovisningen kan ikke endre noe');
+
+  v_failed := false;
+  begin
+    insert into public.companies (name) values ('Ny i demo AS');
+  exception when others then v_failed := true;
+  end;
+  perform t.ok(v_failed, 'eller legge til noe');
+
+  -- ── Hodet virker ikke for andre enn administratorer ──
+  perform t.login(o);
+  perform t.ok(not (public.portal_bootstrap() ->> 'demo')::boolean, 'for en kunde gjør hodet ingenting');
+  perform t.ok(not exists (select 1 from public.companies where id = v_demo), 'kunden ser ikke demoselskapet');
+  perform set_config('request.headers', '', true);
+
+  -- ── Et medlem av demoselskapet ser det, som Kari lokalt ──
+  perform t.root();
+  insert into public.company_members (company_id, user_id, role) values (v_demo, o, 'owner');
+  perform t.login(o);
+  perform t.ok(exists (select 1 from public.ladder_status where ladder_id = v_ladder), 'et medlem ser demoleideren');
+  perform t.root();
+
+  raise notice 'Testene for demovisningen består.';
+end $$;
+
 rollback;
