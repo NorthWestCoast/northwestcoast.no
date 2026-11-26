@@ -53,7 +53,7 @@ export default function MediaGallery({ images }: { images: GalleryItem[] }) {
           <div
             key={img.id}
             className="mg-card"
-            onClick={() => openLightbox(img.src, img.contain)}
+            onClick={() => openLightbox(img.src, img.contain && !img.backdrop)}
           >
             <Image
               src={img.src}
@@ -62,7 +62,7 @@ export default function MediaGallery({ images }: { images: GalleryItem[] }) {
               unoptimized={img.unoptimized}
               style={{
                 objectFit: img.contain ? 'contain' : 'cover',
-                background: img.contain ? CONTAIN_BG : undefined,
+                background: img.contain ? (img.backdrop ?? CONTAIN_BG) : undefined,
               }}
             />
             {img.label && <div className="g-label">{img.label}</div>}

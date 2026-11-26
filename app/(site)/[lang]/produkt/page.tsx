@@ -10,6 +10,7 @@ import Features from '@/components/features';
 import Footer from '@/components/footer';
 import Lightbox from '@/components/lightbox';
 import { DEFAULT_LANG, getDict, isLang, localePath, pageMetadata } from '@/lib/i18n';
+import { RENDER_BG } from '@/lib/gallery-images';
 
 export async function generateMetadata({
   params,
@@ -65,10 +66,10 @@ export default async function ProduktPage({
         <div className="product-grid">
           <div className="product-img">
             <Image
-              src="/images/ladder-full.png"
+              src="/images/argostep-utfelt.jpg"
               alt={t.product.fullAlt}
               fill sizes="(max-width: 960px) 100vw, 50vw"
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: 'contain', background: RENDER_BG }}
               priority
             />
           </div>
